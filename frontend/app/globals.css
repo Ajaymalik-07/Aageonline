@@ -238,14 +238,70 @@ body {
   animation: livePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Carousel & Scroll Track Utilities */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  gap: var(--space-5);
+  padding-bottom: var(--space-3);
+}
+
+.carousel-snap-item {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+}
+
+/* Card Hover Lift & Border Highlights */
+.card-lift {
+  transition: transform var(--motion-normal), box-shadow var(--motion-normal), border-color var(--motion-fast);
+}
+
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--elevation-3);
+  border-color: var(--brand-teal) !important;
+}
+
+/* Marquee / Live Ticker */
+@keyframes marqueeScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.marquee-content {
+  display: flex;
+  flex-shrink: 0;
+  animation: marqueeScroll 35s linear infinite;
+  gap: var(--space-6);
+}
+
+.marquee-content:hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .perspective-tilt {
+  .card-lift:hover {
     transform: none !important;
   }
-  .perspective-tilt:hover {
-    transform: none !important;
-  }
-  .live-indicator-dot {
+  .marquee-content {
     animation: none !important;
   }
 }
