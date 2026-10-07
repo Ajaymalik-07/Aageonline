@@ -182,20 +182,6 @@ export function Header() {
           <ThemeToggle />
 
           <a
-            href="/workspace"
-            className="desktop-nav"
-            style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              textDecoration: 'none',
-              padding: '8px 12px',
-            }}
-          >
-            For Businesses
-          </a>
-
-          <a
             href="/claim"
             className="header-cta"
             style={{
