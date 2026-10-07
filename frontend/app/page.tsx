@@ -42,10 +42,8 @@ export default function HomePage() {
         <FeaturedMarketsShuffle markets={INITIAL_FEATURED_MARKETS} />
       </section>
 
-      {/* 6. What is AageOnline? (Editorial Asymmetric Manifesto + SVG Connected Diagram) */}
-      <div style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
-        <WhatIsAageOnline />
-      </div>
+      {/* 6. What is AageOnline? (Editorial Asymmetric Manifesto + 5-Stage Architecture Pipeline) */}
+      <WhatIsAageOnline />
 
       {/* 7. Markets Gaining Momentum (Soft Neutral Band + Velocity Shift Metrics) */}
       <div className="section-neutral-soft" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
