@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+.npm/
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+*.pfx
+secrets/
+credentials/
+*.env.local
+
+# Production Build Artifacts
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Logs and Debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python / Local agent caches (dev tooling only)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.coverage
+
+# IDE & OS Files
+.DS_Store
+Thumbs.db
+*.sublime-workspace
+.idea/
+
+# Local Dev Caches
+.turbo/
+.cache/

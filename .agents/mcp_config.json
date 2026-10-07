@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agentmemory": {
+      "command": "npx",
+      "args": ["-y", "@agentmemory/mcp"],
+      "env": {
+        "AGENTMEMORY_URL": "http://localhost:3111"
+      },
+      "description": "Persistent memory server for AageOnline AI development harness. Stores developer-agent insights and patterns across sessions. STRICT SECURITY RULE: Never store API keys, passwords, payment secrets, credentials, or private customer data."
+    }
+  }
+}
