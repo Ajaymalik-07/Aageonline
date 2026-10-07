@@ -59,9 +59,11 @@ const SECONDARY_ITEMS: KnowledgeItem[] = [
 export const KnowledgeGuides: React.FC = () => {
   return (
     <section
-      className="section-editorial-clean"
       aria-label="AageOnline Knowledge and Editorial Guides"
       style={{
+        backgroundColor: 'var(--surface-soft)',
+        borderTop: '1px solid var(--border-subtle)',
+        borderBottom: '1px solid var(--border-subtle)',
         padding: 'clamp(var(--space-10), 6vw, var(--space-12)) 0',
       }}
     >

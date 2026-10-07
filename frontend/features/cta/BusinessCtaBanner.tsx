@@ -4,11 +4,11 @@ import React from 'react';
 
 export const BusinessCtaBanner: React.FC = () => {
   return (
-    <section className="container" aria-label="Business Call to Action">
+    <div className="container" aria-label="Business Call to Action">
       <div
         style={{
           borderRadius: 'var(--radius-xl)',
-          backgroundColor: 'var(--brand-deep-navy)',
+          backgroundColor: '#0b1f3b',
           color: '#ffffff',
           padding: 'clamp(var(--space-8), 6vw, var(--space-12)) clamp(var(--space-6), 4vw, var(--space-10))',
           textAlign: 'center',
@@ -143,6 +143,6 @@ export const BusinessCtaBanner: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };

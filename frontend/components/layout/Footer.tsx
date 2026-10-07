@@ -8,11 +8,11 @@ export function Footer() {
     <footer
       role="contentinfo"
       style={{
-        backgroundColor: 'var(--brand-deep-navy)',
+        backgroundColor: '#071324',
         color: 'rgba(255, 255, 255, 0.85)',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
         padding: 'var(--space-12) 0 var(--space-8) 0',
-        marginTop: 'var(--space-12)',
+        marginTop: 0,
         position: 'relative',
         overflow: 'hidden',
       }}

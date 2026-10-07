@@ -26,43 +26,58 @@ export default function HomePage() {
       {/* 1. Hero / Market Introduction (Dark Immersive + 2.5D Interactive Ladder) */}
       <HeroSection />
 
-      {/* 2. Live Markets (Light Marketplace Carousel Rhythm) */}
+      {/* 2. Live Markets (#F8FAFC Soft Surface with Crisp White Cards) */}
       <LiveMarketsCarousel markets={INITIAL_FEATURED_MARKETS} />
 
-      {/* 3. Explore Business Categories (Editorial Clean Category Browsing Rail) */}
-      <div style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+      {/* 3. Explore Business Categories (#FFFFFF Clean Light Surface) */}
+      <section style={{ backgroundColor: '#ffffff', padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
         <CategoryRail />
-      </div>
-
-      {/* 4. Competitive Spotlight (Dark Immersive Signature Visual + Deterministic Transaction Demo) */}
-      <CompetitiveSpotlight />
-
-      {/* 5. Active Local Markets (Marketplace Grid with 1-by-1 FLIP Card Shuffle) */}
-      <section className="container" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
-        <FeaturedMarketsShuffle markets={INITIAL_FEATURED_MARKETS} />
       </section>
 
-      {/* 6. What is AageOnline? (Editorial Asymmetric Manifesto + 5-Stage Architecture Pipeline) */}
+      {/* 4. Competitive Spotlight (#0B1F3B Dark Immersive Surface + Deterministic Transaction Demo) */}
+      <CompetitiveSpotlight />
+
+      {/* 5. Active Local Markets (#F8FAFC Soft Surface with Large Visual Cards) */}
+      <section
+        style={{
+          backgroundColor: 'var(--surface-soft)',
+          borderTop: '1px solid var(--border-subtle)',
+          borderBottom: '1px solid var(--border-subtle)',
+          padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
+        }}
+      >
+        <div className="container">
+          <FeaturedMarketsShuffle markets={INITIAL_FEATURED_MARKETS} />
+        </div>
+      </section>
+
+      {/* 6. What is AageOnline? (#FFFFFF Clean Surface + 5-Stage Architecture Pipeline) */}
       <WhatIsAageOnline />
 
-      {/* 7. Markets Gaining Momentum (Soft Neutral Band + Velocity Shift Metrics) */}
+      {/* 7. Markets Gaining Momentum (#F8FAFC Soft Neutral Band + Velocity Shift Metrics) */}
       <div className="section-neutral-soft" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
         <MomentumMarkets markets={INITIAL_FEATURED_MARKETS} />
       </div>
 
-      {/* 8. How AageOnline Works (6-Step Interactive Infographic Journey) */}
+      {/* 8. How AageOnline Works (#064E3B Deep Brand Dark Infographic Journey) */}
       <HowItWorksJourney />
 
-      {/* 9. Trust & Governance (Clean White / 4 Integrity Pillars + Statutory Disclosure) */}
-      <div style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+      {/* 9. Trust & Governance (#FFFFFF Clean White / 4 Integrity Pillars) */}
+      <section style={{ backgroundColor: '#ffffff', padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
         <TrustGovernance />
-      </div>
+      </section>
 
-      {/* 10. AageOnline Knowledge / Guides (Asymmetric Editorial: Featured Guide + Stacked Entries) */}
+      {/* 10. AageOnline Knowledge / Guides (#F8FAFC Soft Editorial Layout) */}
       <KnowledgeGuides />
 
-      {/* 11. Business CTA (Dark Immersive Network Visual Banner) */}
-      <section className="container" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+      {/* 11. Business CTA (#0B1F3B / Deep Navy Immersive Network Visual Banner) */}
+      <section
+        style={{
+          backgroundColor: '#071324',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
+        }}
+      >
         <BusinessCtaBanner />
       </section>
     </div>

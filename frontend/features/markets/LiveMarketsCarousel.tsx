@@ -23,9 +23,11 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
 
   return (
     <section
-      className="section-light-marketplace"
       aria-label="Live Competitive Markets"
       style={{
+        backgroundColor: 'var(--surface-soft)',
+        borderTop: '1px solid var(--border-subtle)',
+        borderBottom: '1px solid var(--border-subtle)',
         padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
       }}
     >
@@ -93,7 +95,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
               width: '40px',
               height: '40px',
               borderRadius: '50%',
-              backgroundColor: 'var(--surface-card)',
+              backgroundColor: '#ffffff',
               border: '1px solid var(--border-strong)',
               color: 'var(--text-primary)',
               fontSize: '16px',
@@ -115,7 +117,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
               width: '40px',
               height: '40px',
               borderRadius: '50%',
-              backgroundColor: 'var(--surface-card)',
+              backgroundColor: '#ffffff',
               border: '1px solid var(--border-strong)',
               color: 'var(--text-primary)',
               fontSize: '16px',
@@ -142,18 +144,18 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
       >
         {markets.map((market, index) => {
           const isHighActivity = market.totalBusinesses > 50;
+          const imageNumber = (index % 18) + 1;
 
           return (
             <div
               key={market.id}
               className="carousel-snap-item card-lift"
               style={{
-                width: '300px',
-                backgroundColor: 'var(--surface-card)',
+                width: '320px',
+                backgroundColor: '#ffffff',
                 borderRadius: 'var(--radius-lg)',
-                padding: 'var(--space-5)',
                 border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--elevation-2)',
+                boxShadow: '0 4px 16px rgba(11, 31, 59, 0.06)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -161,21 +163,101 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                 overflow: 'hidden',
               }}
             >
-              {/* Top Accent Gradient Border */}
+              {/* Rich Visual Image Banner with Badges */}
               <div
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '4px',
-                  background: index % 2 === 0
-                    ? 'linear-gradient(90deg, var(--brand-emerald), var(--brand-teal))'
-                    : 'linear-gradient(90deg, var(--brand-teal), var(--brand-lime))',
+                  position: 'relative',
+                  width: '100%',
+                  height: '140px',
+                  backgroundColor: '#0b1f3b',
+                  overflow: 'hidden',
                 }}
-              />
+              >
+                <img
+                  src={`/assets/markets/auction-img${imageNumber}.jpg`}
+                  alt={`${market.category.name} in ${market.location.name}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform var(--motion-normal)',
+                  }}
+                  onError={(e) => {
+                    // Fallback gradient if image not accessible
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
 
-              <div>
+                {/* Ambient Image Gradient Overlay */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(11, 31, 59, 0.5) 100%)',
+                    pointerEvents: 'none',
+                  }}
+                />
+
+                {/* Floating Badges */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    left: '10px',
+                    right: '10px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    zIndex: 2,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      padding: '3px 8px',
+                      borderRadius: 'var(--radius-pill)',
+                      backgroundColor: 'rgba(5, 150, 105, 0.9)',
+                      backdropFilter: 'blur(4px)',
+                      color: '#ffffff',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        backgroundColor: '#ffffff',
+                      }}
+                      className="live-indicator-dot"
+                    />
+                    LIVE
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      padding: '3px 8px',
+                      borderRadius: 'var(--radius-pill)',
+                      backgroundColor: isHighActivity ? 'rgba(199, 240, 0, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+                      color: isHighActivity ? '#0b1f3b' : 'var(--text-primary)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {isHighActivity ? 'High Competition' : 'Active Market'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card Body Content */}
+              <div style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                 {/* Header: Live Badge + Competition Level */}
                 <div
                   style={{
@@ -278,39 +360,40 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                     Leading: Active qualifying position
                   </div>
                 </div>
-              </div>
 
-              {/* Action Link */}
-              <a
-                href={`/${market.slug}`}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'transparent',
-                  border: '1.5px solid var(--border-strong)',
-                  color: 'var(--text-primary)',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all var(--motion-fast)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--brand-emerald)';
-                  e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.borderColor = 'var(--brand-emerald)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                  e.currentTarget.style.borderColor = 'var(--border-strong)';
-                }}
-              >
-                Explore Market Ladder →
-              </a>
+                {/* Action Link */}
+                <a
+                  href={`/${market.slug}`}
+                  style={{
+                    marginTop: 'auto',
+                    padding: '10px 16px',
+                    borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'transparent',
+                    border: '1.5px solid var(--border-strong)',
+                    color: 'var(--text-primary)',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all var(--motion-fast)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--brand-emerald)';
+                    e.currentTarget.style.color = '#ffffff';
+                    e.currentTarget.style.borderColor = 'var(--brand-emerald)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                    e.currentTarget.style.borderColor = 'var(--border-strong)';
+                  }}
+                >
+                  Explore Market Ladder →
+                </a>
+              </div>
             </div>
           );
         })}

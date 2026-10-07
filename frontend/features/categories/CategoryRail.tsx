@@ -177,73 +177,132 @@ export const CategoryRail: React.FC = () => {
           paddingBottom: 'var(--space-2)',
         }}
       >
-        {BUSINESS_CATEGORIES.map((cat) => (
-          <a
-            key={cat.id}
-            href={`/explore?category=${cat.slug}`}
-            className="carousel-snap-item card-lift"
-            style={{
-              width: '210px',
-              backgroundColor: 'var(--surface-card)',
-              borderRadius: 'var(--radius-lg)',
-              padding: 'var(--space-5)',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--elevation-1)',
-              textDecoration: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
-            <div
+        {BUSINESS_CATEGORIES.map((cat, idx) => {
+          const imgNum = (idx % 9) + 1;
+
+          return (
+            <a
+              key={cat.id}
+              href={`/explore?category=${cat.slug}`}
+              className="carousel-snap-item card-lift"
               style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                width: '220px',
+                backgroundColor: '#ffffff',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-subtle)',
+                boxShadow: '0 4px 16px rgba(11, 31, 59, 0.05)',
+                textDecoration: 'none',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px',
-                marginBottom: '4px',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                position: 'relative',
               }}
             >
-              {cat.icon}
-            </div>
+              {/* Category Image Header with Icon Badge */}
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '100px',
+                  backgroundColor: '#0b1f3b',
+                  overflow: 'hidden',
+                }}
+              >
+                <img
+                  src={`/assets/categories/category-img${imgNum}.jpg`}
+                  alt={cat.name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
 
-            <h3
-              style={{
-                fontSize: '15px',
-                fontWeight: 800,
-                color: 'var(--text-primary)',
-                lineHeight: 1.25,
-                margin: 0,
-              }}
-            >
-              {cat.name}
-            </h3>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(11, 31, 59, 0.5) 100%)',
+                    pointerEvents: 'none',
+                  }}
+                />
 
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-              {cat.locationCoverage}
-            </div>
+                {/* Floating Icon Center Badge */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '8px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                    border: '2px solid #ffffff',
+                    zIndex: 2,
+                  }}
+                >
+                  {cat.icon}
+                </div>
+              </div>
 
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: 'var(--brand-emerald)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-pill)',
-                marginTop: 'auto',
-              }}
-            >
-              Explore Category →
-            </span>
-          </a>
-        ))}
+              {/* Card Body */}
+              <div
+                style={{
+                  padding: 'var(--space-4)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  gap: '6px',
+                  flexGrow: 1,
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <h3
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 800,
+                      color: 'var(--text-primary)',
+                      lineHeight: 1.25,
+                      margin: '0 0 4px 0',
+                    }}
+                  >
+                    {cat.name}
+                  </h3>
+
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                    {cat.locationCoverage}
+                  </div>
+                </div>
+
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: 'var(--brand-emerald)',
+                    backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                    padding: '4px 10px',
+                    borderRadius: 'var(--radius-pill)',
+                    marginTop: '8px',
+                    transition: 'all var(--motion-fast)',
+                  }}
+                >
+                  Explore Category →
+                </span>
+              </div>
+            </a>
+          );
+        })}
       </div>
     </section>
   );

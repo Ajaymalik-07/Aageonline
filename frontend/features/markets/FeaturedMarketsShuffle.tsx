@@ -202,6 +202,8 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
           const market = pool[marketIndex % pool.length];
           const isShuffling = shufflingIndex === slotIndex;
 
+          const imageNumber = ((marketIndex % 18) + 1);
+
           return (
             <a
               key={`${market.id}-${slotIndex}`}
@@ -209,15 +211,13 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
               className="perspective-tilt"
               style={{
                 textDecoration: 'none',
-                backgroundColor: 'var(--surface-card)',
+                backgroundColor: '#ffffff',
                 borderRadius: 'var(--radius-lg)',
-                padding: 'var(--space-6)',
                 border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--elevation-2)',
+                boxShadow: '0 4px 16px rgba(11, 31, 59, 0.06)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                minHeight: '260px',
                 position: 'relative',
                 overflow: 'hidden',
                 transition: 'transform var(--motion-normal), opacity var(--motion-normal), box-shadow var(--motion-normal)',
@@ -225,123 +225,168 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                 transform: isShuffling ? 'translateY(12px) scale(0.96)' : 'none',
               }}
             >
-              {/* Top ambient color stripe */}
+              {/* Visual Card Image Header with Floating Badges */}
               <div
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '4px',
-                  background: 'linear-gradient(90deg, var(--brand-emerald), var(--brand-lime))',
+                  position: 'relative',
+                  width: '100%',
+                  height: '145px',
+                  backgroundColor: '#0b1f3b',
+                  overflow: 'hidden',
                 }}
-              />
+              >
+                <img
+                  src={`/assets/markets/auction-img${imageNumber}.jpg`}
+                  alt={`${market.category.name} in ${market.location.name}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
 
-              <div>
-                {/* Location & Listings Meta */}
                 <div
                   style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(11, 31, 59, 0.5) 100%)',
+                    pointerEvents: 'none',
+                  }}
+                />
+
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    left: '10px',
+                    right: '10px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: 'var(--space-2)',
+                    zIndex: 2,
                   }}
                 >
                   <span
                     style={{
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: 'var(--brand-teal)',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      padding: '3px 8px',
+                      borderRadius: 'var(--radius-pill)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      color: 'var(--brand-deep-navy)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                     }}
                   >
-                    📍 {market.location.name}, {market.location.state}
+                    📍 {market.location.name}
                   </span>
 
                   <span
                     style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      padding: '2px 8px',
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      padding: '3px 8px',
                       borderRadius: 'var(--radius-pill)',
-                      backgroundColor: 'rgba(11, 31, 59, 0.06)',
-                      color: 'var(--text-secondary)',
+                      backgroundColor: 'rgba(5, 150, 105, 0.9)',
+                      color: '#ffffff',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                     }}
                   >
                     {market.totalBusinesses} listings
                   </span>
                 </div>
-
-                {/* Category Name */}
-                <h3
-                  style={{
-                    fontSize: '18px',
-                    fontWeight: 800,
-                    color: 'var(--text-primary)',
-                    letterSpacing: '-0.01em',
-                    lineHeight: 1.25,
-                    marginBottom: 'var(--space-4)',
-                  }}
-                >
-                  {market.category.name}
-                </h3>
-
-                {/* Competitive Metrics */}
-                <div
-                  style={{
-                    backgroundColor: 'var(--surface-raised)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '10px 12px',
-                    border: '1px solid var(--border-subtle)',
-                    marginBottom: 'var(--space-4)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Top Position Floor</span>
-                    <strong style={{ fontSize: '15px', color: 'var(--brand-deep-emerald)' }}>
-                      {formatINR(market.topQualifyingAmountMinor)}
-                    </strong>
-                  </div>
-
-                  {/* Mini Position Preview Ladder Bars */}
-                  <div style={{ display: 'flex', gap: '3px', marginTop: '6px' }}>
-                    <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-lime)', borderRadius: '2px' }} title="#1 Active" />
-                    <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-teal)', borderRadius: '2px' }} title="#2 Active" />
-                    <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-emerald)', borderRadius: '2px' }} title="#3 Active" />
-                    <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--border-strong)', borderRadius: '2px' }} title="#4 Active" />
-                    <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--border-subtle)', borderRadius: '2px' }} title="20+ Open" />
-                  </div>
-                </div>
               </div>
 
-              {/* Bottom Action Footer */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: 'var(--space-2)',
-                  borderTop: '1px solid var(--border-subtle)',
-                }}
-              >
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  {market.activePositions} paid positions
-                </span>
+              {/* Card Body */}
+              <div style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
+                <div>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: 'var(--brand-teal)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      display: 'block',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    {market.location.state} Market
+                  </span>
 
-                <span
+                  <h3
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 800,
+                      color: 'var(--text-primary)',
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.25,
+                      marginBottom: 'var(--space-3)',
+                    }}
+                  >
+                    {market.category.name}
+                  </h3>
+
+                  {/* Competitive Metrics */}
+                  <div
+                    style={{
+                      backgroundColor: 'var(--surface-raised)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '10px 12px',
+                      border: '1px solid var(--border-subtle)',
+                      marginBottom: 'var(--space-4)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Top Position Floor</span>
+                      <strong style={{ fontSize: '15px', color: 'var(--brand-deep-emerald)', fontWeight: 900 }}>
+                        {formatINR(market.topQualifyingAmountMinor)}
+                      </strong>
+                    </div>
+
+                    {/* Mini Position Preview Ladder Bars */}
+                    <div style={{ display: 'flex', gap: '3px', marginTop: '6px' }}>
+                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-lime)', borderRadius: '2px' }} title="#1 Active" />
+                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-teal)', borderRadius: '2px' }} title="#2 Active" />
+                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-emerald)', borderRadius: '2px' }} title="#3 Active" />
+                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--border-strong)', borderRadius: '2px' }} title="#4 Active" />
+                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--border-subtle)', borderRadius: '2px' }} title="20+ Open" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Footer */}
+                <div
                   style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: 'var(--brand-emerald)',
-                    display: 'inline-flex',
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '4px',
+                    paddingTop: 'var(--space-3)',
+                    borderTop: '1px solid var(--border-subtle)',
                   }}
                 >
-                  Explore Ladder →
-                </span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    {market.activePositions} paid positions
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      color: 'var(--brand-emerald)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    Explore Ladder →
+                  </span>
+                </div>
               </div>
             </a>
           );
