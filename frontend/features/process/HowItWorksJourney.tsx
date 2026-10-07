@@ -128,14 +128,14 @@ export const HowItWorksJourney: React.FC = () => {
 
         {/* Desktop / Tablet Infographic Journey Rail (6 Nodes with SVG Connecting Ribbon) */}
         <div style={{ position: 'relative', marginBottom: 'var(--space-8)' }}>
-          {/* SVG Connecting Track Line */}
+          {/* Connecting Track Line */}
           <div
             aria-hidden="true"
             style={{
               position: 'absolute',
-              top: '32px',
-              left: '5%',
-              right: '5%',
+              top: '35px',
+              left: '8%',
+              right: '8%',
               height: '4px',
               backgroundColor: 'var(--border-subtle)',
               zIndex: 1,
@@ -186,7 +186,7 @@ export const HowItWorksJourney: React.FC = () => {
                     outline: 'none',
                   }}
                 >
-                  {/* Circular Node Icon */}
+                  {/* Circular Node Icon (Opaque background with halo to prevent line bleed) */}
                   <div
                     style={{
                       width: '54px',
@@ -195,14 +195,14 @@ export const HowItWorksJourney: React.FC = () => {
                       backgroundColor: isCurrent
                         ? 'var(--brand-emerald)'
                         : isPast
-                        ? 'rgba(5, 150, 105, 0.15)'
+                        ? 'var(--surface-card)'
                         : 'var(--surface-card)',
                       color: isCurrent ? '#ffffff' : isPast ? 'var(--brand-emerald)' : 'var(--text-muted)',
-                      border: `2px solid ${
+                      border: `2.5px solid ${
                         isCurrent
                           ? 'var(--brand-emerald)'
                           : isPast
-                          ? 'var(--brand-teal)'
+                          ? 'var(--brand-emerald)'
                           : 'var(--border-strong)'
                       }`,
                       display: 'flex',
@@ -210,7 +210,11 @@ export const HowItWorksJourney: React.FC = () => {
                       justifyContent: 'center',
                       fontSize: '22px',
                       marginBottom: '8px',
-                      boxShadow: isCurrent ? '0 0 16px rgba(5, 150, 105, 0.4)' : 'var(--elevation-1)',
+                      position: 'relative',
+                      zIndex: 3,
+                      boxShadow: isCurrent
+                        ? '0 0 0 6px var(--surface-card), 0 0 20px rgba(5, 150, 105, 0.4)'
+                        : '0 0 0 6px var(--surface-card)',
                       transition: 'all var(--motion-fast)',
                       transform: isCurrent ? 'scale(1.12)' : 'scale(1)',
                     }}
