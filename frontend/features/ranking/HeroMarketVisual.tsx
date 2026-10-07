@@ -55,9 +55,9 @@ export const HeroMarketVisual: React.FC = () => {
     const incumbent = ladder[incumbentIdx];
     const newAmount = incumbent.amountMinor + 150000; // +₹1,500 strictly greater
 
-    // Phase 1: New bid enters
+    // Phase 1: New qualifying payment enters
     setStep('bidding');
-    setActiveMessage(`New Qualifying Bid: ${candidate.name} submits ${formatINR(newAmount)} for Position #${incumbent.position}`);
+    setActiveMessage(`New Qualifying Payment: ${candidate.name} submits ${formatINR(newAmount)} for Position #${incumbent.position}`);
     setLadder((prev) =>
       prev.map((c, idx) => (idx === candidateIdx ? { ...c, highlighted: true } : { ...c, highlighted: false }))
     );
@@ -128,9 +128,11 @@ export const HeroMarketVisual: React.FC = () => {
         className="perspective-tilt"
         style={{
           borderRadius: 'var(--radius-xl)',
-          backgroundColor: 'var(--surface-card)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--elevation-3)',
+          backgroundColor: 'rgba(7, 19, 36, 0.88)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.14)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
           overflow: 'hidden',
           position: 'relative',
           padding: 'var(--space-6)',
@@ -146,7 +148,7 @@ export const HeroMarketVisual: React.FC = () => {
             right: 0,
             width: '280px',
             height: '280px',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -159,7 +161,7 @@ export const HeroMarketVisual: React.FC = () => {
             alignItems: 'flex-start',
             gap: 'var(--space-3)',
             marginBottom: 'var(--space-5)',
-            borderBottom: '1px solid var(--border-subtle)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             paddingBottom: 'var(--space-4)',
           }}
         >
@@ -192,16 +194,16 @@ export const HeroMarketVisual: React.FC = () => {
               style={{
                 fontSize: '20px',
                 fontWeight: 900,
-                color: 'var(--text-primary)',
+                color: '#ffffff',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.2,
                 margin: 0,
               }}
             >
-              Jaipur · <span style={{ color: 'var(--brand-emerald)' }}>Interior Designers</span>
+              Jaipur · <span style={{ color: 'var(--brand-teal)' }}>Interior Designers</span>
             </h3>
 
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+            <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.68)', margin: '4px 0 0 0' }}>
               48 businesses · 24 active paid visibility positions
             </p>
           </div>
@@ -214,7 +216,7 @@ export const HeroMarketVisual: React.FC = () => {
                 padding: '4px 10px',
                 borderRadius: 'var(--radius-pill)',
                 backgroundColor: 'rgba(199, 240, 0, 0.18)',
-                color: 'var(--brand-deep-navy)',
+                color: 'var(--brand-lime)',
                 border: '1px solid rgba(199, 240, 0, 0.4)',
                 display: 'inline-block',
               }}
@@ -229,23 +231,23 @@ export const HeroMarketVisual: React.FC = () => {
           style={{
             backgroundColor:
               step === 'bidding'
-                ? 'rgba(245, 158, 11, 0.1)'
+                ? 'rgba(245, 158, 11, 0.15)'
                 : step === 'verifying'
-                ? 'rgba(16, 185, 129, 0.12)'
+                ? 'rgba(16, 185, 129, 0.18)'
                 : step === 'reordering'
                 ? 'rgba(199, 240, 0, 0.18)'
-                : 'rgba(11, 31, 59, 0.03)',
+                : 'rgba(255, 255, 255, 0.05)',
             borderRadius: 'var(--radius-md)',
             padding: '10px 14px',
             marginBottom: 'var(--space-4)',
             border: `1px solid ${
               step === 'bidding'
-                ? 'rgba(245, 158, 11, 0.3)'
+                ? 'rgba(245, 158, 11, 0.4)'
                 : step === 'verifying'
-                ? 'rgba(16, 185, 129, 0.35)'
+                ? 'rgba(16, 185, 129, 0.45)'
                 : step === 'reordering'
                 ? 'rgba(199, 240, 0, 0.5)'
-                : 'var(--border-subtle)'
+                : 'rgba(255, 255, 255, 0.1)'
             }`,
             display: 'flex',
             alignItems: 'center',
@@ -265,7 +267,7 @@ export const HeroMarketVisual: React.FC = () => {
               style={{
                 fontSize: '12px',
                 fontWeight: 600,
-                color: 'var(--text-primary)',
+                color: '#ffffff',
                 whiteSpace: 'nowrap',
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',
@@ -279,7 +281,7 @@ export const HeroMarketVisual: React.FC = () => {
             style={{
               fontSize: '11px',
               fontWeight: 700,
-              color: 'var(--brand-emerald)',
+              color: 'var(--brand-teal)',
               whiteSpace: 'nowrap',
             }}
           >
@@ -312,16 +314,16 @@ export const HeroMarketVisual: React.FC = () => {
                   padding: isTop ? '12px 14px' : '10px 14px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: isTop
-                    ? 'rgba(199, 240, 0, 0.08)'
+                    ? 'rgba(199, 240, 0, 0.12)'
                     : entry.highlighted
-                    ? 'rgba(16, 185, 129, 0.08)'
-                    : 'var(--surface-raised)',
+                    ? 'rgba(16, 185, 129, 0.14)'
+                    : 'rgba(255, 255, 255, 0.04)',
                   border: isTop
-                    ? '1.5px solid rgba(199, 240, 0, 0.6)'
+                    ? '1.5px solid var(--brand-lime)'
                     : entry.highlighted
                     ? '1.5px solid var(--brand-teal)'
-                    : '1px solid var(--border-subtle)',
-                  boxShadow: isTop ? '0 2px 10px rgba(199, 240, 0, 0.15)' : 'none',
+                    : '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: isTop ? '0 2px 12px rgba(199, 240, 0, 0.2)' : 'none',
                   transition: 'all var(--motion-slow)',
                   transform: entry.highlighted ? 'scale(1.015)' : 'scale(1)',
                 }}
@@ -336,7 +338,7 @@ export const HeroMarketVisual: React.FC = () => {
                         style={{
                           fontSize: '14px',
                           fontWeight: 700,
-                          color: 'var(--text-primary)',
+                          color: '#ffffff',
                         }}
                       >
                         {entry.name}
@@ -371,7 +373,7 @@ export const HeroMarketVisual: React.FC = () => {
                     style={{
                       fontSize: '15px',
                       fontWeight: 800,
-                      color: isTop ? 'var(--brand-deep-emerald)' : 'var(--text-primary)',
+                      color: isTop ? 'var(--brand-lime)' : '#ffffff',
                       display: 'block',
                     }}
                   >
@@ -380,7 +382,7 @@ export const HeroMarketVisual: React.FC = () => {
                   <span
                     style={{
                       fontSize: '10px',
-                      color: 'var(--text-muted)',
+                      color: 'rgba(255, 255, 255, 0.5)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
                     }}
@@ -402,7 +404,7 @@ export const HeroMarketVisual: React.FC = () => {
             gap: '8px',
             flexWrap: 'wrap',
             paddingTop: 'var(--space-3)',
-            borderTop: '1px solid var(--border-subtle)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           }}
         >
           <div style={{ display: 'flex', gap: '6px' }}>
@@ -411,7 +413,7 @@ export const HeroMarketVisual: React.FC = () => {
               onClick={triggerOutbidSequence}
               disabled={step === 'bidding' || step === 'verifying' || step === 'reordering'}
               style={{
-                padding: '6px 12px',
+                padding: '6px 14px',
                 borderRadius: 'var(--radius-pill)',
                 backgroundColor: 'var(--brand-emerald)',
                 color: '#ffffff',
@@ -420,9 +422,10 @@ export const HeroMarketVisual: React.FC = () => {
                 fontWeight: 700,
                 cursor: 'pointer',
                 opacity: step !== 'idle' && step !== 'settled' ? 0.6 : 1,
+                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
               }}
             >
-              ⚡ Simulate Outbid
+              ⚡ Simulate Shift
             </button>
 
             <button
@@ -431,9 +434,9 @@ export const HeroMarketVisual: React.FC = () => {
               style={{
                 padding: '6px 12px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -448,9 +451,9 @@ export const HeroMarketVisual: React.FC = () => {
               style={{
                 padding: '6px 12px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',

@@ -18,13 +18,29 @@ export const HeroSection: React.FC = () => {
 
   return (
     <section
-      className="bg-ambient-market"
+      className="section-dark-immersive"
       style={{
-        padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
-        borderBottom: '1px solid var(--border-subtle)',
+        padding: 'clamp(var(--space-10), 6vw, var(--space-12)) 0',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         position: 'relative',
       }}
     >
+      {/* Decorative Spatial Grid & Mesh Background (Section 1) */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px',
+          pointerEvents: 'none',
+          opacity: 0.8,
+        }}
+      />
+
       <div
         className="container hero-grid"
         style={{
@@ -32,62 +48,86 @@ export const HeroSection: React.FC = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: 'var(--space-8)',
           alignItems: 'center',
+          position: 'relative',
+          zIndex: 2,
         }}
       >
         {/* Left Column: Editorial Vision + Market Selectors */}
         <div>
-          <div style={{ display: 'inline-flex', marginBottom: 'var(--space-3)' }}>
+          <div style={{ display: 'inline-flex', marginBottom: 'var(--space-4)' }}>
             <span
               style={{
                 fontSize: '11px',
                 fontWeight: 800,
                 textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                letterSpacing: '0.1em',
                 padding: '4px 14px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                color: 'var(--brand-emerald)',
-                border: '1px solid rgba(5, 150, 105, 0.25)',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                color: 'var(--brand-teal)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--brand-teal)',
+                  display: 'inline-block',
+                }}
+              />
               Market = Location + Category
             </span>
           </div>
 
           <h1
             style={{
-              fontSize: 'clamp(40px, 6vw, 68px)',
+              fontSize: 'clamp(42px, 6.5vw, 72px)',
               fontWeight: 900,
-              color: 'var(--brand-deep-navy)',
-              lineHeight: 1.05,
+              color: '#ffffff',
+              lineHeight: 1.04,
               letterSpacing: '-0.035em',
               marginBottom: 'var(--space-4)',
             }}
           >
             GET SEEN. <br />
-            <span style={{ color: 'var(--brand-emerald)' }}>GET AHEAD.</span>
+            <span
+              style={{
+                background: 'linear-gradient(135deg, var(--brand-lime) 0%, var(--brand-teal) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              GET AHEAD.
+            </span>
           </h1>
 
           <p
             style={{
               fontSize: 'clamp(16px, 2.2vw, 19px)',
-              color: 'var(--text-secondary)',
+              color: 'rgba(255, 255, 255, 0.82)',
               lineHeight: 1.6,
               marginBottom: 'var(--space-6)',
               maxWidth: '540px',
             }}
           >
-            Compete for transparent paid visibility in your local market. Qualifying payments purchase verifiable ranking positions (#1, #2, #3...) within defined Location + Category pairs.
+            AageOnline connects businesses with competitive paid visibility within defined <strong>Location + Category</strong> markets. Qualifying payments purchase verifiable ranking positions (#1, #2, #3...) backed by immutable transaction history.
           </p>
 
-          {/* Interactive Market Quick Selectors (Inspired by Probid Hero 2 search) */}
+          {/* Frosted Glass Market Quick Selectors (Probid Home 2 split hero inspiration) */}
           <div
             style={{
-              backgroundColor: 'var(--surface-card)',
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               borderRadius: 'var(--radius-lg)',
-              padding: '12px 16px',
-              border: '1.5px solid var(--border-subtle)',
-              boxShadow: 'var(--elevation-2)',
+              padding: '12px 18px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
               marginBottom: 'var(--space-6)',
               display: 'flex',
               gap: '12px',
@@ -99,7 +139,14 @@ export const HeroSection: React.FC = () => {
             <div style={{ flex: '1 1 140px' }}>
               <label
                 htmlFor="hero-location-select"
-                style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block' }}
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  display: 'block',
+                }}
               >
                 📍 Location
               </label>
@@ -113,27 +160,34 @@ export const HeroSection: React.FC = () => {
                   backgroundColor: 'transparent',
                   fontWeight: 700,
                   fontSize: '14px',
-                  color: 'var(--text-primary)',
+                  color: '#ffffff',
                   outline: 'none',
                   cursor: 'pointer',
                   paddingTop: '2px',
                 }}
               >
                 {locations.map((loc) => (
-                  <option key={loc} value={loc}>
+                  <option key={loc} value={loc} style={{ backgroundColor: '#0b1f3b', color: '#ffffff' }}>
                     {loc}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div style={{ width: '1px', height: '32px', backgroundColor: 'var(--border-subtle)' }} />
+            <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255, 255, 255, 0.15)' }} />
 
             {/* Category Selector */}
             <div style={{ flex: '1 1 180px' }}>
               <label
                 htmlFor="hero-category-select"
-                style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block' }}
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  display: 'block',
+                }}
               >
                 🏷️ Category
               </label>
@@ -147,14 +201,14 @@ export const HeroSection: React.FC = () => {
                   backgroundColor: 'transparent',
                   fontWeight: 700,
                   fontSize: '14px',
-                  color: 'var(--text-primary)',
+                  color: '#ffffff',
                   outline: 'none',
                   cursor: 'pointer',
                   paddingTop: '2px',
                 }}
               >
                 {categories.map((cat) => (
-                  <option key={cat} value={cat}>
+                  <option key={cat} value={cat} style={{ backgroundColor: '#0b1f3b', color: '#ffffff' }}>
                     {cat}
                   </option>
                 ))}
@@ -165,21 +219,22 @@ export const HeroSection: React.FC = () => {
             <a
               href={`/explore?location=${encodeURIComponent(selectedLocation.toLowerCase())}&category=${encodeURIComponent(selectedCategory.toLowerCase())}`}
               style={{
-                padding: '10px 18px',
+                padding: '10px 20px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'var(--action-primary)',
-                color: '#ffffff',
-                fontWeight: 700,
+                backgroundColor: 'var(--brand-lime)',
+                color: 'var(--brand-deep-navy)',
+                fontWeight: 800,
                 fontSize: '13px',
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
                 marginLeft: 'auto',
-                boxShadow: 'var(--elevation-1)',
+                boxShadow: '0 2px 8px rgba(199, 240, 0, 0.3)',
+                transition: 'transform var(--motion-fast)',
               }}
             >
-              Go →
+              Explore →
             </a>
           </div>
 
@@ -197,7 +252,7 @@ export const HeroSection: React.FC = () => {
               style={{
                 padding: '14px 28px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'var(--action-primary)',
+                backgroundColor: 'var(--brand-emerald)',
                 color: '#ffffff',
                 fontWeight: 800,
                 fontSize: '15px',
@@ -205,7 +260,8 @@ export const HeroSection: React.FC = () => {
                 minHeight: '44px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                boxShadow: 'var(--elevation-2)',
+                boxShadow: '0 4px 16px rgba(5, 150, 105, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
               }}
             >
               Explore Local Markets →
@@ -216,9 +272,9 @@ export const HeroSection: React.FC = () => {
               style={{
                 padding: '14px 28px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'transparent',
-                border: '2px solid var(--border-strong)',
-                color: 'var(--text-primary)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                border: '1.5px solid rgba(255, 255, 255, 0.3)',
+                color: '#ffffff',
                 fontWeight: 700,
                 fontSize: '15px',
                 textDecoration: 'none',
@@ -236,9 +292,9 @@ export const HeroSection: React.FC = () => {
             style={{
               display: 'flex',
               flexWrap: 'wrap',
-              gap: '12px',
+              gap: '14px',
               fontSize: '12px',
-              color: 'var(--text-muted)',
+              color: 'rgba(255, 255, 255, 0.65)',
               fontWeight: 600,
             }}
           >

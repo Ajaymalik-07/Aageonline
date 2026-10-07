@@ -4,71 +4,130 @@ import React, { useState, useEffect } from 'react';
 import { PositionBadge } from '../ranking/PositionBadge';
 import { formatINR } from '../../lib/utils/format';
 
-interface SpotlightEntry {
+interface SpotlightCard {
   id: string;
   name: string;
   position: number;
   amountMinor: number;
   isLeader?: boolean;
+  isMoving?: boolean;
+  movedNote?: string;
 }
 
-const DEFAULT_SPOTLIGHT_ENTRIES: SpotlightEntry[] = [
-  { id: '1', name: 'ABC Interiors', position: 1, amountMinor: 2600000, isLeader: true },
-  { id: '2', name: 'Studio XYZ', position: 2, amountMinor: 2450000 },
-  { id: '3', name: 'Design House', position: 3, amountMinor: 2200000 },
-  { id: '4', name: 'Urban Interiors', position: 4, amountMinor: 2050000 },
+const INITIAL_STATE: SpotlightCard[] = [
+  { id: 'biz-1', name: 'ABC Interiors', position: 1, amountMinor: 2600000, isLeader: true },
+  { id: 'biz-2', name: 'Studio XYZ', position: 2, amountMinor: 2450000 },
+  { id: 'biz-3', name: 'Design House', position: 3, amountMinor: 2200000 },
+  { id: 'biz-4', name: 'Urban Interiors', position: 4, amountMinor: 2050000 },
 ];
 
 export const CompetitiveSpotlight: React.FC = () => {
-  const [entries, setEntries] = useState<SpotlightEntry[]>(DEFAULT_SPOTLIGHT_ENTRIES);
-  const [stepIndex, setStepIndex] = useState<number>(0);
+  const [cards, setCards] = useState<SpotlightCard[]>(INITIAL_STATE);
+  const [phase, setPhase] = useState<'initial' | 'qualifying' | 'verified' | 'animating' | 'settled'>('initial');
+  const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(true);
 
   const microSteps = [
-    { title: 'Qualifying Payment', icon: '💳', desc: 'Positive whole-rupee transaction initiated' },
-    { title: 'Payment Verified', icon: '🛡️', desc: 'Server verifies signature & amount' },
-    { title: 'Position Recalculated', icon: '⚡', desc: 'Atomic market re-indexing in DB transaction' },
-    { title: 'Ranking Changes', icon: '↑', desc: 'Candidate business moves upward' },
-    { title: 'Visibility Updates', icon: '📡', desc: 'Instant public discovery disclosure' },
+    { title: 'Qualifying Payment', icon: '💳', desc: 'Studio XYZ submits ₹27,000 (> incumbent ₹26,000)' },
+    { title: 'Payment Verified', icon: '🛡️', desc: 'Server verifies signature & exact whole Rupee amount' },
+    { title: 'Atomic Recalculation', icon: '⚡', desc: 'Row-level DB lock swaps positions #2 ↔ #1' },
+    { title: 'Ranking Changes', icon: '↑', desc: 'Studio XYZ takes #1 position instantly' },
+    { title: 'Public Disclosure', icon: '📡', desc: 'Paid visibility disclosed transparently to consumers' },
   ];
 
-  // Auto-advance micro sequence
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setStepIndex((prev) => (prev + 1) % microSteps.length);
-    }, 3200);
+  const runSequence = () => {
+    if (phase !== 'initial' && phase !== 'settled') return;
 
-    return () => clearInterval(timer);
-  }, [microSteps.length]);
+    // Step 1: Qualifying payment entered
+    setPhase('qualifying');
+    setCards((prev) =>
+      prev.map((c) =>
+        c.id === 'biz-2'
+          ? { ...c, amountMinor: 2700000, isMoving: true, movedNote: 'Qualifying with ₹27,000' }
+          : { ...c, isMoving: false, movedNote: undefined }
+      )
+    );
+
+    // Step 2: Payment verified
+    setTimeout(() => {
+      setPhase('verified');
+      setCards((prev) =>
+        prev.map((c) =>
+          c.id === 'biz-2'
+            ? { ...c, movedNote: 'Payment Verified ✓' }
+            : c
+        )
+      );
+    }, 1200);
+
+    // Step 3: Physical swap animation
+    setTimeout(() => {
+      setPhase('animating');
+      const xyz = { id: 'biz-2', name: 'Studio XYZ', position: 1, amountMinor: 2700000, isLeader: true, isMoving: true, movedNote: '↑ Moved up 1 position' };
+      const abc = { id: 'biz-1', name: 'ABC Interiors', position: 2, amountMinor: 2600000, isLeader: false, isMoving: false, movedNote: 'Displaced to #2' };
+      const house = { id: 'biz-3', name: 'Design House', position: 3, amountMinor: 2200000 };
+      const urban = { id: 'biz-4', name: 'Urban Interiors', position: 4, amountMinor: 2050000 };
+
+      setCards([xyz, abc, house, urban]);
+    }, 2400);
+
+    // Step 4: Settled
+    setTimeout(() => {
+      setPhase('settled');
+      setCards((prev) =>
+        prev.map((c) => (c.id === 'biz-2' ? { ...c, isMoving: false } : c))
+      );
+    }, 3600);
+  };
+
+  const handleReset = () => {
+    setCards(INITIAL_STATE);
+    setPhase('initial');
+  };
+
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+
+    const interval = setInterval(() => {
+      if (phase === 'initial') {
+        runSequence();
+      } else if (phase === 'settled') {
+        handleReset();
+      }
+    }, 5500);
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, phase]);
+
+  const activeStepIdx =
+    phase === 'initial' ? 0 : phase === 'qualifying' ? 1 : phase === 'verified' ? 2 : phase === 'animating' ? 3 : 4;
 
   return (
-    <section className="container" aria-label="Live Competitive Spotlight">
+    <section
+      className="section-dark-immersive"
+      aria-label="Signature Competitive Ladder Visual"
+      style={{
+        padding: 'clamp(var(--space-10), 6vw, var(--space-12)) 0',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        position: 'relative',
+      }}
+    >
+      {/* Decorative Radial Backdrop Accent */}
       <div
+        aria-hidden="true"
         style={{
-          borderRadius: 'var(--radius-xl)',
-          backgroundColor: 'var(--brand-deep-navy)',
-          color: '#ffffff',
-          padding: 'clamp(var(--space-8), 5vw, var(--space-12)) clamp(var(--space-6), 4vw, var(--space-10))',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: 'var(--elevation-4)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          position: 'absolute',
+          top: '-20%',
+          right: '-5%',
+          width: '600px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(199, 240, 0, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, transparent 70%)',
+          pointerEvents: 'none',
         }}
-      >
-        {/* Subtle Radial Lighting Atmosphere */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '-30%',
-            right: '-10%',
-            width: '600px',
-            height: '600px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }}
-        />
+      />
 
+      <div className="container">
         <div
           style={{
             display: 'grid',
@@ -88,43 +147,51 @@ export const CompetitiveSpotlight: React.FC = () => {
                   fontWeight: 800,
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
-                  padding: '3px 12px',
+                  padding: '4px 14px',
                   borderRadius: 'var(--radius-pill)',
                   backgroundColor: 'rgba(199, 240, 0, 0.15)',
                   color: 'var(--brand-lime)',
-                  border: '1px solid rgba(199, 240, 0, 0.3)',
+                  border: '1px solid rgba(199, 240, 0, 0.35)',
                 }}
               >
-                Competitive Spotlight
+                Signature Platform Mechanism
               </span>
             </div>
 
             <h2
               style={{
-                fontSize: 'clamp(30px, 4.5vw, 48px)',
+                fontSize: 'clamp(32px, 5vw, 52px)',
                 fontWeight: 900,
                 color: '#ffffff',
-                lineHeight: 1.12,
-                letterSpacing: '-0.025em',
+                lineHeight: 1.1,
+                letterSpacing: '-0.03em',
                 marginBottom: 'var(--space-4)',
               }}
             >
-              Every position is competitive.{' '}
-              <span style={{ color: 'var(--brand-lime)' }}>A verified payment changes the market.</span>
+              Every Position Is Competitive.{' '}
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, var(--brand-lime) 0%, var(--brand-teal) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                A qualifying payment moves you up.
+              </span>
             </h2>
 
             <p
               style={{
                 fontSize: '16px',
                 lineHeight: 1.6,
-                color: 'rgba(255, 255, 255, 0.75)',
+                color: 'rgba(255, 255, 255, 0.8)',
                 marginBottom: 'var(--space-6)',
               }}
             >
-              No auctions. No fake urgency. Businesses qualify by making verified transactions strictly higher than the incumbent amount. In atomic database transactions, ranking updates instantly.
+              A business can move upward by making a qualifying payment strictly greater than the current qualifying amount. Ranking updates atomically inside a database transaction—never relying on unverified client claims.
             </p>
 
-            {/* Section 20: Payment -> Position Visual Infographic Sequence */}
+            {/* Interactive Step Timeline Indicator */}
             <div
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -134,21 +201,30 @@ export const CompetitiveSpotlight: React.FC = () => {
                 marginBottom: 'var(--space-6)',
               }}
             >
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: 'var(--brand-teal)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  display: 'block',
-                  marginBottom: '10px',
-                }}
-              >
-                Transaction → Ranking Mechanism
-              </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: 'var(--brand-teal)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Step {activeStepIdx + 1} of 5 · Transaction Flow
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: phase === 'verified' ? 'var(--brand-lime)' : 'rgba(255, 255, 255, 0.6)',
+                  }}
+                >
+                  {phase === 'verified' ? 'Payment Verified ✓' : phase === 'animating' ? 'Re-indexing Rank...' : 'Deterministic Demo'}
+                </span>
+              </div>
 
-              {/* Progress Indicator Steps */}
+              {/* Step Progress Line */}
               <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
                 {microSteps.map((s, idx) => (
                   <div
@@ -157,22 +233,22 @@ export const CompetitiveSpotlight: React.FC = () => {
                       flex: 1,
                       height: '4px',
                       borderRadius: '2px',
-                      backgroundColor: idx === stepIndex ? 'var(--brand-lime)' : 'rgba(255, 255, 255, 0.15)',
+                      backgroundColor: idx <= activeStepIdx ? 'var(--brand-lime)' : 'rgba(255, 255, 255, 0.15)',
                       transition: 'all var(--motion-normal)',
                     }}
                   />
                 ))}
               </div>
 
-              {/* Active Step Display */}
+              {/* Active Step Content */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '24px' }}>{microSteps[stepIndex].icon}</span>
+                <span style={{ fontSize: '24px' }}>{microSteps[activeStepIdx].icon}</span>
                 <div>
                   <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                    {stepIndex + 1}. {microSteps[stepIndex].title}
+                    {microSteps[activeStepIdx].title}
                   </h4>
                   <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>
-                    {microSteps[stepIndex].desc}
+                    {microSteps[activeStepIdx].desc}
                   </p>
                 </div>
               </div>
@@ -193,37 +269,42 @@ export const CompetitiveSpotlight: React.FC = () => {
                   boxShadow: '0 4px 14px rgba(199, 240, 0, 0.3)',
                 }}
               >
-                Explore a Market Ladder →
+                Explore Market Ladders →
               </a>
               <a
-                href="/#how-it-works"
+                href="/claim"
                 style={{
                   padding: '12px 24px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'transparent',
-                  border: '1.5px solid rgba(255, 255, 255, 0.3)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.25)',
                   color: '#ffffff',
                   fontWeight: 600,
                   fontSize: '14px',
                   textDecoration: 'none',
                 }}
               >
-                Learn How Ranking Works
+                Claim Your Business
               </a>
             </div>
           </div>
 
-          {/* Right Column: 3D Stage / Market Podium Visualizer */}
+          {/* Right Column: Physical 2.5D Stage Visualizer (Exact Section 12 Specification) */}
           <div
             className="perspective-tilt"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              backgroundColor: 'rgba(7, 19, 36, 0.9)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               borderRadius: 'var(--radius-xl)',
               padding: 'var(--space-6)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: 'var(--elevation-3)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.65)',
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
+            {/* Top Identity Header */}
             <div
               style={{
                 display: 'flex',
@@ -235,81 +316,186 @@ export const CompetitiveSpotlight: React.FC = () => {
               }}
             >
               <div>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal)' }}>
-                  MARKET STAGE
+                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--brand-teal)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  MARKET STAGE DEMONSTRATION
                 </span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#ffffff', margin: '2px 0 0 0' }}>
                   Jaipur · Interior Designers
                 </h3>
               </div>
               <span
                 style={{
                   fontSize: '11px',
-                  padding: '3px 8px',
+                  padding: '3px 10px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'rgba(199, 240, 0, 0.15)',
-                  color: 'var(--brand-lime)',
+                  backgroundColor: phase === 'verified' ? 'rgba(199, 240, 0, 0.2)' : 'rgba(16, 185, 129, 0.15)',
+                  color: phase === 'verified' ? 'var(--brand-lime)' : 'var(--brand-teal)',
                   fontWeight: 700,
+                  border: `1px solid ${phase === 'verified' ? 'rgba(199, 240, 0, 0.4)' : 'rgba(16, 185, 129, 0.3)'}`,
                 }}
               >
-                High Activity
+                {phase === 'initial' ? 'Baseline' : phase === 'qualifying' ? 'Payment Submitted' : phase === 'verified' ? 'Verified' : 'Promoted'}
               </span>
             </div>
 
-            {/* Ranking Cards Ladder */}
+            {/* Ranking Cards Ladder (Physical DOM Animation) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {entries.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: item.isLeader ? '14px 16px' : '10px 14px',
-                    borderRadius: 'var(--radius-md)',
-                    backgroundColor: item.isLeader
-                      ? 'rgba(199, 240, 0, 0.1)'
-                      : 'rgba(255, 255, 255, 0.04)',
-                    border: item.isLeader
-                      ? '1.5px solid var(--brand-lime)'
-                      : '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: item.isLeader ? '0 0 20px rgba(199, 240, 0, 0.2)' : 'none',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <PositionBadge position={item.position} size={item.isLeader ? 'md' : 'sm'} />
-                    <div>
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', display: 'block' }}>
-                        {item.name}
+              {cards.map((card) => {
+                const isLeader = card.position === 1;
+
+                return (
+                  <div
+                    key={card.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: isLeader ? '14px 16px' : '10px 14px',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: isLeader
+                        ? 'rgba(199, 240, 0, 0.12)'
+                        : card.isMoving
+                        ? 'rgba(16, 185, 129, 0.15)'
+                        : 'rgba(255, 255, 255, 0.04)',
+                      border: isLeader
+                        ? '1.5px solid var(--brand-lime)'
+                        : card.isMoving
+                        ? '1.5px solid var(--brand-teal)'
+                        : '1px solid rgba(255, 255, 255, 0.08)',
+                      boxShadow: isLeader ? '0 0 20px rgba(199, 240, 0, 0.2)' : 'none',
+                      transition: 'all var(--motion-slow)',
+                      transform: card.isMoving ? 'scale(1.02)' : 'scale(1)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <PositionBadge position={card.position} size={isLeader ? 'md' : 'sm'} />
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>
+                            {card.name}
+                          </span>
+                          {isLeader && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 800,
+                                padding: '1px 6px',
+                                borderRadius: 'var(--radius-pill)',
+                                backgroundColor: 'var(--brand-lime)',
+                                color: 'var(--brand-deep-navy)',
+                              }}
+                            >
+                              LEADER
+                            </span>
+                          )}
+                        </div>
+                        {card.movedNote && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: card.position === 1 ? 'var(--brand-lime)' : 'var(--brand-teal)',
+                              display: 'block',
+                            }}
+                          >
+                            {card.movedNote}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <span
+                        style={{
+                          fontSize: isLeader ? '16px' : '14px',
+                          fontWeight: 900,
+                          color: isLeader ? 'var(--brand-lime)' : '#ffffff',
+                          display: 'block',
+                        }}
+                      >
+                        {formatINR(card.amountMinor)}
                       </span>
-                      <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                        {item.isLeader ? 'Leading position' : `Position #${item.position}`}
+                      <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase' }}>
+                        Qualifying
                       </span>
                     </div>
                   </div>
-
-                  <div style={{ textAlign: 'right' }}>
-                    <span
-                      style={{
-                        fontSize: item.isLeader ? '16px' : '14px',
-                        fontWeight: 900,
-                        color: item.isLeader ? 'var(--brand-lime)' : '#ffffff',
-                        display: 'block',
-                      }}
-                    >
-                      {formatINR(item.amountMinor)}
-                    </span>
-                    <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                      Qualifying
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: 'var(--space-4)', margin: 'var(--space-4) 0 0 0' }}>
-              * Visibility reflects paid competitive position and does not certify business quality.
-            </p>
+            {/* Interactive Demo Controls & Statutory Disclosure (Section 12 & 13) */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginTop: 'var(--space-5)',
+                paddingTop: 'var(--space-3)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={runSequence}
+                  disabled={phase !== 'initial' && phase !== 'settled'}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'var(--brand-emerald)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    opacity: phase !== 'initial' && phase !== 'settled' ? 0.6 : 1,
+                  }}
+                >
+                  ⚡ Trigger Qualification
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {isAutoPlaying ? '⏸ Pause' : '▶ Play Auto'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-pill)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+
+              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic' }}>
+                * Interactive example · Not real activity
+              </span>
+            </div>
           </div>
         </div>
       </div>

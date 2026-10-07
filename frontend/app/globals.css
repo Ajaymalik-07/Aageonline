@@ -216,7 +216,7 @@ body {
   box-shadow: 0 0 20px -3px rgba(199, 240, 0, 0.35);
 }
 
-/* Ambient Radial Backgrounds */
+/* Ambient Radial Backgrounds & Section Rhythm Styling (Section 27) */
 .bg-ambient-market {
   background: radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
               radial-gradient(circle at 20% 80%, rgba(6, 78, 59, 0.06) 0%, transparent 60%);
@@ -225,6 +225,68 @@ body {
 [data-theme='dark'] .bg-ambient-market {
   background: radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.12) 0%, transparent 65%),
               radial-gradient(circle at 20% 80%, rgba(6, 78, 59, 0.2) 0%, transparent 65%);
+}
+
+/* Immersive Dark Section (Hero, Stage, CTA) - Direction C Hybrid */
+.section-dark-immersive {
+  background-color: #0b1f3b;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  background-image: 
+    radial-gradient(circle at 85% 15%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 15% 85%, rgba(199, 240, 0, 0.08) 0%, transparent 50%),
+    linear-gradient(180deg, #071324 0%, #0b1f3b 50%, #081a33 100%);
+}
+
+.section-dark-immersive h1,
+.section-dark-immersive h2,
+.section-dark-immersive h3 {
+  color: #ffffff;
+}
+
+.section-dark-immersive p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* Light Marketplace Section */
+.section-light-marketplace {
+  background-color: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+/* Editorial Clean Section */
+.section-editorial-clean {
+  background-color: var(--bg-page);
+  position: relative;
+}
+
+/* Soft Neutral Band */
+.section-neutral-soft {
+  background: linear-gradient(180deg, rgba(241, 245, 249, 0.7) 0%, rgba(248, 250, 252, 0.9) 100%);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+[data-theme='dark'] .section-neutral-soft {
+  background: linear-gradient(180deg, rgba(11, 31, 59, 0.5) 0%, rgba(7, 19, 36, 0.8) 100%);
+}
+
+/* Infographic Journey Background */
+.section-infographic-bg {
+  background-color: var(--surface-card);
+  background-image: radial-gradient(rgba(5, 150, 105, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+[data-theme='dark'] .section-infographic-bg {
+  background-image: radial-gradient(rgba(16, 185, 129, 0.12) 1px, transparent 1px);
 }
 
 /* Subtle Live Dot Animation */

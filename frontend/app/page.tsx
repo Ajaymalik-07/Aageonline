@@ -11,10 +11,8 @@ import { WhatIsAageOnline } from '../features/about/WhatIsAageOnline';
 import { MomentumMarkets } from '../features/momentum/MomentumMarkets';
 import { HowItWorksJourney } from '../features/process/HowItWorksJourney';
 import { TrustGovernance } from '../features/trust/TrustGovernance';
-import { FaqAccordion } from '../features/faq/FaqAccordion';
 import { KnowledgeGuides } from '../features/knowledge/KnowledgeGuides';
 import { BusinessCtaBanner } from '../features/cta/BusinessCtaBanner';
-import { VisibilityDisclosure } from '../components/ui/VisibilityDisclosure';
 
 export const metadata: Metadata = {
   title: `${siteConfig.name} — Get Seen. Get Ahead.`,
@@ -24,50 +22,50 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-12)' }}>
-      {/* 1. Hero / Market Introduction (Homepage 2 Split Editorial + AageOnline 2.5D Interactive Ladder) */}
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* 1. Hero / Market Introduction (Dark Immersive + 2.5D Interactive Ladder) */}
       <HeroSection />
 
-      {/* 2. Live Markets (Homepage 1 Carousel Rhythm) */}
+      {/* 2. Live Markets (Light Marketplace Carousel Rhythm) */}
       <LiveMarketsCarousel markets={INITIAL_FEATURED_MARKETS} />
 
-      {/* 3. Explore Business Categories (Category Browsing Rail) */}
-      <CategoryRail />
+      {/* 3. Explore Business Categories (Editorial Clean Category Browsing Rail) */}
+      <div style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+        <CategoryRail />
+      </div>
 
-      {/* 4. Active Local Markets (Marketplace Grid with Smooth 1-by-1 Card Shuffle) */}
-      <section className="container">
+      {/* 4. Active Local Markets (Marketplace Grid with 1-by-1 FLIP Card Shuffle) */}
+      <section className="container" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
         <FeaturedMarketsShuffle markets={INITIAL_FEATURED_MARKETS} />
       </section>
 
-      {/* 5. Competitive Spotlight (Large Visual / Promotional Stage + Payment-to-Ranking Sequence) */}
+      {/* 5. Competitive Spotlight (Dark Immersive Signature Visual + Deterministic Transaction Demo) */}
       <CompetitiveSpotlight />
 
-      {/* 6. What is AageOnline? (Editorial Split + Node Architecture Diagram) */}
-      <WhatIsAageOnline />
+      {/* 6. What is AageOnline? (Editorial Asymmetric Manifesto + SVG Connected Diagram) */}
+      <div style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+        <WhatIsAageOnline />
+      </div>
 
-      {/* 7. Markets Gaining Momentum (Velocity & Shift Metrics) */}
-      <MomentumMarkets markets={INITIAL_FEATURED_MARKETS} />
+      {/* 7. Markets Gaining Momentum (Soft Neutral Band + Velocity Shift Metrics) */}
+      <div className="section-neutral-soft" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+        <MomentumMarkets markets={INITIAL_FEATURED_MARKETS} />
+      </div>
 
-      {/* 8. How AageOnline Works (5-Step Interactive Infographic Journey) */}
-      <section className="container">
-        <HowItWorksJourney />
-      </section>
+      {/* 8. How AageOnline Works (6-Step Interactive Infographic Journey) */}
+      <HowItWorksJourney />
 
-      {/* 9. Trust & Governance (4 Integrity Pillars + Disclosure) */}
-      <TrustGovernance />
+      {/* 9. Trust & Governance (Clean White / 4 Integrity Pillars + Statutory Disclosure) */}
+      <div style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+        <TrustGovernance />
+      </div>
 
-      {/* 10. Frequently Asked Questions (Interactive Accordion) */}
-      <FaqAccordion />
-
-      {/* 11. AageOnline Knowledge / Guides (Editorial Cards) */}
+      {/* 10. AageOnline Knowledge / Guides (Asymmetric Editorial: Featured Guide + Stacked Entries) */}
       <KnowledgeGuides />
 
-      {/* 12. Business CTA (Large Visual Banner) */}
-      <BusinessCtaBanner />
-
-      {/* 13. Mandatory Statutory Paid Visibility Transparency Banner */}
-      <section className="container">
-        <VisibilityDisclosure />
+      {/* 11. Business CTA (Dark Immersive Network Visual Banner) */}
+      <section className="container" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
+        <BusinessCtaBanner />
       </section>
     </div>
   );

@@ -22,18 +22,25 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
   };
 
   return (
-    <section className="container" aria-label="Live Competitive Markets">
-      {/* Section Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          flexWrap: 'wrap',
-          gap: 'var(--space-4)',
-          marginBottom: 'var(--space-6)',
-        }}
-      >
+    <section
+      className="section-light-marketplace"
+      aria-label="Live Competitive Markets"
+      style={{
+        padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
+      }}
+    >
+      <div className="container">
+        {/* Section Header */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            flexWrap: 'wrap',
+            gap: 'var(--space-4)',
+            marginBottom: 'var(--space-6)',
+          }}
+        >
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span
@@ -307,6 +314,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
             </div>
           );
         })}
+      </div>
       </div>
     </section>
   );

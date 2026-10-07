@@ -6,8 +6,7 @@ interface CategoryItem {
   id: string;
   name: string;
   icon: string;
-  activeMarkets: number;
-  competingBusinesses: number;
+  locationCoverage: string;
   slug: string;
 }
 
@@ -16,64 +15,56 @@ const BUSINESS_CATEGORIES: CategoryItem[] = [
     id: 'cat-interior',
     name: 'Interior Designers',
     icon: '🛋️',
-    activeMarkets: 18,
-    competingBusinesses: 420,
+    locationCoverage: 'Jaipur, Noida, Delhi & Gurugram',
     slug: 'interior-designers',
   },
   {
     id: 'cat-dining',
     name: 'Restaurants & Dining',
     icon: '🍽️',
-    activeMarkets: 26,
-    competingBusinesses: 890,
+    locationCoverage: 'Noida, Jaipur, Mumbai & Pune',
     slug: 'restaurants',
   },
   {
     id: 'cat-arch',
     name: 'Commercial Architects',
     icon: '📐',
-    activeMarkets: 14,
-    competingBusinesses: 310,
+    locationCoverage: 'Delhi, Gurugram & Chandigarh',
     slug: 'architects',
   },
   {
     id: 'cat-health',
     name: 'Hospitals & Healthcare',
     icon: '🏥',
-    activeMarkets: 12,
-    competingBusinesses: 240,
+    locationCoverage: 'Hisar, Jaipur & Delhi NCR',
     slug: 'hospitals',
   },
   {
     id: 'cat-photo',
     name: 'Wedding Photographers',
     icon: '📷',
-    activeMarkets: 19,
-    competingBusinesses: 380,
+    locationCoverage: 'Chandigarh, Jaipur & Delhi',
     slug: 'wedding-photographers',
   },
   {
     id: 'cat-digital',
     name: 'Digital Marketing',
     icon: '📈',
-    activeMarkets: 22,
-    competingBusinesses: 670,
+    locationCoverage: 'Gurugram, Noida & Bengaluru',
     slug: 'digital-marketing-agencies',
   },
   {
     id: 'cat-software',
     name: 'Software Development',
     icon: '💻',
-    activeMarkets: 16,
-    competingBusinesses: 520,
+    locationCoverage: 'Noida, Bengaluru & Pune',
     slug: 'software-companies',
   },
   {
     id: 'cat-real-estate',
     name: 'Real Estate Advisory',
     icon: '🏢',
-    activeMarkets: 24,
-    competingBusinesses: 790,
+    locationCoverage: 'Gurugram, Noida & Mumbai',
     slug: 'real-estate-advisory',
   },
 ];
@@ -234,8 +225,8 @@ export const CategoryRail: React.FC = () => {
               {cat.name}
             </h3>
 
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              {cat.activeMarkets} city markets
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              {cat.locationCoverage}
             </div>
 
             <span
@@ -246,10 +237,10 @@ export const CategoryRail: React.FC = () => {
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
                 padding: '2px 8px',
                 borderRadius: 'var(--radius-pill)',
-                marginTop: '4px',
+                marginTop: 'auto',
               }}
             >
-              {cat.competingBusinesses}+ businesses
+              Explore Category →
             </span>
           </a>
         ))}
