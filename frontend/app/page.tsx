@@ -34,13 +34,13 @@ export default function HomePage() {
         <CategoryRail />
       </div>
 
-      {/* 4. Active Local Markets (Marketplace Grid with 1-by-1 FLIP Card Shuffle) */}
+      {/* 4. Competitive Spotlight (Dark Immersive Signature Visual + Deterministic Transaction Demo) */}
+      <CompetitiveSpotlight />
+
+      {/* 5. Active Local Markets (Marketplace Grid with 1-by-1 FLIP Card Shuffle) */}
       <section className="container" style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
         <FeaturedMarketsShuffle markets={INITIAL_FEATURED_MARKETS} />
       </section>
-
-      {/* 5. Competitive Spotlight (Dark Immersive Signature Visual + Deterministic Transaction Demo) */}
-      <CompetitiveSpotlight />
 
       {/* 6. What is AageOnline? (Editorial Asymmetric Manifesto + SVG Connected Diagram) */}
       <div style={{ padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0' }}>
