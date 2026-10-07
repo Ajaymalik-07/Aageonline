@@ -1,185 +1,391 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PositionBadge } from './PositionBadge';
 import { PositionMovement } from './PositionMovement';
 import { formatINR } from '../../lib/utils/format';
 
-interface SimulatedEntry {
+interface LadderCard {
   id: string;
   name: string;
   position: number;
   amountMinor: number;
-  movement?: 'up' | 'down' | 'same';
+  movement: 'up' | 'down' | 'same';
   movementCount?: number;
+  isLeading?: boolean;
+  highlighted?: boolean;
 }
 
-const INITIAL_SIMULATION: SimulatedEntry[] = [
-  { id: '1', name: 'ABC Interiors', position: 1, amountMinor: 2600000, movement: 'same' },
-  { id: '2', name: 'Studio XYZ', position: 2, amountMinor: 2450000, movement: 'same' },
-  { id: '3', name: 'Design House', position: 3, amountMinor: 2200000, movement: 'same' },
-  { id: '4', name: 'Urban Interiors', position: 4, amountMinor: 2050000, movement: 'same' },
-  { id: '5', name: 'SpaceCraft Studio', position: 5, amountMinor: 1900000, movement: 'same' },
+const INITIAL_LADDER: LadderCard[] = [
+  { id: 'biz-1', name: 'ABC Interiors', position: 1, amountMinor: 2600000, movement: 'same', isLeading: true },
+  { id: 'biz-2', name: 'Studio XYZ', position: 2, amountMinor: 2450000, movement: 'same' },
+  { id: 'biz-3', name: 'Design House', position: 3, amountMinor: 2200000, movement: 'same' },
+  { id: 'biz-4', name: 'Urban Interiors', position: 4, amountMinor: 2050000, movement: 'same' },
+  { id: 'biz-5', name: 'SpaceCraft Studio', position: 5, amountMinor: 1900000, movement: 'same' },
 ];
 
 export const HeroMarketVisual: React.FC = () => {
-  const [entries, setEntries] = useState<SimulatedEntry[]>(INITIAL_SIMULATION);
-  const [animatingId, setAnimatingId] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string>(
-    'Interactive Demonstration — Click any business to simulate rank movement'
-  );
+  const [ladder, setLadder] = useState<LadderCard[]>(INITIAL_LADDER);
+  const [step, setStep] = useState<'idle' | 'bidding' | 'verifying' | 'reordering' | 'settled'>('idle');
+  const [activeMessage, setActiveMessage] = useState<string>('Live Market Ladder · Real-time qualifying amounts');
+  const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(true);
+  const [stepCount, setStepCount] = useState<number>(0);
+  const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Simulates a legitimate competitive upward qualification (+₹1,000 / strictly greater)
-  const handleSimulateMoveUp = (targetIndex: number) => {
-    if (targetIndex === 0) return; // Already #1
+  // Run continuous, restrained demo transitions when autoplay is on
+  useEffect(() => {
+    if (!isAutoPlaying) return;
 
-    const candidate = entries[targetIndex];
-    const incumbent = entries[targetIndex - 1];
+    const timer = setInterval(() => {
+      triggerOutbidSequence();
+    }, 7000);
 
-    setAnimatingId(candidate.id);
-    const newQualifyingAmount = incumbent.amountMinor + 100000; // +₹1,000 strictly greater
+    return () => clearInterval(timer);
+  }, [isAutoPlaying, ladder, stepCount]);
 
-    setStatusMessage(`${candidate.name} qualifies with ${formatINR(newQualifyingAmount)} to move to #${incumbent.position}`);
+  const triggerOutbidSequence = () => {
+    if (step !== 'idle' && step !== 'settled') return;
 
+    // Pick candidate: either #2 outbidding #1, or #3 outbidding #2
+    const isOutbiddingTop = stepCount % 2 === 0;
+    const candidateIdx = isOutbiddingTop ? 1 : 2;
+    const incumbentIdx = candidateIdx - 1;
+
+    const candidate = ladder[candidateIdx];
+    const incumbent = ladder[incumbentIdx];
+    const newAmount = incumbent.amountMinor + 150000; // +₹1,500 strictly greater
+
+    // Phase 1: New bid enters
+    setStep('bidding');
+    setActiveMessage(`New Qualifying Bid: ${candidate.name} submits ${formatINR(newAmount)} for Position #${incumbent.position}`);
+    setLadder((prev) =>
+      prev.map((c, idx) => (idx === candidateIdx ? { ...c, highlighted: true } : { ...c, highlighted: false }))
+    );
+
+    // Phase 2: Server-side cryptographic & financial verification
     setTimeout(() => {
-      const updated = [...entries];
-      // Swap with updated attributes
-      updated[targetIndex] = {
-        ...incumbent,
-        position: candidate.position,
-        movement: 'down',
-        movementCount: 1,
-      };
-      updated[targetIndex - 1] = {
-        ...candidate,
-        position: incumbent.position,
-        amountMinor: newQualifyingAmount,
-        movement: 'up',
-        movementCount: 1,
-      };
+      setStep('verifying');
+      setActiveMessage(`Payment Confirmed ✓ Server verified ${formatINR(newAmount)}. Recalculating market...`);
+    }, 1200);
 
-      setEntries(updated);
-      setAnimatingId(null);
-    }, 400);
+    // Phase 3: FLIP reordering
+    setTimeout(() => {
+      setStep('reordering');
+      setLadder((prev) => {
+        const next = [...prev];
+        const updatedCandidate: LadderCard = {
+          ...candidate,
+          position: incumbent.position,
+          amountMinor: newAmount,
+          movement: 'up',
+          movementCount: 1,
+          isLeading: incumbent.position === 1,
+          highlighted: true,
+        };
+        const updatedIncumbent: LadderCard = {
+          ...incumbent,
+          position: candidate.position,
+          movement: 'down',
+          movementCount: 1,
+          isLeading: false,
+          highlighted: false,
+        };
+
+        next[incumbentIdx] = updatedCandidate;
+        next[candidateIdx] = updatedIncumbent;
+        return next;
+      });
+      setActiveMessage(`Position Updated: ${candidate.name} moved #${candidate.position} → #${incumbent.position}`);
+    }, 2400);
+
+    // Phase 4: Settled
+    setTimeout(() => {
+      setStep('settled');
+      setStepCount((c) => c + 1);
+      setLadder((prev) => prev.map((c) => ({ ...c, highlighted: false })));
+      setActiveMessage(`Market Succeeded: ${candidate.name} holds Position #${incumbent.position}`);
+    }, 3800);
   };
 
   const handleReset = () => {
-    setEntries(INITIAL_SIMULATION);
-    setStatusMessage('Interactive Demonstration — Click any business to simulate rank movement');
+    setLadder(INITIAL_LADDER);
+    setStep('idle');
+    setStepCount(0);
+    setActiveMessage('Demo Reset to Baseline · Jaipur + Interior Designers');
   };
 
   return (
-    <div className="perspective-stage" style={{ width: '100%', maxWidth: '520px', margin: '0 auto' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: '560px',
+        margin: '0 auto',
+      }}
+    >
+      {/* Crisp 2.5D Spatial Stage Card */}
       <div
-        className="perspective-tilt bg-ambient-market"
+        className="perspective-tilt"
         style={{
-          backgroundColor: 'var(--surface-card)',
           borderRadius: 'var(--radius-xl)',
-          padding: 'var(--space-6)',
+          backgroundColor: 'var(--surface-card)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--elevation-4), 0 20px 40px -15px rgba(6, 78, 59, 0.2)',
+          boxShadow: 'var(--elevation-3)',
+          overflow: 'hidden',
           position: 'relative',
+          padding: 'var(--space-6)',
+          transformStyle: 'preserve-3d',
         }}
       >
-        {/* Market Context Header */}
+        {/* Subtle Ambient Radial Lighting */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '280px',
+            height: '280px',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Market Identity Stage Header */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'space-between',
-            paddingBottom: 'var(--space-4)',
-            marginBottom: 'var(--space-4)',
+            alignItems: 'flex-start',
+            gap: 'var(--space-3)',
+            marginBottom: 'var(--space-5)',
             borderBottom: '1px solid var(--border-subtle)',
+            paddingBottom: 'var(--space-4)',
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="live-indicator-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-teal)' }} />
-              <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.06em', color: 'var(--brand-emerald)', textTransform: 'uppercase' }}>
-                LIVE MARKET LADDER
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--brand-teal)',
+                }}
+                className="live-indicator-dot"
+              />
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: 'var(--brand-teal)',
+                }}
+              >
+                Defined Market
               </span>
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', margin: '2px 0 0 0' }}>
-              Jaipur · Interior Designers
+
+            <h3
+              style={{
+                fontSize: '20px',
+                fontWeight: 900,
+                color: 'var(--text-primary)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2,
+                margin: 0,
+              }}
+            >
+              Jaipur · <span style={{ color: 'var(--brand-emerald)' }}>Interior Designers</span>
             </h3>
+
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+              48 businesses · 24 active paid visibility positions
+            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleReset}
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              backgroundColor: 'var(--bg-page)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-pill)',
-              padding: '4px 10px',
-              cursor: 'pointer',
-            }}
-          >
-            Reset Demo
-          </button>
+          <div style={{ textAlign: 'right' }}>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '4px 10px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'rgba(199, 240, 0, 0.18)',
+                color: 'var(--brand-deep-navy)',
+                border: '1px solid rgba(199, 240, 0, 0.4)',
+                display: 'inline-block',
+              }}
+            >
+              High Activity
+            </span>
+          </div>
         </div>
 
-        {/* Competitive Ranking Stack */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          {entries.map((entry, idx) => {
-            const isTargeted = animatingId === entry.id;
-            const isLeading = entry.position === 1;
+        {/* Live Transaction State Callout Banner */}
+        <div
+          style={{
+            backgroundColor:
+              step === 'bidding'
+                ? 'rgba(245, 158, 11, 0.1)'
+                : step === 'verifying'
+                ? 'rgba(16, 185, 129, 0.12)'
+                : step === 'reordering'
+                ? 'rgba(199, 240, 0, 0.18)'
+                : 'rgba(11, 31, 59, 0.03)',
+            borderRadius: 'var(--radius-md)',
+            padding: '10px 14px',
+            marginBottom: 'var(--space-4)',
+            border: `1px solid ${
+              step === 'bidding'
+                ? 'rgba(245, 158, 11, 0.3)'
+                : step === 'verifying'
+                ? 'rgba(16, 185, 129, 0.35)'
+                : step === 'reordering'
+                ? 'rgba(199, 240, 0, 0.5)'
+                : 'var(--border-subtle)'
+            }`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            transition: 'all var(--motion-normal)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+            <span style={{ fontSize: '14px' }}>
+              {step === 'bidding' && '⚡'}
+              {step === 'verifying' && '🛡️'}
+              {step === 'reordering' && '↑'}
+              {(step === 'idle' || step === 'settled') && '●'}
+            </span>
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              }}
+            >
+              {activeMessage}
+            </span>
+          </div>
+
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: 'var(--brand-emerald)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {step === 'verifying' ? 'Verifying...' : step === 'reordering' ? 'Shifting...' : 'Active'}
+          </span>
+        </div>
+
+        {/* High-DPI Crisp Market Ladder List */}
+        <div
+          role="list"
+          aria-label="Interactive Market Ladder Demonstration"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            marginBottom: 'var(--space-5)',
+          }}
+        >
+          {ladder.map((entry) => {
+            const isTop = entry.position === 1;
 
             return (
               <div
                 key={entry.id}
-                onClick={() => handleSimulateMoveUp(idx)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleSimulateMoveUp(idx);
-                }}
+                role="listitem"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  backgroundColor: isTargeted
-                    ? 'rgba(16, 185, 129, 0.15)'
-                    : isLeading
-                    ? 'rgba(199, 240, 0, 0.08)'
-                    : 'var(--surface-card)',
+                  padding: isTop ? '12px 14px' : '10px 14px',
                   borderRadius: 'var(--radius-md)',
-                  border: isTargeted
-                    ? '1px solid var(--brand-teal)'
-                    : isLeading
-                    ? '1px solid rgba(199, 240, 0, 0.5)'
+                  backgroundColor: isTop
+                    ? 'rgba(199, 240, 0, 0.08)'
+                    : entry.highlighted
+                    ? 'rgba(16, 185, 129, 0.08)'
+                    : 'var(--surface-raised)',
+                  border: isTop
+                    ? '1.5px solid rgba(199, 240, 0, 0.6)'
+                    : entry.highlighted
+                    ? '1.5px solid var(--brand-teal)'
                     : '1px solid var(--border-subtle)',
-                  boxShadow: isLeading ? '0 4px 12px rgba(11, 31, 59, 0.08)' : 'none',
-                  cursor: idx > 0 ? 'pointer' : 'default',
-                  transition: 'all 280ms cubic-bezier(0.16, 1, 0.3, 1)',
-                  transform: isTargeted ? 'scale(1.02)' : 'none',
+                  boxShadow: isTop ? '0 2px 10px rgba(199, 240, 0, 0.15)' : 'none',
+                  transition: 'all var(--motion-slow)',
+                  transform: entry.highlighted ? 'scale(1.015)' : 'scale(1)',
                 }}
-                title={idx > 0 ? `Click to simulate ${entry.name} moving up` : 'Currently leading'}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <PositionBadge position={entry.position} size="sm" />
+                {/* Left: Position Badge & Business Details */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <PositionBadge position={entry.position} size="md" />
+
                   <div>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>
-                      {entry.name}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        {entry.name}
+                      </span>
+                      {isTop && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            padding: '1px 6px',
+                            borderRadius: 'var(--radius-pill)',
+                            backgroundColor: 'var(--brand-lime)',
+                            color: 'var(--brand-deep-navy)',
+                          }}
+                        >
+                          LEADER
+                        </span>
+                      )}
+                    </div>
+
                     <PositionMovement
                       direction={entry.movement}
                       positions={entry.movementCount}
-                      isLeading={isLeading}
+                      isLeading={isTop}
                     />
                   </div>
                 </div>
 
+                {/* Right: Qualifying Amount */}
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--brand-deep-navy)' }}>
+                  <span
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 800,
+                      color: isTop ? 'var(--brand-deep-emerald)' : 'var(--text-primary)',
+                      display: 'block',
+                    }}
+                  >
                     {formatINR(entry.amountMinor)}
                   </span>
-                  <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)' }}>
-                    Qualifying amount
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    Qualifying
                   </span>
                 </div>
               </div>
@@ -187,21 +393,82 @@ export const HeroMarketVisual: React.FC = () => {
           })}
         </div>
 
-        {/* Interactive Guidance Bar */}
+        {/* Demo Controls Bar */}
         <div
           style={{
-            marginTop: 'var(--space-4)',
-            paddingTop: 'var(--space-3)',
-            borderTop: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            fontSize: '11px',
-            color: 'var(--text-secondary)',
+            gap: '8px',
+            flexWrap: 'wrap',
+            paddingTop: 'var(--space-3)',
+            borderTop: '1px solid var(--border-subtle)',
           }}
         >
-          <span style={{ fontStyle: 'italic' }}>{statusMessage}</span>
-          <span style={{ fontWeight: 600, color: 'var(--brand-teal)' }}>New bid &gt; Current</span>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={triggerOutbidSequence}
+              disabled={step === 'bidding' || step === 'verifying' || step === 'reordering'}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'var(--brand-emerald)',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                opacity: step !== 'idle' && step !== 'settled' ? 0.6 : 1,
+              }}
+            >
+              ⚡ Simulate Outbid
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {isAutoPlaying ? '⏸ Pause Auto' : '▶ Play Auto'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleReset}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Reset
+            </button>
+          </div>
+
+          <span
+            style={{
+              fontSize: '11px',
+              color: 'var(--text-muted)',
+              fontStyle: 'italic',
+            }}
+          >
+            * Interactive demonstration
+          </span>
         </div>
       </div>
     </div>

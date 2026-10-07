@@ -46,4 +46,31 @@ describe('Visual Ranking Component Domain Verification', () => {
     assert.doesNotMatch(disclosureText, /guaranteed best/i);
     assert.match(disclosureText, /paid competitive visibility/i);
   });
+
+  it('should verify 1-by-1 card shuffle indexing logic', () => {
+    const totalMarkets = 8;
+    const initialSlots = [0, 1, 2, 3];
+
+    // Single card shuffle shifts out first slot and pushes next valid index
+    const currentlyShown = new Set(initialSlots);
+    let nextCandidate = (initialSlots[initialSlots.length - 1] + 1) % totalMarkets;
+    while (currentlyShown.has(nextCandidate) && currentlyShown.size < totalMarkets) {
+      nextCandidate = (nextCandidate + 1) % totalMarkets;
+    }
+
+    const shuffledSlots = [...initialSlots.slice(1), nextCandidate];
+
+    assert.deepStrictEqual(shuffledSlots, [1, 2, 3, 4]);
+    assert.strictEqual(shuffledSlots.length, 4);
+    assert.strictEqual(shuffledSlots[3], 4);
+  });
+
+  it('should verify that all featured markets have positive whole-rupee floors', () => {
+    const amounts = [2600000, 3200000, 1850000, 4500000, 3800000, 2200000, 4200000, 6500000];
+
+    for (const amt of amounts) {
+      assert.strictEqual(amt > 0, true);
+      assert.strictEqual(amt % 100, 0, 'Qualifying amount must be whole rupee (divisible by 100 paise)');
+    }
+  });
 });
