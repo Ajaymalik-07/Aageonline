@@ -79,8 +79,8 @@ export const Button: React.FC<ButtonProps> = ({
         };
       case 'spotlight':
         return {
-          backgroundColor: 'var(--brand-lime)',
-          color: 'var(--brand-deep-navy)',
+          backgroundColor: '#EA580C',
+          color: '#ffffff',
           fontWeight: 700,
         };
     }

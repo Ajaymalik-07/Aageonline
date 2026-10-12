@@ -1,0 +1,108 @@
+# AageOnline — Production Docker Compose Configuration
+# Milestone 0.20.6: Local Development → Production Deployment Architecture
+# Usage: docker compose -f docker-compose.yml --env-file .env.production up -d
+
+services:
+  # 1. Caddy Reverse Proxy & Automatic TLS Termination
+  caddy:
+    image: caddy:2.9-alpine
+    container_name: aageonline_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 QUIC support
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - SITE_ADDRESS=${SITE_ADDRESS:-aageonline.com}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@aageonline.com}
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - aageonline-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # 2. Next.js Web Application (Standalone Node.js Server)
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: web
+    container_name: aageonline_web
+    restart: unless-stopped
+    # Port 3000 is exposed ONLY to the private Docker bridge network; never published to host interface
+    expose:
+      - "3000"
+    env_file:
+      - .env.production
+    networks:
+      - aageonline-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # 3. Dedicated Background Reconciler Worker
+  worker:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: worker
+    container_name: aageonline_worker
+    restart: unless-stopped
+    # No exposed ports: background worker communicates strictly outbound to PostgreSQL
+    env_file:
+      - .env.production
+    networks:
+      - aageonline-net
+    healthcheck:
+      test: ["CMD", "node", "--experimental-strip-types", "scripts/worker.ts", "--health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # 4. Database Migrations One-Off Runner
+  migrator:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: aageonline_migrator
+    profiles:
+      - tools
+    restart: "no"
+    env_file:
+      - .env.production
+    networks:
+      - aageonline-net
+
+networks:
+  aageonline-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+    name: aageonline_caddy_data
+  caddy_config:
+    name: aageonline_caddy_config

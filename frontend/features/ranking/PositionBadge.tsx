@@ -26,11 +26,11 @@ export const PositionBadge: React.FC<PositionBadgeProps> = ({
   const getVariantStyles = (): React.CSSProperties => {
     if (isFirst) {
       return {
-        background: 'linear-gradient(135deg, var(--brand-lime) 0%, #b3dc00 100%)',
-        color: 'var(--brand-deep-navy)',
+        background: 'linear-gradient(135deg, #EA580C 0%, #F97316 100%)',
+        color: '#ffffff',
         fontWeight: 900,
-        boxShadow: '0 2px 8px rgba(199, 240, 0, 0.45)',
-        border: '1px solid #d4ff1a',
+        boxShadow: '0 2px 10px rgba(234, 88, 12, 0.45)',
+        border: '1px solid #EA580C',
       };
     }
     if (isSecond) {
@@ -53,10 +53,10 @@ export const PositionBadge: React.FC<PositionBadgeProps> = ({
     }
     if (isTopTen) {
       return {
-        backgroundColor: 'rgba(16, 185, 129, 0.12)',
-        color: 'var(--brand-emerald)',
+        backgroundColor: 'rgba(234, 88, 12, 0.1)',
+        color: '#EA580C',
         fontWeight: 700,
-        border: '1px solid rgba(16, 185, 129, 0.3)',
+        border: '1px solid rgba(234, 88, 12, 0.25)',
       };
     }
     return {

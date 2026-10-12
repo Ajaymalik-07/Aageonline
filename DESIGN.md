@@ -15,43 +15,44 @@ AageOnline merges high-trust business discovery with dynamic, competitive positi
 
 #### Brand Palette
 ```css
---brand-deep-emerald: #064E3B; /* High-contrast baseline and dark brand surfaces */
---brand-emerald:      #059669; /* Primary actions, verified badges, affirmative status */
---brand-teal:         #10B981; /* Interactive accents, hover states, ranking gains */
---brand-lime:         #C7F000; /* Vibrant competitive spotlights, position callouts */
---brand-deep-navy:    #0B1F3B; /* Primary typography, contrast anchors, deep background */
+--brand-deep-emerald: #EA580C; /* Primary orange — high-attention CTAs, #1 position badge */
+--brand-emerald:      #F97316; /* Secondary orange — active states, ranking gains, hover */
+--brand-teal:         #FB923C; /* Accent coral — interactive highlights, hover states */
+--brand-lime:         #FED7AA; /* Soft accent — tinted backgrounds, secondary callouts */
+--brand-deep-navy:    #0B1F33; /* Deep Navy — primary typography, contrast anchors, dark surfaces */
 ```
 
 #### Light Theme Semantics
 ```css
---bg-page:            #F8FAFC; /* Neutral cool background */
+--bg-page:            #FFFFFF; /* Clean white canvas */
 --surface-card:       #FFFFFF; /* Elevated components and table rows */
 --surface-raised:     #FFFFFF; /* Modals, popovers, floating overlays */
---border-subtle:      #E2E8F0; /* Row separators, card borders */
---border-strong:      #CBD5E1; /* Interactive component borders */
---text-primary:       #0B1F3B; /* Deep Navy - AA compliant on white/light gray */
---text-secondary:     #64748B; /* Slate gray supporting copy */
+--surface-soft:       #FFF7ED; /* Warm soft background (orange-tinted) */
+--border-subtle:      #E5E7EB; /* Row separators, card borders */
+--border-strong:      #E5E7EB; /* Interactive component borders */
+--text-primary:       #111827; /* High-contrast body text */
+--text-secondary:     #64748B; /* Supporting copy */
 --text-muted:         #94A3B8; /* Disclaimers, inactive timestamps */
---action-primary:     #059669; /* Primary button background */
---action-hover:       #047857; /* Hover for emerald action */
---accent-focus:       #10B981; /* 2px solid visible focus ring */
---badge-spotlight:    #C7F000; /* Lime tag for high-visibility market spotlight */
+--action-primary:     #EA580C; /* Orange primary button background */
+--action-hover:       #C2410C; /* Darker orange on hover */
+--accent-focus:       #F97316; /* 2px solid visible focus ring */
+--badge-spotlight:    #FB923C; /* Coral tag for high-visibility market spotlight */
 ```
 
 #### Dark Theme Semantics
 Dark mode uses a layered Deep Navy hierarchy instead of flat black or simple inversion:
 ```css
---dark-bg-page:       #071324; /* Deepest Navy canvas */
---dark-surface-card:  #0B1F3B; /* Standard card/row container */
---dark-surface-raised:#112B50; /* Modals, elevated cards, dropdowns */
+--dark-bg-page:       #071018; /* Deepest Navy canvas */
+--dark-surface-card:  #0B1F33; /* Standard card/row container */
+--dark-surface-raised:#152C47; /* Modals, elevated cards, dropdowns */
 --dark-border-subtle: #1E3A5F; /* Subtle panel borders */
 --dark-border-strong: #2D4E7B; /* Interactive borders */
 --dark-text-primary:  #F8FAFC; /* Clean off-white */
 --dark-text-secondary:#94A3B8; /* Cool slate muted text */
 --dark-text-muted:    #64748B; /* De-emphasized notes */
---dark-action-primary:#10B981; /* High-contrast teal for dark mode CTA */
---dark-action-hover:  #059669; /* Emerald hover in dark mode */
---dark-accent-focus:  #C7F000; /* Lime outline for high-contrast dark focus ring */
+--dark-action-primary:#F97316; /* Brighter orange for dark mode CTA */
+--dark-action-hover:  #EA580C; /* Primary orange hover in dark mode */
+--dark-accent-focus:  #FB923C; /* Coral outline for high-contrast dark focus ring */
 ```
 
 ---
@@ -72,6 +73,16 @@ Dark mode uses a layered Deep Navy hierarchy instead of flat black or simple inv
   - `text-4xl`: `40px` (Line height: `44px`) — Hero headlines
   - `text-5xl`: `52px` (Line height: `56px`) — Marketing display headers
 
+### Layout & Container Grid Tokens
+```css
+--container-max:        1200px; /* Canonical maximum width across all desktop pages */
+--container-gutter:     24px;   /* Standard horizontal gutter (tablet 768px+) */
+--container-gutter-sm:  16px;   /* Mobile horizontal gutter (< 768px) */
+--container-gutter-lg:  32px;   /* Desktop horizontal gutter (1280px+) */
+--section-padding-y:    clamp(48px, 6vw, 80px); /* Primary section vertical separation */
+--section-padding-y-compact: clamp(32px, 4vw, 48px); /* Compact section vertical separation */
+```
+
 ### Spacing System (4px Base Grid)
 | Token | Value | Primary Usage |
 |---|---|---|
@@ -81,9 +92,16 @@ Dark mode uses a layered Deep Navy hierarchy instead of flat black or simple inv
 | `space-4` | `16px` | Standard element spacing, card padding |
 | `space-5` | `20px` | Table row padding, modal inline margins |
 | `space-6` | `24px` | Grid gutters, container spacing |
+| `space-7` | `28px` | Intermediate gaps |
 | `space-8` | `32px` | Section layout gaps |
-| `space-10` | `48px` | Subsection division |
-| `space-12` | `64px` | Page block vertical separation |
+| `space-9` | `36px` | Hero subtitle margins |
+| `space-10` | `40px` | Subsection division |
+| `space-11` | `44px` | Accessible touch target height |
+| `space-12` | `48px` | Major section blocks |
+| `space-14` | `56px` | Hero spacing |
+| `space-16` | `64px` | Deep section separations |
+| `space-20` | `80px` | Page separation boundaries |
+| `space-24` | `96px` | Maximum display separation |
 
 ### Border Radius
 - `radius-sm`: `8px` (Form fields, sub-badges, dropdown items)
@@ -113,7 +131,7 @@ Dark mode uses a layered Deep Navy hierarchy instead of flat black or simple inv
 
 ### Motion Semantics
 Motion is not decorative fluff—it communicates real platform events:
-- **Position Gain:** Subtle upward spring translation with teal border highlight.
+- **Position Gain:** Subtle upward spring translation with orange border highlight.
 - **Position Drop:** Smooth glide downward when another business overtakes position.
 - **Payment Success:** Crisp checkmark reveal and atomic transition into position view.
 
@@ -151,12 +169,12 @@ Every interactive component across Public, Workspace, and Admin surfaces must sp
 ### Mandatory State Matrix
 1. **Default:** Stable, accessible, clearly delineated bounds.
 2. **Hover:** Predictable elevation/color shift (`--motion-fast`). Pointer cursor.
-3. **Focus-Visible:** Mandatory 2px solid ring (`--brand-teal` or `--dark-accent-focus`) with 2px offset. Focus indicators must never be hidden (`outline: none` without replacement is forbidden).
+3. **Focus-Visible:** Mandatory 2px solid ring (`--brand-teal` → `#FB923C` coral, or `--dark-accent-focus` in dark mode) with 2px offset. Focus indicators must never be hidden (`outline: none` without replacement is forbidden).
 4. **Active:** Pressed scale (`transform: scale(0.98)`), instantaneous feedback.
 5. **Disabled:** Reduced opacity (0.5), `cursor: not-allowed`, inert to pointer/keyboard events, aria-disabled="true".
 6. **Loading:** Accessible spinner or skeleton, aria-busy="true", preserve dimensions to prevent layout shifts.
 7. **Error:** Clear crimson/coral border (`#EF4444`), descriptive error text with `role="alert"`.
-8. **Success:** Affirmative emerald confirmation state.
+8. **Success:** Affirmative green confirmation state (`--color-success: #16a34a`).
 
 ### Device & Interaction Modalities
 - **Keyboard Behavior:** Full Tab, Enter, Space, and Arrow navigation. ESC dismisses overlays.
@@ -174,7 +192,7 @@ Every interactive component across Public, Workspace, and Admin surfaces must sp
   - Clearly disclose paid ranking: Badged with `Paid Visibility` or `Sponsored Rank`.
   - Display ranking movements clearly: Up arrow (green/teal), down arrow (neutral gray/orange), or new entry badge.
 - **Position Badge:**
-  - Pill shape with bold numbers. #1 position uses distinctive Deep Emerald with Lime accent. Positions #2–#5 use Teal accents.
+  - Pill shape with bold numbers. #1 position uses distinctive Deep Navy with Orange accent (`--brand-deep-emerald`). Positions #2–#5 use Coral accents (`--brand-teal`).
 - **Target Position Selector:**
   - Interactive ladder showing current position vs. target position with quoted price.
   - Recalculates dynamically: "You are selecting #2 for ₹X. Next position #1 requires ₹Y."

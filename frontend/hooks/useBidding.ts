@@ -157,7 +157,7 @@ export function useBidding({
     try {
       const status = await paymentApi.getPaymentStatus(activePaymentId);
 
-      if (status.status === 'CONFIRMED' || status.status === 'SUCCESS') {
+      if (status.status === 'CONFIRMED' || status.status === 'SUCCEEDED') {
         setState('CONFIRMED');
         onPositionConfirmed?.(targetPosition, offeredAmountMinor);
       } else if (status.status === 'FAILED' || status.status === 'CANCELLED') {

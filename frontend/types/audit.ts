@@ -1,0 +1,86 @@
+/**
+ * AageOnline — Audit Logging Domain Types
+ * Append-only security and operational audit trail.
+ */
+
+export type AuditAction =
+  | 'USER_CREATED'
+  | 'USER_AUTHENTICATED'
+  | 'BUSINESS_CLAIM_SUBMITTED'
+  | 'BUSINESS_CLAIM_REVIEWED'
+  | 'BUSINESS_CLAIM_APPROVED'
+  | 'BUSINESS_CLAIM_REJECTED'
+  | 'BUSINESS_CLAIM_CANCELLED'
+  | 'MEMBERSHIP_CREATED'
+  | 'MEMBERSHIP_ROLE_CHANGED'
+  | 'MEMBERSHIP_SUSPENDED'
+  | 'MEMBERSHIP_REMOVED'
+  | 'BUSINESS_PROFILE_UPDATED'
+  | 'BID_INTENT_CREATED'
+  | 'BID_INTENT_CANCELLED'
+  | 'PAYMENT_ORDER_CREATED'
+  | 'PAYMENT_ORDER_REUSED'
+  | 'PAYMENT_WEBHOOK_RECEIVED'
+  | 'PAYMENT_WEBHOOK_REJECTED'
+  | 'PAYMENT_CONFIRMED'
+  | 'PAYMENT_FAILED'
+  | 'PAYMENT_CANCELLED'
+  | 'PAYMENT_STATE_CONFLICT'
+  | 'PAYMENT_VERIFICATION_FAILED'
+  | 'RANKING_SETTLEMENT_CREATED'
+  | 'RANKING_SETTLEMENT_STARTED'
+  | 'RANKING_SETTLEMENT_SUCCEEDED'
+  | 'RANKING_SETTLEMENT_FAILED'
+  | 'RANKING_SETTLEMENT_RETRYABLE'
+  | 'RANKING_POSITION_CHANGED'
+  | 'RANKING_SETTLEMENT_DUPLICATE'
+  | 'RANKING_SETTLEMENT_CONFLICT'
+  | 'ADMIN_AUTH_REJECTED'
+  | 'USER_ROLE_UPDATED'
+  | 'USER_STATUS_UPDATED'
+  | 'PAYMENT_RECONCILIATION_TRIGGERED'
+  | 'PAYMENT_MANUAL_RECONCILE_REQUESTED'
+  | 'PAYMENT_RECONCILIATION_CONFLICT'
+  | 'PAYMENT_CONFIRMED_VIA_RECONCILIATION'
+  | 'PAYMENT_FAILED_VIA_RECONCILIATION'
+  | 'SETTLEMENT_RECOVERY_TRIGGERED'
+  | 'RECOVERY_JOB_MANUAL_RETRY_REQUESTED'
+  | 'RECOVERY_JOB_MANUAL_RETRY'
+  | 'RANKING_CHANGE_EVENT_CREATED'
+  | 'NOTIFICATION_CREATED'
+  | 'NOTIFICATION_DELIVERED'
+  | 'NOTIFICATION_DELIVERY_FAILED'
+  | 'NOTIFICATION_MARKED_READ'
+  | 'NOTIFICATION_PREFERENCE_UPDATED'
+  | 'SEO_AUDIT_TRIGGERED'
+  | 'SEO_AUDIT_COMPLETED'
+  | 'SITEMAP_GENERATED'
+  | 'MARKET_RANKING_CACHE_INVALIDATED';
+
+export type AuditEntityType =
+  | 'User'
+  | 'BusinessClaim'
+  | 'BusinessMembership'
+  | 'Business'
+  | 'BidIntent'
+  | 'PaymentOrder'
+  | 'PaymentProviderEvent'
+  | 'RankingSettlement'
+  | 'PositionHistory'
+  | 'SettlementRecoveryJob'
+  | 'RankingChangeEvent'
+  | 'BusinessNotification'
+  | 'NotificationPreference'
+  | 'SeoAuditRun'
+  | 'Market'
+  | 'System';
+
+export interface AuditEvent {
+  id: string;
+  actorUserId?: string;
+  action: AuditAction;
+  entityType: AuditEntityType;
+  entityId: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}

@@ -63,8 +63,17 @@ export const FaqAccordion: React.FC = () => {
   };
 
   return (
-    <section className="container" aria-label="Frequently Asked Questions">
-      <div style={{ maxWidth: '840px', margin: '0 auto' }}>
+    <section
+      aria-label="Frequently Asked Questions"
+      style={{
+        padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
+        backgroundColor: 'var(--surface-soft)',
+        borderTop: '1px solid var(--border-subtle)',
+        borderBottom: '1px solid var(--border-subtle)',
+      }}
+    >
+      <div className="container">
+        <div style={{ maxWidth: '840px', margin: '0 auto' }}>
         {/* Section Header */}
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
           <span
@@ -173,6 +182,7 @@ export const FaqAccordion: React.FC = () => {
             );
           })}
         </div>
+      </div>
       </div>
     </section>
   );

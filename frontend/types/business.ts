@@ -8,6 +8,67 @@ export type BusinessStatus =
   | 'SUSPENDED'
   | 'ARCHIVED';
 
+export type BusinessVerificationStatus =
+  | 'UNVERIFIED'
+  | 'PENDING'
+  | 'VERIFIED'
+  | 'REJECTED';
+
+export type BusinessPublicationStatus =
+  | 'PUBLISHED'
+  | 'DRAFT'
+  | 'REVIEW'
+  | 'ARCHIVED';
+
+export interface BusinessEntity {
+  id: string;
+  slug: string;
+  name: string;
+  legalName?: string;
+  tagline?: string;
+  description: string;
+  logo?: string;
+  coverImage?: string;
+  website?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  primaryCityId?: string;
+  primaryStateId?: string;
+  primaryCountryId?: string;
+  verificationStatus: BusinessVerificationStatus;
+  publicationStatus: BusinessPublicationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessCategoryRelation {
+  businessId: string;
+  categoryId: string;
+  isPrimary?: boolean;
+}
+
+export interface BusinessLocationRelation {
+  businessId: string;
+  cityId: string;
+  isPrimary?: boolean;
+}
+
+export type MarketParticipationStatus = 'ACTIVE' | 'ELIGIBLE' | 'SUSPENDED' | 'REMOVED';
+export type MarketParticipationEligibility = 'ELIGIBLE' | 'INELIGIBLE';
+
+export interface MarketParticipation {
+  id: string;
+  businessId: string;
+  marketId: string;
+  status: MarketParticipationStatus;
+  eligibilityStatus: MarketParticipationEligibility;
+  currentPosition?: number | null; // Authoritative paid position in this market, or null if unranked
+  qualifyingAmountRupees?: number;
+  joinedAt: string;
+  updatedAt: string;
+}
+
 export interface Business {
   id: string;
   name: string;

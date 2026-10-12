@@ -19,7 +19,7 @@ const FEATURED_GUIDE: KnowledgeItem = {
   title: 'Local Positioning vs. Broad Advertising: The Defined Market Edge',
   readTime: '5 min read',
   excerpt:
-    'Why competing inside exactly one Location + Category pair delivers transparent commercial reach without pay-per-click wastage or opaque ad auction budgets.',
+    'Why competing inside exactly one Location + Category pair delivers transparent commercial reach without pay-per-click wastage or unpredictable advertising budgets.',
   slug: 'local-positioning-vs-broad-advertising',
 };
 
@@ -28,10 +28,10 @@ const SECONDARY_ITEMS: KnowledgeItem[] = [
     id: 'k-1',
     tag: 'Ladder Mechanics',
     type: 'Market Insight',
-    title: 'Navigating Position Floors: How Qualifying Calculations Supersede Incumbents',
+    title: 'Navigating Position Floors: How Qualifying Calculations Update Rankings',
     readTime: '4 min read',
     excerpt:
-      'A deep dive into atomic transaction locking, strict minimum increments (+₹1.00), and avoiding displacement down the ladder.',
+      'An explanation of qualifying calculations, whole-rupee amounts, and how positions are updated across the market ladder.',
     slug: 'navigating-position-floors',
   },
   {
@@ -48,10 +48,10 @@ const SECONDARY_ITEMS: KnowledgeItem[] = [
     id: 'k-3',
     tag: 'Governance',
     type: 'Glossary',
-    title: 'Glossary: Qualifying Payment, Discrete Market, and Immutable Position History',
+    title: 'Glossary: Qualifying Payment, Defined Market, and Immutable Position History',
     readTime: '3 min read',
     excerpt:
-      'Core definitions of non-negotiable architectural terms governing AageOnline transactions, row-level locks, and rankings.',
+      'Core definitions of key terms governing AageOnline markets, qualifying payments, and ranking positions.',
     slug: 'aageonline-core-glossary',
   },
 ];
@@ -86,7 +86,7 @@ export const KnowledgeGuides: React.FC = () => {
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
-                color: 'var(--brand-emerald)',
+                color: '#EA580C',
                 display: 'block',
                 marginBottom: '4px',
               }}
@@ -103,7 +103,7 @@ export const KnowledgeGuides: React.FC = () => {
                 margin: 0,
               }}
             >
-              AageOnline <span style={{ color: 'var(--brand-emerald)' }}>Knowledge</span>
+              AageOnline <span style={{ color: '#EA580C' }}>Knowledge</span>
             </h2>
 
             <p style={{ fontSize: '15px', color: 'var(--text-secondary)', margin: '6px 0 0 0' }}>
@@ -116,7 +116,7 @@ export const KnowledgeGuides: React.FC = () => {
             style={{
               fontSize: '13px',
               fontWeight: 800,
-              color: 'var(--brand-emerald)',
+              color: '#EA580C',
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
@@ -154,7 +154,7 @@ export const KnowledgeGuides: React.FC = () => {
             <div
               style={{
                 height: '220px',
-                background: 'linear-gradient(135deg, #0b1f3b 0%, #064e3b 50%, #059669 100%)',
+                background: 'linear-gradient(135deg, #0B1F33 0%, #EA580C 60%, #FB923C 100%)',
                 position: 'relative',
                 padding: 'var(--space-6)',
                 display: 'flex',
@@ -172,9 +172,9 @@ export const KnowledgeGuides: React.FC = () => {
                     letterSpacing: '0.08em',
                     padding: '3px 10px',
                     borderRadius: 'var(--radius-pill)',
-                    backgroundColor: 'rgba(199, 240, 0, 0.25)',
-                    color: 'var(--brand-lime)',
-                    border: '1px solid rgba(199, 240, 0, 0.4)',
+                    backgroundColor: 'rgba(234, 88, 12, 0.25)',
+                    color: '#FED7AA',
+                    border: '1px solid rgba(234, 88, 12, 0.4)',
                   }}
                 >
                   FEATURED GUIDE
@@ -194,7 +194,7 @@ export const KnowledgeGuides: React.FC = () => {
                     fontWeight: 700,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    color: 'var(--brand-lime)',
+                    color: '#FED7AA',
                   }}
                 >
                   Competitive Market Theory
@@ -217,7 +217,7 @@ export const KnowledgeGuides: React.FC = () => {
                   style={{
                     fontSize: '12px',
                     fontWeight: 800,
-                    color: 'var(--brand-emerald)',
+                    color: '#EA580C',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     display: 'block',
@@ -258,7 +258,7 @@ export const KnowledgeGuides: React.FC = () => {
                   marginTop: 'var(--space-6)',
                   padding: '12px 24px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'var(--brand-emerald)',
+                  backgroundColor: '#EA580C',
                   color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '14px',
@@ -305,13 +305,13 @@ export const KnowledgeGuides: React.FC = () => {
                             ? 'rgba(245, 158, 11, 0.12)'
                             : item.type === 'Glossary'
                             ? 'rgba(11, 31, 59, 0.08)'
-                            : 'rgba(5, 150, 105, 0.12)',
+                            : 'rgba(234, 88, 12, 0.12)',
                         color:
                           item.type === 'Question'
                             ? 'var(--color-warning)'
                             : item.type === 'Glossary'
                             ? 'var(--brand-deep-navy)'
-                            : 'var(--brand-emerald)',
+                            : '#EA580C',
                         textTransform: 'uppercase',
                         letterSpacing: '0.04em',
                       }}
@@ -350,7 +350,7 @@ export const KnowledgeGuides: React.FC = () => {
                   style={{
                     fontSize: '13px',
                     fontWeight: 700,
-                    color: 'var(--brand-emerald)',
+                    color: '#EA580C',
                     textDecoration: 'none',
                     display: 'inline-flex',
                     alignItems: 'center',

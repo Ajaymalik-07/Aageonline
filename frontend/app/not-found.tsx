@@ -24,7 +24,7 @@ export default function NotFound() {
           The requested market or business directory page does not exist or has been relocated.
         </p>
         <a
-          href="/explore"
+          href="/markets"
           style={{
             padding: '12px 24px',
             borderRadius: 'var(--radius-pill)',

@@ -53,12 +53,12 @@ export const BidModal: React.FC<BidModalProps> = ({
     }
   }, [isOpen]);
 
-  // Initial target selection on open
+  // All bids compete strictly for Position #1: who pays more takes #1
   useEffect(() => {
-    if (isOpen && initialTargetPosition && !targetPosition) {
-      selectTarget(initialTargetPosition);
+    if (isOpen) {
+      selectTarget(1);
     }
-  }, [isOpen, initialTargetPosition, targetPosition, selectTarget]);
+  }, [isOpen, selectTarget]);
 
   if (!isOpen) return null;
 
@@ -106,7 +106,7 @@ export const BidModal: React.FC<BidModalProps> = ({
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal)', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#EA580C', textTransform: 'uppercase' }}>
               Competitive Positioning
             </span>
             <h2 id="bid-modal-title" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
@@ -144,8 +144,8 @@ export const BidModal: React.FC<BidModalProps> = ({
               <strong>{businessName}</strong> is now position <strong>#{targetPosition}</strong> in{' '}
               {market.category.name} ({market.location.name}).
             </p>
-            <div style={{ padding: 'var(--space-3)', backgroundColor: 'rgba(16, 185, 129, 0.08)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>
-              <span style={{ fontSize: '13px', color: 'var(--brand-deep-emerald)', fontWeight: 600 }}>
+            <div style={{ padding: 'var(--space-3)', backgroundColor: 'rgba(234, 88, 12, 0.08)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>
+              <span style={{ fontSize: '13px', color: '#EA580C', fontWeight: 600 }}>
                 Transaction verified and auditable in position history.
               </span>
             </div>
@@ -161,7 +161,7 @@ export const BidModal: React.FC<BidModalProps> = ({
                 display: 'inline-block',
                 width: '40px',
                 height: '40px',
-                border: '4px solid var(--brand-teal)',
+                border: '4px solid #EA580C',
                 borderTopColor: 'transparent',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
@@ -190,11 +190,43 @@ export const BidModal: React.FC<BidModalProps> = ({
               Business: <strong>{businessName}</strong> · Market: <strong>{market.category.name}</strong>
             </div>
 
-            <TargetPositionSelector
-              currentRankings={currentRankings}
-              selectedTarget={targetPosition}
-              onSelectTarget={selectTarget}
-            />
+            {/* Target is strictly Position #1: pay more than current #1 to lead */}
+            <div
+              style={{
+                padding: 'var(--space-3) var(--space-4)',
+                backgroundColor: 'rgba(234, 88, 12, 0.08)',
+                borderRadius: 'var(--radius-md)',
+                border: '1.5px solid rgba(234, 88, 12, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#EA580C', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block' }}>
+                  Targeting Top Rank
+                </span>
+                <span style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-primary)' }}>
+                  Position #1 (Market Top)
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginTop: '2px' }}>
+                  Positions compete for #1 · Qualifying higher than incumbent updates the ladder
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  padding: '4px 12px',
+                  borderRadius: 'var(--radius-pill)',
+                  backgroundColor: '#EA580C',
+                  color: '#ffffff',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                #1 Position
+              </span>
+            </div>
 
             {quote && (
               <div
@@ -225,7 +257,7 @@ export const BidModal: React.FC<BidModalProps> = ({
                   <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     Minimum Required (Strictly Higher):
                   </span>
-                  <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand-deep-emerald)' }}>
+                  <span style={{ fontSize: '16px', fontWeight: 800, color: '#EA580C' }}>
                     {formatINR(quote.minimumRequiredAmountMinor)}
                   </span>
                 </div>
@@ -271,7 +303,7 @@ export const BidModal: React.FC<BidModalProps> = ({
                 }}
               >
                 {state === 'RACE_CONDITION_DETECTED'
-                  ? '⚡ Another business just placed a higher bid. Please update your amount to qualify.'
+                  ? '⚡ Another business just qualified with a higher amount. Please update your amount to qualify.'
                   : errorMessage}
               </div>
             )}

@@ -7,35 +7,35 @@ export const TrustGovernance: React.FC = () => {
     {
       icon: '🔍',
       title: 'Transparent',
-      subtitle: 'Clear Paid Visibility Labeling',
+      subtitle: 'Clear Visibility Labeling',
       description:
-        'Every ranking position is explicitly disclosed as a paid commercial placement. Consumers are never deceived by disguised organic search rankings.',
+        'Paid visibility positions are clearly disclosed so users understand what they represent.',
     },
     {
       icon: '🛡️',
       title: 'Verified',
-      subtitle: 'Cryptographic & Server Authority',
+      subtitle: 'Independent Verification',
       description:
-        'No client assertion can modify a ranking. Every transaction signature, qualification amount, and business ownership record is verified independently server-side.',
+        'Payments and business eligibility are independently verified before ranking changes occur.',
     },
     {
       icon: '📜',
       title: 'Auditable',
-      subtitle: 'Immutable Append-Only Records',
+      subtitle: 'Traceable Activity Records',
       description:
-        'Every position change, outbid event, and upward promotion is permanently recorded in an append-only ledger that cannot be retroactively edited or deleted.',
+        'Position changes are recorded so ranking activity can be reviewed and traced.',
     },
     {
       icon: '🔒',
       title: 'Secure',
-      subtitle: 'Atomic Transaction Mutation',
+      subtitle: 'Protected Transactions',
       description:
-        'Rankings mutate inside strict ACID database transactions with row-level locks, eliminating race conditions, double displacements, or corrupt positions.',
+        'Ranking changes are protected by server-side authorization, payment verification and transaction controls.',
     },
   ];
 
   return (
-    <section className="container" aria-label="Trust and Governance">
+    <section id="trust" className="container" aria-label="Trust and Governance">
       <div
         style={{
           borderRadius: 'var(--radius-xl)',
@@ -55,7 +55,7 @@ export const TrustGovernance: React.FC = () => {
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
-              color: 'var(--brand-emerald)',
+              color: '#EA580C',
               display: 'block',
               marginBottom: '6px',
             }}
@@ -72,11 +72,11 @@ export const TrustGovernance: React.FC = () => {
               margin: '0 0 var(--space-2) 0',
             }}
           >
-            Trust &amp; <span style={{ color: 'var(--brand-emerald)' }}>Governance</span>
+            Trust &amp; <span style={{ color: '#EA580C' }}>Governance</span>
           </h2>
 
           <p style={{ fontSize: '15px', color: 'var(--text-secondary)', margin: 0 }}>
-            Built on non-negotiable architectural invariants. Transparent rules for businesses and consumers.
+            Built on transparent rules and verified transactions for businesses and consumers.
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export const TrustGovernance: React.FC = () => {
               <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
                 {pillar.title}
               </h3>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--brand-teal)', display: 'block', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#EA580C', display: 'block', marginBottom: '8px' }}>
                 {pillar.subtitle}
               </span>
               <p style={{ fontSize: '13px', lineHeight: 1.55, color: 'var(--text-secondary)', margin: 0 }}>
@@ -116,10 +116,10 @@ export const TrustGovernance: React.FC = () => {
         {/* Prominent Statutory Disclosure Banner */}
         <div
           style={{
-            backgroundColor: 'rgba(6, 78, 59, 0.05)',
+            backgroundColor: 'rgba(234, 88, 12, 0.05)',
             borderRadius: 'var(--radius-md)',
             padding: 'var(--space-4) var(--space-6)',
-            border: '1px solid rgba(5, 150, 105, 0.2)',
+            border: '1px solid rgba(234, 88, 12, 0.2)',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
@@ -127,7 +127,7 @@ export const TrustGovernance: React.FC = () => {
         >
           <span style={{ fontSize: '20px' }}>⚖️</span>
           <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-primary)', margin: 0 }}>
-            <strong>Statutory Consumer Disclosure:</strong> A paid visibility position on AageOnline reflects an eligible, verified business that has completed a qualifying commercial transaction. It does not certify that a business is objectively the best business, nor does it replace independent consumer evaluation.
+            <strong>Paid visibility disclosure:</strong> A higher position represents paid commercial visibility. It does not certify that a business is objectively the best business or replace independent consumer evaluation.
           </p>
         </div>
       </div>

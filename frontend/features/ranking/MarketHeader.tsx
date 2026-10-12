@@ -62,7 +62,7 @@ export const MarketHeader: React.FC<MarketHeaderProps> = ({
               fontSize: '12px',
               fontWeight: 700,
               color: 'var(--brand-emerald)',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              backgroundColor: 'rgba(234, 88, 12, 0.1)',
               padding: '3px 10px',
               borderRadius: 'var(--radius-pill)',
               letterSpacing: '0.04em',

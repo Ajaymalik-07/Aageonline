@@ -102,7 +102,7 @@ export const RankingTable: React.FC<RankingTableProps> = ({
                   key={entry.businessId}
                   style={{
                     borderBottom: '1px solid var(--border-subtle)',
-                    backgroundColor: isFirst ? 'rgba(199, 240, 0, 0.03)' : 'transparent',
+                    backgroundColor: isFirst ? 'rgba(234, 88, 12, 0.03)' : 'transparent',
                     transition: 'background-color var(--motion-fast)',
                   }}
                 >

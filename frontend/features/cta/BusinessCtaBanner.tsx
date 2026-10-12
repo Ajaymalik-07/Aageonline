@@ -28,7 +28,7 @@ export const BusinessCtaBanner: React.FC = () => {
             transform: 'translateX(-50%)',
             width: '800px',
             height: '500px',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(234, 88, 12, 0.2) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -41,7 +41,7 @@ export const BusinessCtaBanner: React.FC = () => {
             right: '-10%',
             width: '500px',
             height: '400px',
-            background: 'radial-gradient(circle, rgba(199, 240, 0, 0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(251, 146, 60, 0.12) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -53,7 +53,7 @@ export const BusinessCtaBanner: React.FC = () => {
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
-              color: 'var(--brand-lime)',
+              color: '#FB923C',
               display: 'inline-block',
               marginBottom: 'var(--space-2)',
             }}
@@ -72,7 +72,7 @@ export const BusinessCtaBanner: React.FC = () => {
             }}
           >
             Ready to get seen? <br />
-            <span style={{ color: 'var(--brand-lime)' }}>Get ahead in your market.</span>
+            <span style={{ color: '#FB923C' }}>Get ahead in your market.</span>
           </h2>
 
           <p
@@ -102,15 +102,15 @@ export const BusinessCtaBanner: React.FC = () => {
               style={{
                 padding: '16px 36px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'var(--brand-lime)',
-                color: 'var(--brand-deep-navy)',
+                backgroundColor: '#EA580C',
+                color: '#ffffff',
                 fontWeight: 900,
                 fontSize: '15px',
                 textDecoration: 'none',
                 minHeight: '48px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                boxShadow: '0 6px 20px rgba(199, 240, 0, 0.35)',
+                boxShadow: '0 6px 20px rgba(234, 88, 12, 0.4)',
                 transition: 'transform var(--motion-fast)',
               }}
             >
@@ -139,7 +139,7 @@ export const BusinessCtaBanner: React.FC = () => {
           </div>
 
           <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
-            ✓ Atomic Database Recalculation · ✓ Append-Only History · ✓ 100% Disclosure
+            ✓ Verified Position Updates · ✓ Auditable Position History · ✓ 100% Transparent Disclosure
           </div>
         </div>
       </div>

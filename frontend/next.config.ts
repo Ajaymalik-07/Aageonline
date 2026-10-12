@@ -1,9 +1,27 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  serverExternalPackages: ['pg'],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve = config.resolve || {};
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        dns: false,
+        pg: false,
+        'pg-native': false,
+        'util/types': false,
+      };
+    }
+    return config;
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 86400,
@@ -30,6 +48,30 @@ const nextConfig: NextConfig = {
             value: 'strict-origin-when-cross-origin',
           },
         ],
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/explore',
+        destination: '/markets',
+        permanent: true,
+      },
+      {
+        source: '/claim',
+        destination: '/business/claim',
+        permanent: true,
+      },
+      {
+        source: '/how-it-works',
+        destination: '/#how-it-works',
+        permanent: false,
+      },
+      {
+        source: '/trust',
+        destination: '/#trust',
+        permanent: false,
       },
     ];
   },

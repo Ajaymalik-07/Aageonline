@@ -64,3 +64,65 @@ export interface MilestoneEvent {
   tier: MilestoneTier;
   timestamp: string;
 }
+
+export interface MarketBusinessItem {
+  id: string;
+  name: string;
+  slug: string;
+  rank: number;
+  area: string;
+  category: string;
+  qualifyingAmountRupees: number;
+  isVerified: boolean;
+  specialties: string[];
+  description: string;
+}
+
+export interface RelatedMarketLink {
+  title: string;
+  location: string;
+  category: string;
+  slug: string;
+  qualifyingAmountRupees: number;
+}
+
+export interface RelatedCategoryLink {
+  title: string;
+  slug: string;
+  description: string;
+}
+
+export interface EditorialSection {
+  id: string;
+  navTitle: string;
+  heading: string;
+  subheading?: string;
+  intro?: string;
+  paragraphs: string[];
+  subsections?: {
+    id?: string;
+    title: string;
+    content: string[];
+    bulletPoints?: string[];
+    callout?: {
+      title: string;
+      body: string;
+    };
+  }[];
+  directAnswer?: {
+    question: string;
+    answer: string;
+  };
+}
+
+export interface MarketPageData {
+  market: Market;
+  rankings: MarketBusinessItem[];
+  editorialContent: EditorialSection[];
+  relatedMarkets: RelatedMarketLink[];
+  relatedCategories: RelatedCategoryLink[];
+  seo: {
+    title: string;
+    description: string;
+  };
+}

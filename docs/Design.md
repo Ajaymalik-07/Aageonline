@@ -9,8 +9,8 @@ AageOnline must feel modern, premium, energetic, and trustworthy while making co
 - Product: AageOnline
 - Tagline: Get Seen. Get Ahead.
 - Primary domain: aageonline.com
-- Primary palette: Teal + Emerald + Lime
-- Foundation: Deep Navy + White / cool neutral surfaces
+- Primary palette: Orange + Coral + Deep Navy
+- Foundation: Deep Navy + White / warm neutral surfaces
 - Modes: Light and Dark
 - Accessibility target: WCAG 2.2 AA
 
@@ -30,32 +30,36 @@ AageOnline must feel modern, premium, energetic, and trustworthy while making co
 ### Brand
 
 ```text
-brand.deep-emerald = #064E3B
-brand.emerald      = #059669
-brand.teal         = #10B981
-brand.lime         = #C7F000
-brand.deep-navy    = #0B1F3B
+brand.primary       = #EA580C  (Orange — high-attention CTAs, #1 badge)
+brand.secondary     = #F97316  (Secondary orange — active states, gains)
+brand.accent        = #FB923C  (Coral — interactive highlights)
+brand.soft-accent   = #FED7AA  (Soft accent — backgrounds, callouts)
+brand.deep-navy     = #0B1F33  (Deep Navy — dark surfaces, contrast anchors)
 ```
 
 ### Neutral
 
 ```text
 neutral.white      = #FFFFFF
-neutral.background = #F8FAFC
+neutral.background = #FFF7ED
 neutral.secondary  = #64748B
 ```
+
+> **Note:** Do NOT use the previous emerald/teal/lime palette. All new components must use the orange/coral/navy tokens above.
 
 Semantic tokens must be used by components instead of hard-coded hex values.
 
 ## 5. Light Theme
 
-- page background: neutral.background
-- elevated surface: neutral.white
-- primary text: brand.deep-navy
-- secondary text: neutral.secondary
-- primary action: brand.emerald
-- interactive accent: brand.teal
-- highlight: brand.lime
+- page background: #FFFFFF
+- elevated surface: #FFFFFF
+- soft background: #FFF7ED
+- primary text: #111827
+- secondary text: #64748B
+- border: #E5E7EB
+- primary action: #EA580C (orange)
+- interactive accent: #FB923C (coral)
+- highlight / soft accent: #FED7AA
 
 ## 6. Dark Theme
 
@@ -64,17 +68,17 @@ Dark mode must use a deep navy/near-black hierarchy rather than simple color inv
 Recommended semantic structure:
 
 ```text
-dark.page
-dark.surface
-dark.surface-raised
-dark.text-primary
-dark.text-secondary
-dark.border
-dark.brand
-dark.accent
+dark.page          = #071018
+dark.surface       = #0B1F33
+dark.surface-raised= #152C47
+dark.text-primary  = #F8FAFC
+dark.text-secondary= #94A3B8
+dark.border        = #1E3A5F
+dark.brand         = #F97316  (orange CTA)
+dark.accent        = #FB923C  (coral focus)
 ```
 
-Brand teal/emerald and lime should remain recognizable while maintaining contrast.
+Orange and coral remain recognizable while maintaining contrast.
 
 ## 7. Typography
 
@@ -104,23 +108,44 @@ xl   20px
 
 Marketing headlines may use larger display sizes when responsive constraints are respected.
 
-## 8. Spacing
-
-Use a rational 4px-based system:
+## 8. Layout & Grid Tokens
 
 ```text
-space.1 = 4px
-space.2 = 8px
-space.3 = 12px
-space.4 = 16px
-space.5 = 20px
-space.6 = 24px
-space.7 = 32px
-space.8 = 40px
-space.9 = 48px
-space.10 = 64px
-space.11 = 80px
-space.12 = 96px
+container.max       = 1200px (--container-max)
+container.gutter-sm = 16px   (--container-gutter-sm, mobile < 768px)
+container.gutter    = 24px   (--container-gutter, tablet 768px+)
+container.gutter-lg = 32px   (--container-gutter-lg, desktop 1280px+)
+
+section.padding-y         = clamp(48px, 6vw, 80px) (--section-padding-y)
+section.padding-y-compact = clamp(32px, 4vw, 48px) (--section-padding-y-compact)
+```
+
+### Layout Invariants
+1. **Canonical Alignment:** Every page header, section header, breadcrumb bar, table, and grid aligns with the 1200px canonical `.container`.
+2. **Carousel Bleed:** Horizontal scroll tracks (`carousel-bleed-track`) compute left and right padding dynamically (`calc((100% - var(--container-max)) / 2 + ...)`), ensuring the first card starts precisely at the container margin while enabling edge-to-edge touch scrolling.
+3. **Reading Constraint:** Long-form prose, FAQ items, and legal disclosures are constrained to `840px` inside the 1200px container for optimal line-length and scannability, never shifting the outer container bounds.
+
+## 9. Spacing Scale
+
+Use a rational 4px-based grid:
+
+```text
+space.1  = 4px
+space.2  = 8px
+space.3  = 12px
+space.4  = 16px
+space.5  = 20px
+space.6  = 24px
+space.7  = 28px
+space.8  = 32px
+space.9  = 36px
+space.10 = 40px
+space.11 = 44px
+space.12 = 48px
+space.14 = 56px
+space.16 = 64px
+space.20 = 80px
+space.24 = 96px
 ```
 
 One-off spacing values should not be introduced without a documented reason.

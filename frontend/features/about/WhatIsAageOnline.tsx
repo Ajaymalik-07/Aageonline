@@ -18,44 +18,44 @@ const ARCHITECTURE_NODES: ArchitectureNode[] = [
     title: 'Location + Category',
     badge: 'Defined Scope',
     subtitle: 'City × Vertical Pair',
-    detail: 'Every market is bounded by exactly one geographical city and one industry vertical.',
+    detail: 'Every market is defined by one location and one business category.',
     example: 'Jaipur × Interior Designers',
     icon: '📍',
   },
   {
     step: '02',
-    title: 'Discrete Market',
-    badge: 'Closed Competition',
+    title: 'Defined Market',
+    badge: 'Local Market',
     subtitle: 'Direct Local Peers',
-    detail: 'No cross-city leakage. Businesses compete exclusively against direct regional competitors.',
-    example: 'Single Discrete Market Unit',
+    detail: 'Businesses compete within a clearly defined local market.',
+    example: 'Single Local Market',
     icon: '🏛️',
   },
   {
     step: '03',
-    title: 'Eligible Businesses',
+    title: 'Eligible Business',
     badge: 'Verified Identity',
     subtitle: 'Authenticated Records',
-    detail: 'Only verified businesses with documented ownership can participate in visibility rankings.',
-    example: 'Govt ID / GSTIN Verified',
+    detail: 'Verified businesses can participate in the market.',
+    example: 'Verified Business Record',
     icon: '🛡️',
   },
   {
     step: '04',
     title: 'Qualifying Payment',
-    badge: 'Server Verified',
-    subtitle: 'Strictly Greater (> Incumbent)',
-    detail: 'Whole-Rupee transaction verified server-side via payment signatures before ranking updates.',
-    example: '₹27,000 > Incumbent ₹26,000',
+    badge: 'Verified Payment',
+    subtitle: 'Whole Rupee Value',
+    detail: 'A verified whole-rupee payment qualifies for a position update.',
+    example: 'Qualifying Transaction',
     icon: '💳',
   },
   {
     step: '05',
-    title: 'Paid Position',
+    title: 'Paid Visibility Position',
     badge: 'Transparent Rank',
     subtitle: 'Prominent Visibility',
-    detail: 'Instant promotion to #1, #2, #3 with immutable append-only history and public disclosure.',
-    example: 'Rank #1 Activated + Disclosed',
+    detail: 'The verified qualifying amount determines the resulting paid visibility position.',
+    example: 'Active Position on Ladder',
     icon: '🌟',
   },
 ];
@@ -85,7 +85,7 @@ export const WhatIsAageOnline: React.FC = () => {
           width: '500px',
           height: '500px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(234, 88, 12, 0.08) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -102,9 +102,9 @@ export const WhatIsAageOnline: React.FC = () => {
                 letterSpacing: '0.1em',
                 padding: '4px 14px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'rgba(5, 150, 105, 0.12)',
-                color: 'var(--brand-emerald)',
-                border: '1px solid rgba(5, 150, 105, 0.25)',
+                backgroundColor: 'rgba(234, 88, 12, 0.12)',
+                color: '#EA580C',
+                border: '1px solid rgba(234, 88, 12, 0.25)',
               }}
             >
               Platform Paradigm &amp; Core Mechanics
@@ -121,7 +121,7 @@ export const WhatIsAageOnline: React.FC = () => {
               margin: '0 0 var(--space-3) 0',
             }}
           >
-            Paid visibility, <span style={{ color: 'var(--brand-emerald)' }}>made transparent.</span>
+            Paid visibility, <span style={{ color: '#EA580C' }}>made transparent.</span>
           </h2>
 
           <p
@@ -132,7 +132,7 @@ export const WhatIsAageOnline: React.FC = () => {
               margin: 0,
             }}
           >
-            AageOnline allows verified local businesses to compete for paid visibility positions inside well-defined <strong>Location + Category</strong> markets. No opaque black-box ad algorithms, no unpredictable pay-per-click bidding wars, and no disguised sponsored search biases.
+            AageOnline allows verified local businesses to compete for paid visibility positions inside clearly defined <strong>Location + Category</strong> markets.
           </p>
         </div>
 
@@ -153,39 +153,46 @@ export const WhatIsAageOnline: React.FC = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: 'var(--space-4)',
+              flexWrap: 'wrap',
+              gap: 'var(--space-3)',
+              marginBottom: 'var(--space-6)',
               borderBottom: '1px solid var(--border-subtle)',
-              paddingBottom: 'var(--space-3)',
+              paddingBottom: 'var(--space-4)',
             }}
           >
             <div>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: 'var(--brand-teal)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Market Formation Pipeline
-              </span>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', margin: '2px 0 0 0' }}>
+              <div style={{ display: 'inline-flex', marginBottom: '4px' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: '#EA580C',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  Market Formation Pipeline
+                </span>
+              </div>
+              <h3 style={{ fontSize: 'clamp(20px, 2.5vw, 24px)', fontWeight: 900, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
                 How A Single Competitive Market Forms
               </h3>
             </div>
 
             <span
               style={{
-                fontSize: '12px',
-                fontWeight: 700,
-                color: 'var(--brand-emerald)',
-                backgroundColor: 'rgba(5, 150, 105, 0.08)',
-                padding: '3px 10px',
+                fontSize: '11px',
+                fontWeight: 800,
+                color: '#EA580C',
+                backgroundColor: 'rgba(234, 88, 12, 0.08)',
+                padding: '4px 12px',
                 borderRadius: 'var(--radius-pill)',
+                border: '1px solid rgba(234, 88, 12, 0.2)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
               }}
             >
-              5 Architectural Stages
+              5 Market Stages
             </span>
           </div>
 
@@ -193,9 +200,9 @@ export const WhatIsAageOnline: React.FC = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '12px',
-              position: 'relative',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))',
+              gap: '14px',
+              alignItems: 'stretch',
             }}
           >
             {ARCHITECTURE_NODES.map((node, idx) => {
@@ -207,79 +214,103 @@ export const WhatIsAageOnline: React.FC = () => {
                   onClick={() => setActiveStep(idx)}
                   className="card-lift"
                   style={{
-                    backgroundColor: isSelected ? 'rgba(5, 150, 105, 0.06)' : 'var(--surface-raised)',
+                    backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.04)' : '#ffffff',
                     borderRadius: 'var(--radius-lg)',
                     padding: 'var(--space-4)',
-                    border: `1.5px solid ${isSelected ? 'var(--brand-emerald)' : 'var(--border-subtle)'}`,
+                    border: `1.5px solid ${isSelected ? '#EA580C' : 'var(--border-subtle)'}`,
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '190px',
+                    minHeight: '220px',
                     position: 'relative',
+                    boxShadow: isSelected ? '0 6px 20px rgba(234, 88, 12, 0.12)' : '0 2px 8px rgba(11, 31, 59, 0.04)',
                     transition: 'all var(--motion-fast)',
                   }}
                 >
-                  <div>
-                    {/* Step Badge & Icon */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: 900,
-                          padding: '2px 8px',
-                          borderRadius: 'var(--radius-pill)',
-                          backgroundColor: isSelected ? 'var(--brand-emerald)' : 'rgba(11, 31, 59, 0.08)',
-                          color: isSelected ? '#ffffff' : 'var(--text-muted)',
-                        }}
-                      >
-                        STEP {node.step}
-                      </span>
-                      <span style={{ fontSize: '20px' }}>{node.icon}</span>
-                    </div>
-
-                    <strong
-                      style={{
-                        fontSize: '15px',
-                        fontWeight: 900,
-                        color: 'var(--text-primary)',
-                        display: 'block',
-                        lineHeight: 1.25,
-                        marginBottom: '4px',
-                      }}
-                    >
-                      {node.title}
-                    </strong>
-
+                  {/* Step Badge & Icon */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <span
                       style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        color: 'var(--brand-teal)',
-                        display: 'block',
-                        marginBottom: '8px',
+                        fontSize: '10px',
+                        fontWeight: 900,
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-pill)',
+                        backgroundColor: isSelected ? '#EA580C' : 'rgba(234, 88, 12, 0.1)',
+                        color: isSelected ? '#ffffff' : '#EA580C',
+                        letterSpacing: '0.04em',
                       }}
                     >
-                      {node.badge}
+                      STEP {node.step}
                     </span>
-
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
-                      {node.detail}
-                    </p>
+                    <span
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.12)' : 'var(--surface-raised)',
+                        border: '1px solid var(--border-subtle)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                      }}
+                    >
+                      {node.icon}
+                    </span>
                   </div>
 
-                  {/* Concrete Example Pill */}
+                  <strong
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 900,
+                      color: 'var(--text-primary)',
+                      display: 'block',
+                      lineHeight: 1.25,
+                      marginBottom: '2px',
+                    }}
+                  >
+                    {node.title}
+                  </strong>
+
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      color: '#EA580C',
+                      display: 'block',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    {node.badge}
+                  </span>
+
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 var(--space-3) 0' }}>
+                    {node.detail}
+                  </p>
+
+                  {/* Concrete Example Pill (Uniform Height & Baseline) */}
                   <div
                     style={{
                       fontSize: '11px',
                       fontWeight: 700,
-                      color: isSelected ? 'var(--brand-emerald)' : 'var(--text-muted)',
-                      backgroundColor: isSelected ? 'rgba(5, 150, 105, 0.12)' : 'var(--surface-card)',
-                      padding: '4px 8px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-subtle)',
-                      marginTop: '10px',
+                      color: isSelected ? '#EA580C' : 'var(--text-secondary)',
+                      backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.1)' : 'var(--surface-raised)',
+                      padding: '0 8px',
+                      height: '30px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: `1px solid ${isSelected ? 'rgba(234, 88, 12, 0.35)' : 'var(--border-subtle)'}`,
+                      marginTop: 'auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
+                    title={node.example}
                   >
                     {node.example}
                   </div>
@@ -314,7 +345,7 @@ export const WhatIsAageOnline: React.FC = () => {
                 width: '44px',
                 height: '44px',
                 borderRadius: 'var(--radius-md)',
-                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                backgroundColor: 'rgba(234, 88, 12, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -350,7 +381,7 @@ export const WhatIsAageOnline: React.FC = () => {
                 width: '44px',
                 height: '44px',
                 borderRadius: 'var(--radius-md)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                backgroundColor: 'rgba(249, 115, 22, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -366,7 +397,7 @@ export const WhatIsAageOnline: React.FC = () => {
             </h3>
 
             <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
-              Positions (#1, #2, #3...) are determined by verified qualifying transactions. A higher whole-rupee amount supersedes the incumbent atomically inside a database transaction with row-level market locking.
+              Positions (#1, #2, #3...) are determined by verified qualifying transactions. A higher qualifying amount securely updates the ranking order so verified businesses receive their earned visibility.
             </p>
           </div>
 
@@ -386,7 +417,7 @@ export const WhatIsAageOnline: React.FC = () => {
                 width: '44px',
                 height: '44px',
                 borderRadius: 'var(--radius-md)',
-                backgroundColor: 'rgba(199, 240, 0, 0.18)',
+                backgroundColor: 'rgba(251, 146, 60, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -407,13 +438,13 @@ export const WhatIsAageOnline: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 14 Mandatory Statutory Disclosure Callout Banner */}
+        {/* Section 16 Mandatory Statutory Disclosure Callout Banner */}
         <div
           style={{
-            backgroundColor: 'rgba(6, 78, 59, 0.05)',
+            backgroundColor: 'rgba(234, 88, 12, 0.05)',
             borderRadius: 'var(--radius-lg)',
             padding: 'var(--space-4) var(--space-6)',
-            border: '1.5px solid rgba(5, 150, 105, 0.25)',
+            border: '1.5px solid rgba(234, 88, 12, 0.25)',
             display: 'flex',
             alignItems: 'center',
             gap: '14px',
@@ -421,7 +452,7 @@ export const WhatIsAageOnline: React.FC = () => {
         >
           <span style={{ fontSize: '24px' }}>🛡️</span>
           <p style={{ fontSize: '13px', lineHeight: 1.55, color: 'var(--text-primary)', margin: 0 }}>
-            <strong>Statutory Platform Governance:</strong> A higher paid visibility position on AageOnline does not certify that a business is objectively the best business. All positions represent transparent commercial visibility acquired through verified qualifying transactions.
+            <strong>Paid visibility disclosure:</strong> A higher position represents paid commercial visibility. It does not certify that a business is objectively the best business or replace independent consumer evaluation.
           </p>
         </div>
       </div>

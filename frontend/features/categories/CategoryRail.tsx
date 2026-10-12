@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
+import { getCategoryImage } from '../../lib/category-images';
 
 interface CategoryItem {
   id: string;
@@ -83,45 +84,52 @@ export const CategoryRail: React.FC = () => {
   };
 
   return (
-    <section className="container" aria-label="Explore Business Categories">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          flexWrap: 'wrap',
-          gap: 'var(--space-4)',
-          marginBottom: 'var(--space-6)',
-        }}
-      >
+    <div aria-label="Explore Business Categories" role="region" style={{ width: '100%', overflow: 'hidden' }}>
+      <div className="container">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            flexWrap: 'wrap',
+            gap: 'var(--space-4)',
+            marginBottom: 'var(--space-6)',
+          }}
+        >
         <div>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--brand-emerald)',
-              display: 'block',
-              marginBottom: '4px',
-            }}
-          >
-            Market Verticals
-          </span>
+          <div style={{ display: 'inline-flex', marginBottom: '6px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                padding: '2px 10px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'rgba(234, 88, 12, 0.15)',
+                border: '1px solid rgba(234, 88, 12, 0.35)',
+                color: '#FB923C',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              Market Verticals
+            </span>
+          </div>
 
           <h2
             style={{
               fontSize: 'clamp(24px, 3.5vw, 32px)',
               fontWeight: 900,
-              color: 'var(--text-primary)',
+              color: '#F8FAFC',
               letterSpacing: '-0.02em',
               margin: 0,
             }}
           >
-            Explore Business <span style={{ color: 'var(--brand-emerald)' }}>Categories</span>
+            Explore Business <span style={{ color: '#FB923C' }}>Categories</span>
           </h2>
 
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+          <p style={{ fontSize: '14px', color: '#94A3B8', margin: '4px 0 0 0' }}>
             Local businesses compete exclusively within their verified industry category.
           </p>
         </div>
@@ -133,16 +141,27 @@ export const CategoryRail: React.FC = () => {
             onClick={() => scroll('left')}
             aria-label="Scroll categories left"
             style={{
-              width: '36px',
-              height: '36px',
+              width: '40px',
+              height: '40px',
               borderRadius: '50%',
-              backgroundColor: 'var(--surface-card)',
-              border: '1px solid var(--border-strong)',
-              color: 'var(--text-primary)',
+              backgroundColor: '#11253E',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#F8FAFC',
+              fontSize: '16px',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+              transition: 'all var(--motion-fast)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1E3A5F';
+              e.currentTarget.style.borderColor = '#FB923C';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#11253E';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
             }}
           >
             ←
@@ -152,16 +171,27 @@ export const CategoryRail: React.FC = () => {
             onClick={() => scroll('right')}
             aria-label="Scroll categories right"
             style={{
-              width: '36px',
-              height: '36px',
+              width: '40px',
+              height: '40px',
               borderRadius: '50%',
-              backgroundColor: 'var(--surface-card)',
-              border: '1px solid var(--border-strong)',
-              color: 'var(--text-primary)',
+              backgroundColor: '#11253E',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#F8FAFC',
+              fontSize: '16px',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+              transition: 'all var(--motion-fast)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1E3A5F';
+              e.currentTarget.style.borderColor = '#FB923C';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#11253E';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
             }}
           >
             →
@@ -169,16 +199,17 @@ export const CategoryRail: React.FC = () => {
         </div>
       </div>
 
-      {/* Horizontal Category Cards Rail */}
+      {/* Horizontal Category Cards Rail (Aligned with canonical container grid) */}
       <div
         ref={scrollRef}
-        className="carousel-track hide-scrollbar"
+        className="carousel-bleed-track hide-scrollbar"
         style={{
-          paddingBottom: 'var(--space-2)',
+          paddingTop: '6px',
         }}
       >
         {BUSINESS_CATEGORIES.map((cat, idx) => {
-          const imgNum = (idx % 9) + 1;
+          const isFeatured = idx === 2; // Card 3 highlighted like in screenshot 3
+          const catImage = getCategoryImage(cat.slug || cat.name);
 
           return (
             <a
@@ -186,16 +217,17 @@ export const CategoryRail: React.FC = () => {
               href={`/explore?category=${cat.slug}`}
               className="carousel-snap-item card-lift"
               style={{
-                width: '220px',
-                backgroundColor: '#ffffff',
+                width: '240px',
+                backgroundColor: '#0F2137',
                 borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: '0 4px 16px rgba(11, 31, 59, 0.05)',
+                border: isFeatured ? '1.5px solid #FB923C' : '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: isFeatured ? '0 10px 30px rgba(234, 88, 12, 0.25)' : '0 6px 20px rgba(0, 0, 0, 0.35)',
                 textDecoration: 'none',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
                 position: 'relative',
+                transition: 'all var(--motion-fast)',
               }}
             >
               {/* Category Image Header with Icon Badge */}
@@ -203,13 +235,13 @@ export const CategoryRail: React.FC = () => {
                 style={{
                   position: 'relative',
                   width: '100%',
-                  height: '100px',
-                  backgroundColor: '#0b1f3b',
+                  height: '110px',
+                  backgroundColor: '#071526',
                   overflow: 'hidden',
                 }}
               >
                 <img
-                  src={`/assets/categories/category-img${imgNum}.jpg`}
+                  src={catImage}
                   alt={cat.name}
                   style={{
                     width: '100%',
@@ -225,7 +257,7 @@ export const CategoryRail: React.FC = () => {
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(11, 31, 59, 0.5) 100%)',
+                    background: 'linear-gradient(180deg, rgba(15, 33, 55, 0.1) 0%, rgba(15, 33, 55, 0.9) 100%)',
                     pointerEvents: 'none',
                   }}
                 />
@@ -234,19 +266,19 @@ export const CategoryRail: React.FC = () => {
                 <div
                   style={{
                     position: 'absolute',
-                    bottom: '8px',
+                    bottom: '6px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    width: '40px',
-                    height: '40px',
+                    width: '42px',
+                    height: '42px',
                     borderRadius: '50%',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#162F4D',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '20px',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-                    border: '2px solid #ffffff',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
+                    border: '2px solid rgba(255, 255, 255, 0.15)',
                     zIndex: 2,
                   }}
                 >
@@ -272,7 +304,7 @@ export const CategoryRail: React.FC = () => {
                     style={{
                       fontSize: '15px',
                       fontWeight: 800,
-                      color: 'var(--text-primary)',
+                      color: '#F8FAFC',
                       lineHeight: 1.25,
                       margin: '0 0 4px 0',
                     }}
@@ -280,7 +312,7 @@ export const CategoryRail: React.FC = () => {
                     {cat.name}
                   </h3>
 
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '11px', color: '#94A3B8', lineHeight: 1.4 }}>
                     {cat.locationCoverage}
                   </div>
                 </div>
@@ -289,8 +321,9 @@ export const CategoryRail: React.FC = () => {
                   style={{
                     fontSize: '11px',
                     fontWeight: 800,
-                    color: 'var(--brand-emerald)',
-                    backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                    color: '#FB923C',
+                    backgroundColor: 'rgba(234, 88, 12, 0.15)',
+                    border: '1px solid rgba(234, 88, 12, 0.3)',
                     padding: '4px 10px',
                     borderRadius: 'var(--radius-pill)',
                     marginTop: '8px',
@@ -304,6 +337,7 @@ export const CategoryRail: React.FC = () => {
           );
         })}
       </div>
-    </section>
+      </div>
+    </div>
   );
 };

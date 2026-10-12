@@ -1,0 +1,47 @@
+# AageOnline — Caddy Reverse Proxy & Direct HTTPS Configuration
+# Milestone 0.20.6: Production Deployment Architecture
+
+{
+    email {$ACME_EMAIL:admin@aageonline.com}
+    # Global options
+    servers {
+        trusted_proxies private_ranges
+    }
+}
+
+{$SITE_ADDRESS:aageonline.com} {
+    # Automatic TLS with Let's Encrypt / ZeroSSL
+    encode zstd gzip
+
+    # Production Security & Defense-in-Depth Browser Headers
+    header {
+        # Standard defensive browser headers
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+    }
+
+    # Reverse proxy to the internal Next.js container (private Docker network)
+    reverse_proxy web:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+
+        # Health monitoring and timeouts
+        transport http {
+            response_header_timeout 30s
+            dial_timeout 5s
+        }
+    }
+
+    # Structured operational access logging
+    log {
+        output stdout
+        format json
+        level INFO
+    }
+}

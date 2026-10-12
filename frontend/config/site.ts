@@ -9,9 +9,9 @@ export const siteConfig = {
     terms: '/terms',
     privacy: '/privacy',
     grievance: '/grievance',
-    trust: '/trust',
-    howItWorks: '/how-it-works',
-    claim: '/claim',
+    trust: '/#trust',
+    howItWorks: '/#how-it-works',
+    claim: '/business/claim',
   },
   disclosures: {
     paidVisibility:
@@ -21,16 +21,16 @@ export const siteConfig = {
   },
   nav: {
     public: [
-      { label: 'Explore Markets', href: '/explore' },
-      { label: 'How It Works', href: '/how-it-works' },
-      { label: 'Trust & Governance', href: '/trust' },
-      { label: 'Claim Business', href: '/claim' },
+      { label: 'Explore Markets', href: '/markets' },
+      { label: 'How It Works', href: '/#how-it-works' },
+      { label: 'Trust & Governance', href: '/#trust' },
+      { label: 'Claim Business', href: '/business/claim' },
     ],
     business: [
-      { label: 'Workspace', href: '/workspace' },
-      { label: 'My Rankings', href: '/workspace/rankings' },
-      { label: 'Transactions', href: '/workspace/transactions' },
-      { label: 'Notifications', href: '/workspace/notifications' },
+      { label: 'Workspace', href: '/business/dashboard' },
+      { label: 'My Rankings', href: '/business/dashboard/ranking-history' },
+      { label: 'Markets', href: '/business/dashboard/markets' },
+      { label: 'Notifications', href: '/business/dashboard/notifications' },
     ],
   },
 } as const;

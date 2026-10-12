@@ -148,7 +148,7 @@ export const HeroMarketVisual: React.FC = () => {
             right: 0,
             width: '280px',
             height: '280px',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(234, 88, 12, 0.15) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -215,9 +215,9 @@ export const HeroMarketVisual: React.FC = () => {
                 fontWeight: 700,
                 padding: '4px 10px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'rgba(199, 240, 0, 0.18)',
-                color: 'var(--brand-lime)',
-                border: '1px solid rgba(199, 240, 0, 0.4)',
+                backgroundColor: 'rgba(234, 88, 12, 0.15)',
+                color: '#FB923C',
+                border: '1px solid rgba(234, 88, 12, 0.35)',
                 display: 'inline-block',
               }}
             >
@@ -233,9 +233,9 @@ export const HeroMarketVisual: React.FC = () => {
               step === 'bidding'
                 ? 'rgba(245, 158, 11, 0.15)'
                 : step === 'verifying'
-                ? 'rgba(16, 185, 129, 0.18)'
+                ? 'rgba(249, 115, 22, 0.15)'
                 : step === 'reordering'
-                ? 'rgba(199, 240, 0, 0.18)'
+                ? 'rgba(234, 88, 12, 0.18)'
                 : 'rgba(255, 255, 255, 0.05)',
             borderRadius: 'var(--radius-md)',
             padding: '10px 14px',
@@ -244,9 +244,9 @@ export const HeroMarketVisual: React.FC = () => {
               step === 'bidding'
                 ? 'rgba(245, 158, 11, 0.4)'
                 : step === 'verifying'
-                ? 'rgba(16, 185, 129, 0.45)'
+                ? 'rgba(249, 115, 22, 0.4)'
                 : step === 'reordering'
-                ? 'rgba(199, 240, 0, 0.5)'
+                ? 'rgba(234, 88, 12, 0.5)'
                 : 'rgba(255, 255, 255, 0.1)'
             }`,
             display: 'flex',
@@ -314,16 +314,16 @@ export const HeroMarketVisual: React.FC = () => {
                   padding: isTop ? '12px 14px' : '10px 14px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: isTop
-                    ? 'rgba(199, 240, 0, 0.12)'
+                    ? 'rgba(234, 88, 12, 0.12)'
                     : entry.highlighted
-                    ? 'rgba(16, 185, 129, 0.14)'
+                    ? 'rgba(249, 115, 22, 0.12)'
                     : 'rgba(255, 255, 255, 0.04)',
                   border: isTop
-                    ? '1.5px solid var(--brand-lime)'
+                    ? '1.5px solid #EA580C'
                     : entry.highlighted
                     ? '1.5px solid var(--brand-teal)'
                     : '1px solid rgba(255, 255, 255, 0.08)',
-                  boxShadow: isTop ? '0 2px 12px rgba(199, 240, 0, 0.2)' : 'none',
+                  boxShadow: isTop ? '0 2px 12px rgba(234, 88, 12, 0.25)' : 'none',
                   transition: 'all var(--motion-slow)',
                   transform: entry.highlighted ? 'scale(1.015)' : 'scale(1)',
                 }}
@@ -350,8 +350,8 @@ export const HeroMarketVisual: React.FC = () => {
                             fontWeight: 800,
                             padding: '1px 6px',
                             borderRadius: 'var(--radius-pill)',
-                            backgroundColor: 'var(--brand-lime)',
-                            color: 'var(--brand-deep-navy)',
+                            backgroundColor: '#EA580C',
+                            color: '#ffffff',
                           }}
                         >
                           LEADER
@@ -373,7 +373,7 @@ export const HeroMarketVisual: React.FC = () => {
                     style={{
                       fontSize: '15px',
                       fontWeight: 800,
-                      color: isTop ? 'var(--brand-lime)' : '#ffffff',
+                      color: isTop ? '#FB923C' : '#ffffff',
                       display: 'block',
                     }}
                   >
@@ -422,7 +422,7 @@ export const HeroMarketVisual: React.FC = () => {
                 fontWeight: 700,
                 cursor: 'pointer',
                 opacity: step !== 'idle' && step !== 'settled' ? 0.6 : 1,
-                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+                boxShadow: '0 2px 8px rgba(234, 88, 12, 0.3)',
               }}
             >
               ⚡ Simulate Shift

@@ -63,7 +63,7 @@ export const TargetPositionSelector: React.FC<TargetPositionSelectorProps> = ({
                 padding: 'var(--space-3) var(--space-4)',
                 borderRadius: 'var(--radius-lg)',
                 backgroundColor: isSelected
-                  ? 'rgba(16, 185, 129, 0.08)'
+                  ? 'rgba(234, 88, 12, 0.08)'
                   : 'var(--surface-card)',
                 border: `2px solid ${
                   isSelected

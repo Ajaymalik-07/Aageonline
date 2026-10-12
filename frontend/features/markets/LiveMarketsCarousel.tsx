@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import type { Market } from '../../types/market';
 import { formatINR } from '../../lib/utils/format';
+import { getCategoryImage } from '../../lib/category-images';
 
 export interface LiveMarketsCarouselProps {
   markets: Market[];
@@ -13,7 +14,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 320;
+      const scrollAmount = 340;
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth',
@@ -29,6 +30,8 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
         borderTop: '1px solid var(--border-subtle)',
         borderBottom: '1px solid var(--border-subtle)',
         padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
+        overflow: 'hidden',
+        width: '100%',
       }}
     >
       <div className="container">
@@ -47,24 +50,45 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span
               style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--brand-teal)',
-                display: 'inline-block',
-              }}
-              className="live-indicator-dot"
-            />
-            <span
-              style={{
                 fontSize: '11px',
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: 'var(--brand-teal)',
+                padding: '2px 10px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                color: '#EA580C',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#EA580C',
+                  display: 'inline-block',
+                }}
+                className="live-indicator-dot"
+              />
               Real-Time Activity
+            </span>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                padding: '1px 8px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'rgba(234, 88, 12, 0.08)',
+                color: '#EA580C',
+                border: '1px solid rgba(234, 88, 12, 0.25)',
+              }}
+            >
+              Illustrative Markets
             </span>
           </div>
 
@@ -77,7 +101,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
               margin: 0,
             }}
           >
-            Live Local <span style={{ color: 'var(--brand-emerald)' }}>Markets</span>
+            Live Local <span style={{ color: '#EA580C' }}>Markets</span>
           </h2>
 
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
@@ -134,17 +158,17 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
         </div>
       </div>
 
-      {/* Responsive Horizontal Scroll Track */}
+      {/* Responsive Horizontal Scroll Track (Aligned with canonical container grid) */}
       <div
         ref={scrollRef}
-        className="carousel-track hide-scrollbar"
+        className="carousel-bleed-track hide-scrollbar"
         style={{
-          paddingBottom: 'var(--space-2)',
+          paddingTop: '6px',
         }}
       >
-        {markets.map((market, index) => {
+        {markets.map((market) => {
           const isHighActivity = market.totalBusinesses > 50;
-          const imageNumber = (index % 18) + 1;
+          const categoryImage = getCategoryImage(market.category.slug || market.category.name);
 
           return (
             <div
@@ -174,7 +198,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                 }}
               >
                 <img
-                  src={`/assets/markets/auction-img${imageNumber}.jpg`}
+                  src={categoryImage}
                   alt={`${market.category.name} in ${market.location.name}`}
                   style={{
                     width: '100%',
@@ -183,7 +207,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                     transition: 'transform var(--motion-normal)',
                   }}
                   onError={(e) => {
-                    // Fallback gradient if image not accessible
+                    // Fallback if image not accessible
                     e.currentTarget.style.display = 'none';
                   }}
                 />
@@ -217,7 +241,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                       fontWeight: 800,
                       padding: '3px 8px',
                       borderRadius: 'var(--radius-pill)',
-                      backgroundColor: 'rgba(5, 150, 105, 0.9)',
+                      backgroundColor: 'rgba(234, 88, 12, 0.9)',
                       backdropFilter: 'blur(4px)',
                       color: '#ffffff',
                       display: 'inline-flex',
@@ -244,8 +268,8 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                       fontWeight: 800,
                       padding: '3px 8px',
                       borderRadius: 'var(--radius-pill)',
-                      backgroundColor: isHighActivity ? 'rgba(199, 240, 0, 0.95)' : 'rgba(255, 255, 255, 0.9)',
-                      color: isHighActivity ? '#0b1f3b' : 'var(--text-primary)',
+                      backgroundColor: isHighActivity ? '#EA580C' : 'rgba(255, 255, 255, 0.95)',
+                      color: isHighActivity ? '#ffffff' : '#111827',
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
                       boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
@@ -258,62 +282,13 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
 
               {/* Card Body Content */}
               <div style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                {/* Header: Live Badge + Competition Level */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 'var(--space-3)',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      padding: '2px 8px',
-                      borderRadius: 'var(--radius-pill)',
-                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                      color: 'var(--brand-emerald)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--brand-emerald)',
-                      }}
-                      className="live-indicator-dot"
-                    />
-                    LIVE
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: 'var(--radius-pill)',
-                      backgroundColor: isHighActivity ? 'rgba(199, 240, 0, 0.2)' : 'rgba(11, 31, 59, 0.06)',
-                      color: isHighActivity ? 'var(--brand-deep-navy)' : 'var(--text-secondary)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    {isHighActivity ? 'High Competition' : 'Active Market'}
-                  </span>
-                </div>
 
                 {/* Location & Category Typography */}
                 <span
                   style={{
                     fontSize: '12px',
-                    fontWeight: 700,
-                    color: 'var(--brand-teal)',
+                    fontWeight: 800,
+                    color: '#EA580C',
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                     display: 'block',
@@ -325,12 +300,12 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
 
                 <h3
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 800,
+                    fontSize: '19px',
+                    fontWeight: 900,
                     color: 'var(--text-primary)',
                     letterSpacing: '-0.015em',
                     lineHeight: 1.25,
-                    marginBottom: 'var(--space-3)',
+                    marginBottom: 'var(--space-2)',
                   }}
                 >
                   {market.category.name}
@@ -352,11 +327,11 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Position #1 Floor</span>
-                    <strong style={{ fontSize: '15px', fontWeight: 900, color: 'var(--brand-deep-emerald)' }}>
+                    <strong style={{ fontSize: '16px', fontWeight: 900, color: '#EA580C' }}>
                       {formatINR(market.topQualifyingAmountMinor)}
                     </strong>
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--brand-emerald)', fontWeight: 600, marginTop: '2px' }}>
+                  <div style={{ fontSize: '11px', color: '#EA580C', fontWeight: 600, marginTop: '2px' }}>
                     Leading: Active qualifying position
                   </div>
                 </div>
@@ -381,9 +356,9 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
                     transition: 'all var(--motion-fast)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--brand-emerald)';
+                    e.currentTarget.style.backgroundColor = '#EA580C';
                     e.currentTarget.style.color = '#ffffff';
-                    e.currentTarget.style.borderColor = 'var(--brand-emerald)';
+                    e.currentTarget.style.borderColor = '#EA580C';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';

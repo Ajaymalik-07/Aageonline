@@ -35,7 +35,7 @@ const SIX_STEPS: JourneyStep[] = [
     title: 'Choose a Position',
     subtitle: 'Target Rank Selection',
     description:
-      'Inspect the active ranking ladder (#1 to #24). View the exact qualifying payment amount needed to supersede the current incumbent position.',
+      'View the current market ladder and the qualifying amount required for your selected position.',
     icon: '🎯',
     stageName: 'Target Ladder',
   },
@@ -44,18 +44,18 @@ const SIX_STEPS: JourneyStep[] = [
     title: 'Make a Qualifying Payment',
     subtitle: 'Strictly Greater & Whole Rupee',
     description:
-      'Complete a verified payment strictly greater than the incumbent amount. The server independently recalculates pricing and verifies the payment gateway signature.',
+      'Complete the required whole-rupee payment. The platform verifies the transaction before updating the ranking.',
     icon: '💳',
     stageName: 'Verified Payment',
   },
   {
     number: '05',
     title: 'Position Updates',
-    subtitle: 'Atomic Transaction Mutation',
+    subtitle: 'Server-Verified Transition',
     description:
-      'The database recalculates rankings atomically inside a strict transaction with row-level locks, creating an immutable, append-only position history record.',
+      "Once the payment is verified, the market ranking updates according to the platform's ranking rules.",
     icon: '⚡',
-    stageName: 'Atomic Mutation',
+    stageName: 'Verified Update',
   },
   {
     number: '06',
@@ -70,29 +70,19 @@ const SIX_STEPS: JourneyStep[] = [
 
 export const HowItWorksJourney: React.FC = () => {
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(true);
-
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-
-    const timer = setInterval(() => {
-      setActiveStepIndex((prev) => (prev + 1) % SIX_STEPS.length);
-    }, 4500);
-
-    return () => clearInterval(timer);
-  }, [isAutoPlaying]);
 
   const active = SIX_STEPS[activeStepIndex];
 
   return (
     <section
-      aria-label="How AageOnline Works - 6-Step Infographic Journey"
+      id="how-it-works"
+      aria-label="How AageOnline Works - Step-by-Step Overview"
       style={{
-        backgroundColor: '#064e3b',
+        backgroundColor: '#0B1F33',
         backgroundImage: `
-          radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.2) 0%, transparent 50%),
-          radial-gradient(circle at 20% 80%, rgba(199, 240, 0, 0.12) 0%, transparent 50%),
-          linear-gradient(180deg, #053e30 0%, #064e3b 50%, #083327 100%)
+          radial-gradient(circle at 80% 20%, rgba(234, 88, 12, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
+          linear-gradient(180deg, #071018 0%, #0B1F33 50%, #0a1b2e 100%)
         `,
         color: '#ffffff',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
@@ -111,16 +101,16 @@ export const HowItWorksJourney: React.FC = () => {
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: '0.12em',
-              color: 'var(--brand-lime)',
+              color: '#FB923C',
               display: 'inline-block',
               padding: '3px 12px',
               borderRadius: 'var(--radius-pill)',
-              backgroundColor: 'rgba(199, 240, 0, 0.15)',
-              border: '1px solid rgba(199, 240, 0, 0.3)',
+              backgroundColor: 'rgba(234, 88, 12, 0.15)',
+              border: '1px solid rgba(234, 88, 12, 0.35)',
               marginBottom: '10px',
             }}
           >
-            Deterministic Process Flow
+            Simple 6-Step Process
           </span>
 
           <h2
@@ -132,11 +122,11 @@ export const HowItWorksJourney: React.FC = () => {
               margin: '0 0 var(--space-3) 0',
             }}
           >
-            How AageOnline <span style={{ color: 'var(--brand-lime)' }}>Works</span>
+            How AageOnline <span style={{ color: '#FB923C' }}>Works</span>
           </h2>
 
           <p style={{ fontSize: '15px', color: 'rgba(255, 255, 255, 0.82)', margin: 0, lineHeight: 1.6 }}>
-            A transparent 6-step journey from market identification to public visibility. Built on atomic transactions, immutable history, and honest commercial labeling.
+            A transparent 6-step journey from market identification to public visibility. Built on verified payments, auditable position history, and clear commercial labeling.
           </p>
         </div>
 
@@ -159,10 +149,10 @@ export const HowItWorksJourney: React.FC = () => {
               style={{
                 height: '100%',
                 width: `${(activeStepIndex / (SIX_STEPS.length - 1)) * 100}%`,
-                background: 'linear-gradient(90deg, var(--brand-teal), var(--brand-lime))',
+                background: 'linear-gradient(90deg, #FB923C, #EA580C)',
                 transition: 'width var(--motion-normal)',
                 borderRadius: '2px',
-                boxShadow: '0 0 10px rgba(199, 240, 0, 0.6)',
+                boxShadow: '0 0 10px rgba(234, 88, 12, 0.5)',
               }}
             />
           </div>
@@ -187,7 +177,6 @@ export const HowItWorksJourney: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setActiveStepIndex(idx);
-                    setIsAutoPlaying(false);
                   }}
                   style={{
                     background: 'none',
@@ -201,19 +190,19 @@ export const HowItWorksJourney: React.FC = () => {
                     outline: 'none',
                   }}
                 >
-                  {/* Circular Node Icon (Solid opaque #064e3b halo preventing line bleed) */}
+                  {/* Circular Node Icon (Solid opaque #0B1F33 halo preventing line bleed) */}
                   <div
                     style={{
                       width: '54px',
                       height: '54px',
                       borderRadius: '50%',
-                      backgroundColor: isCurrent ? 'var(--brand-lime)' : '#064e3b',
-                      color: isCurrent ? '#0b1f3b' : isPast ? 'var(--brand-teal)' : 'rgba(255, 255, 255, 0.6)',
+                      backgroundColor: isCurrent ? '#EA580C' : '#0B1F33',
+                      color: isCurrent ? '#ffffff' : isPast ? '#FB923C' : 'rgba(255, 255, 255, 0.6)',
                       border: `2.5px solid ${
                         isCurrent
-                          ? 'var(--brand-lime)'
+                          ? '#EA580C'
                           : isPast
-                          ? 'var(--brand-teal)'
+                          ? '#FB923C'
                           : 'rgba(255, 255, 255, 0.3)'
                       }`,
                       display: 'flex',
@@ -224,8 +213,8 @@ export const HowItWorksJourney: React.FC = () => {
                       position: 'relative',
                       zIndex: 3,
                       boxShadow: isCurrent
-                        ? '0 0 0 6px #064e3b, 0 0 20px rgba(199, 240, 0, 0.6)'
-                        : '0 0 0 6px #064e3b',
+                        ? '0 0 0 6px #0B1F33, 0 0 20px rgba(234, 88, 12, 0.6)'
+                        : '0 0 0 6px #0B1F33',
                       transition: 'all var(--motion-fast)',
                       transform: isCurrent ? 'scale(1.12)' : 'scale(1)',
                     }}
@@ -237,7 +226,7 @@ export const HowItWorksJourney: React.FC = () => {
                     style={{
                       fontSize: '11px',
                       fontWeight: 800,
-                      color: isCurrent ? 'var(--brand-lime)' : 'rgba(255, 255, 255, 0.6)',
+                      color: isCurrent ? '#FB923C' : 'rgba(255, 255, 255, 0.6)',
                       letterSpacing: '0.04em',
                     }}
                   >
@@ -288,9 +277,9 @@ export const HowItWorksJourney: React.FC = () => {
                   fontWeight: 900,
                   padding: '4px 12px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'rgba(199, 240, 0, 0.18)',
-                  color: 'var(--brand-lime)',
-                  border: '1px solid rgba(199, 240, 0, 0.35)',
+                  backgroundColor: 'rgba(234, 88, 12, 0.18)',
+                  color: '#FB923C',
+                  border: '1px solid rgba(234, 88, 12, 0.35)',
                 }}
               >
                 PHASE {active.number} OF 06
@@ -348,34 +337,16 @@ export const HowItWorksJourney: React.FC = () => {
                 style={{
                   padding: '8px 18px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'var(--brand-lime)',
+                  backgroundColor: '#EA580C',
                   border: 'none',
-                  color: '#0b1f3b',
+                  color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '13px',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(199, 240, 0, 0.35)',
+                  boxShadow: '0 4px 14px rgba(234, 88, 12, 0.35)',
                 }}
               >
                 Next Step →
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  color: 'rgba(255, 255, 255, 0.65)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  marginLeft: 'auto',
-                }}
-              >
-                {isAutoPlaying ? '⏸ Pause Flow' : '▶ Auto Advance'}
               </button>
             </div>
           </div>
@@ -393,10 +364,10 @@ export const HowItWorksJourney: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--brand-teal)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                System Architecture Node
+              <span style={{ fontSize: '11px', fontWeight: 800, color: '#FB923C', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                System Workflow
               </span>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-lime)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#FB923C' }}>
                 {active.stageName}
               </span>
             </div>
@@ -428,13 +399,13 @@ export const HowItWorksJourney: React.FC = () => {
                 fontSize: '12px',
                 color: 'rgba(255, 255, 255, 0.75)',
                 lineHeight: 1.5,
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                backgroundColor: 'rgba(234, 88, 12, 0.1)',
                 padding: '10px 12px',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
+                border: '1px solid rgba(234, 88, 12, 0.25)',
               }}
             >
-              🛡️ <strong>Architectural Guarantee:</strong> Every position mutation occurs within a server-verified transaction with strict concurrency locks. Bids never displace incumbents without full payment confirmation.
+              🛡️ <strong>Platform Guarantee:</strong> Every ranking update occurs through a server-verified transaction. Position changes take effect only after complete payment verification.
             </div>
           </div>
         </div>

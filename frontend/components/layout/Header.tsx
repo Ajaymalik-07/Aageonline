@@ -80,9 +80,9 @@ export function Header() {
                 textTransform: 'uppercase',
                 padding: '2px 8px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'rgba(5, 150, 105, 0.12)',
-                color: 'var(--brand-emerald)',
-                border: '1px solid rgba(5, 150, 105, 0.25)',
+                backgroundColor: 'rgba(234, 88, 12, 0.12)',
+                color: '#EA580C',
+                border: '1px solid rgba(234, 88, 12, 0.25)',
               }}
               className="desktop-nav"
             >
@@ -108,7 +108,7 @@ export function Header() {
           }}
         >
           <a
-            href="/explore"
+            href="/markets"
             style={{
               padding: '8px 16px',
               borderRadius: 'var(--radius-pill)',
@@ -154,7 +154,7 @@ export function Header() {
           </a>
 
           <a
-            href="/trust"
+            href="/#trust"
             style={{
               padding: '8px 16px',
               borderRadius: 'var(--radius-pill)',
@@ -182,7 +182,7 @@ export function Header() {
           <ThemeToggle />
 
           <a
-            href="/claim"
+            href="/business/claim"
             className="header-cta"
             style={{
               padding: '9px 18px',
@@ -201,11 +201,9 @@ export function Header() {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--action-hover)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--action-primary)';
-              e.currentTarget.style.transform = 'none';
             }}
           >
             Claim Business →

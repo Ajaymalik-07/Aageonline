@@ -27,7 +27,7 @@ export function Footer() {
           width: '500px',
           height: '500px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(234, 88, 12, 0.1) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -57,13 +57,13 @@ export function Footer() {
                 marginBottom: 'var(--space-2)',
               }}
             >
-              Aage<span style={{ color: 'var(--brand-teal)' }}>Online</span>
+              Aage<span style={{ color: '#EA580C' }}>Online</span>
             </span>
             <p
               style={{
                 fontSize: '18px',
                 fontWeight: 600,
-                color: 'var(--brand-lime)',
+                color: '#FB923C',
                 letterSpacing: '-0.01em',
                 marginBottom: 'var(--space-3)',
               }}
@@ -102,7 +102,7 @@ export function Footer() {
                 marginBottom: 'var(--space-1)',
               }}
             >
-              Get Local Market Activity Updates
+              Get Local Market Updates
             </h4>
             <p
               style={{
@@ -111,7 +111,7 @@ export function Footer() {
                 marginBottom: 'var(--space-4)',
               }}
             >
-              Receive alerts when position movements, new bids, or competitor qualifications occur in your city.
+              Receive alerts when position updates or competitor qualifications occur in your city.
             </p>
 
             <form
@@ -147,14 +147,14 @@ export function Footer() {
                 style={{
                   padding: '12px 22px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'var(--brand-lime)',
-                  color: 'var(--brand-deep-navy)',
+                  backgroundColor: '#EA580C',
+                  color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '14px',
                   border: 'none',
                   cursor: 'pointer',
                   minHeight: '44px',
-                  boxShadow: '0 4px 12px rgba(199, 240, 0, 0.25)',
+                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.35)',
                   transition: 'opacity var(--motion-fast)',
                 }}
               >
@@ -181,7 +181,7 @@ export function Footer() {
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: 'var(--brand-teal)',
+                color: '#FB923C',
                 marginBottom: 'var(--space-4)',
               }}
             >
@@ -193,7 +193,7 @@ export function Footer() {
               <li><a href="/delhi/digital-marketing-agencies" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Delhi · Digital Agencies</a></li>
               <li><a href="/gurugram/architects" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Gurugram · Commercial Architects</a></li>
               <li><a href="/hisar/hospitals" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Hisar · Hospitals</a></li>
-              <li><a href="/explore" style={{ color: 'var(--brand-lime)', textDecoration: 'none', fontWeight: 700 }}>Browse All Markets →</a></li>
+              <li><a href="/markets" style={{ color: '#FB923C', textDecoration: 'none', fontWeight: 700 }}>Browse All Markets →</a></li>
             </ul>
           </div>
 
@@ -205,18 +205,18 @@ export function Footer() {
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: 'var(--brand-teal)',
+                color: '#FB923C',
                 marginBottom: 'var(--space-4)',
               }}
             >
               For Businesses
             </h5>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-              <li><a href="/claim" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Claim Your Listing</a></li>
-              <li><a href="/workspace" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Business Workspace</a></li>
-              <li><a href="/how-it-works" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Position Ladder Rules</a></li>
-              <li><a href="/how-it-works#rules" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Whole Rupee Bidding Policy</a></li>
-              <li><a href="/workspace/rankings" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Position History &amp; Audits</a></li>
+              <li><a href="/business/claim" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Claim Your Listing</a></li>
+              <li><a href="/business/dashboard" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Business Workspace</a></li>
+              <li><a href="/#how-it-works" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Position Ladder Rules</a></li>
+              <li><a href="/#how-it-works" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Whole Rupee Payment Policy</a></li>
+              <li><a href="/business/dashboard/ranking-history" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Position History &amp; Audits</a></li>
             </ul>
           </div>
 
@@ -228,16 +228,16 @@ export function Footer() {
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: 'var(--brand-teal)',
+                color: '#FB923C',
                 marginBottom: 'var(--space-4)',
               }}
             >
               Trust &amp; Governance
             </h5>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-              <li><a href="/trust" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Trust Architecture</a></li>
-              <li><a href="/trust#security" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Security Invariants (SEC-01–20)</a></li>
-              <li><a href="/trust#integrity" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Payment Finality &amp; No Refunds</a></li>
+              <li><a href="/#trust" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Trust Architecture</a></li>
+              <li><a href="/#trust" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Security Invariants (SEC-01–20)</a></li>
+              <li><a href="/#trust" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Payment Finality &amp; No Refunds</a></li>
               <li><a href="/grievance" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Grievance Officer (IT Act)</a></li>
               <li><a href="/terms" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Terms of Service</a></li>
             </ul>
@@ -251,7 +251,7 @@ export function Footer() {
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: 'var(--brand-teal)',
+                color: '#FB923C',
                 marginBottom: 'var(--space-4)',
               }}
             >

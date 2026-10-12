@@ -1,43 +1,26 @@
 import type { MetadataRoute } from 'next';
-import { siteConfig } from '../config/site';
-import { INITIAL_FEATURED_MARKETS } from '../config/markets';
+import { generateAuthoritativeSitemap } from '../lib/seo/sitemap-service.ts';
+import { getAuthoritativeOrigin } from '../lib/seo/canonical.ts';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = siteConfig.url;
+export const revalidate = 3600;
 
-  const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/explore`,
-      lastModified: new Date(),
-      changeFrequency: 'hourly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/how-it-works`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/trust`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-  ];
-
-  const marketRoutes: MetadataRoute.Sitemap = INITIAL_FEATURED_MARKETS.map((m) => ({
-    url: `${baseUrl}/${m.slug}`,
-    lastModified: new Date(m.updatedAt),
-    changeFrequency: 'hourly',
-    priority: 0.8,
-  }));
-
-  return [...staticRoutes, ...marketRoutes];
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  try {
+    return await generateAuthoritativeSitemap();
+  } catch {
+    // Safe emergency fallback returning minimal canonical base route
+    const origin = getAuthoritativeOrigin();
+    return [
+      {
+        url: origin,
+        changeFrequency: 'daily',
+        priority: 1.0,
+      },
+      {
+        url: `${origin}/markets`,
+        changeFrequency: 'daily',
+        priority: 0.9,
+      },
+    ];
+  }
 }

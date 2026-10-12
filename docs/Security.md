@@ -278,7 +278,221 @@ No deployment to staging or production is permitted if any of the following rele
 4. ❌ Any code path where client browser redirects declare payment success.
 5. ❌ Missing HMAC signature verification on webhook routes.
 6. ❌ Replayed webhooks causing multiple rank shifts.
-7. ❌ Broken object authorization on business or transaction endpoints.
-8. ❌ Public API responses leaking private financial IDs, webhook secrets, or owner details.
-9. ❌ Floating-point arithmetic used for monetary amounts.
-10. ❌ Unhandled concurrent bids causing duplicate positions or lost updates.
+
+---
+
+## 16. Identity, Membership & Business Workspace Security Controls
+
+1. **Server-Side Authorization is Authoritative:**
+   - Client payloads sending `userId`, `businessId`, or `role` are never trusted.
+   - The server derives user identity directly from the authenticated session.
+   - Every business mutation independently verifies that the authenticated user possesses an `ACTIVE` `BusinessMembership` for the target business with sufficient RBAC permissions.
+2. **Cross-Business Isolation Invariant:**
+   - User A cannot access, view private details, or update profiles of Business B without a valid membership in Business B. Requests are rejected with `403 Forbidden`.
+   - Business switching in workspace routes must re-validate membership server-side.
+3. **Claim Verification Boundary:**
+   - Claim requests do not grant ownership upon submission.
+   - Claims require verified commercial documentation (GSTIN, trade license, official corporate domain email).
+   - Approval is restricted to verified administrators and executes inside an audited transaction.
+4. **Open-Redirect Hardening:**
+   - The `/auth/login` redirect handler whitelists relative internal paths (e.g. `/business/claim`, `/business/dashboard`) and rejects protocol-relative (`//`) or absolute external URLs.
+
+---
+
+## 17. Pricing Engine & Floor Calculator Security Invariants (Read-Only)
+
+1. **Zero Financial Mutation:**
+   - The pricing endpoint (`GET /api/markets/:marketId/pricing`) is strictly `GET` and read-only.
+   - It cannot initiate payments, charge payment methods, reserve positions, or alter ranking records.
+2. **Server Authority & Non-Authoritative Client:**
+   - The client supplies only `targetPosition` and optional context `businessId`.
+   - The server exclusively resolves the current occupant, current floor, base floor, and market capacity from authoritative state.
+3. **Competitor Data Privacy:**
+   - Pricing calculations expose only public market mechanics: target position, current qualifying amount, required qualifying amount, calculation mode, and explanation.
+   - **Strictly Masked:** Competitor user IDs, bank accounts, transaction references, audit logs, and internal risk scores are never included in pricing responses.
+4. **Whole Rupee Financial Invariant:**
+   - Inputs and calculations strictly enforce integer minor units (`amountMinor % 100 === 0`) and positive whole rupees (`amountRupees > 0 && Number.isSafeInteger(amountRupees)`).
+   - Floating-point arithmetic, fractions, and decimal rupees are rejected.
+5. **No Audit Flooding:**
+   - Read-only calculations do not emit high-volume security audit events to prevent log exhaustion. Security audit logging remains reserved for state-changing authentication, claim, and administrative operations.
+
+---
+
+## 18. Bid Intent Creation & Idempotency Boundary Security Controls (Milestone 0.11.0)
+
+1. **Authentication & Identity Resolution:**
+   - `POST /api/bid-intents`, `GET /api/bid-intents/:id`, and `POST /api/bid-intents/:id/cancel` require an authenticated session token.
+   - Anonymous or guest requests are rejected with `401 Unauthenticated`.
+   - The creator identity (`createdByUserId`) is derived exclusively from server session state, never from client body parameters.
+
+2. **Centralized RBAC Enforcement:**
+   - Membership and role permissions are evaluated via `assertAuthorized(membership, 'bidIntent.create')`.
+   - Allowed roles: `OWNER`, `ADMIN`.
+   - Denied roles: `EDITOR` (403), `FINANCE` (403). Role escalation via client payload is rejected.
+
+3. **Strict Cross-Business Isolation:**
+   - A caller can only create, view, or cancel BidIntents for businesses where they hold an active, authorized membership.
+   - Accessing or mutating another business's BidIntent is rejected with `403 ForbiddenBusinessAccessError`.
+
+4. **Authoritative Pricing Re-evaluation & Client Amount Tampering Defense:**
+   - Client-submitted amounts (`qualifyingAmountMinor`) are never accepted as authoritative.
+   - The server independently recomputes the current required qualifying amount using `PricingCalculator` against authoritative market state.
+   - Submitting ₹0.01, ₹1, or arbitrary discounted amounts is completely ineffective.
+   - If a client includes `clientCalculatedAmountMinor` and the market moved in the interim, the server halts with `409 PRICING_CHANGED` to prevent unintended commitments under stale quotes.
+
+5. **Scoped Idempotency Protection:**
+   - Idempotency keys are mandatory (`Idempotency-Key` header) and scoped to `(actorUserId, businessId, idempotencyKey)`.
+   - Replay attacks across different businesses or users fail because keys are isolated to the caller's context.
+   - Replaying a key with conflicting parameters (different target position, market, or business) is rejected with `409 IDEMPOTENCY_KEY_REUSED`.
+   - Deduplicated retries return the original intent without re-triggering creation audit events.
+
+6. **Audit Trail Integrity:**
+   - `BID_INTENT_CREATED` and `BID_INTENT_CANCELLED` are recorded in the append-only audit log with actor ID, business ID, market ID, target position, and qualifying amount.
+   - Sensitive competitor data, authentication secrets, and payment tokens are excluded from audit payloads.
+
+7. **Zero Financial Mutation & Non-Reservation Boundary:**
+   - Creation of a `BidIntent` creates zero payment gateway charges, zero ledger entries, and zero position locks.
+
+---
+
+## 11. PayU Payment Gateway Security Controls & Boundary Invariants (Milestone 0.12.0)
+
+1. **Zero Client Authority on Financial Records:**
+   - Client applications cannot supply authoritative payment amounts, status flags, transaction identifiers, or qualification states.
+   - The server exclusively recalculates and derives payment amounts from the server-side `BidIntent` (`qualifyingAmountMinor`).
+
+2. **Cryptographic SHA-512 Reverse-Hash Verification:**
+   - PayU India webhook payloads and browser callback responses are verified using PayU's documented SHA-512 reverse-hash formula:
+     `sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
+   - Hash comparisons are performed strictly using constant-time byte comparison (`crypto.timingSafeEqual`) on 128-character hexadecimal buffers. Naive string equality (`===`) is prohibited to eliminate timing side-channel attacks.
+
+3. **Merchant Secret & Salt Isolation:**
+   - The PayU Merchant Salt (`PAYU_MERCHANT_SALT`) is restricted to server-side runtime environments.
+   - It is never shipped in client bundles, never rendered in HTML form templates, never serialized in API responses, and never logged.
+
+4. **Audit Trail Secret Redaction:**
+   - Financial audit events (`PAYMENT_ORDER_CREATED`, `PAYMENT_WEBHOOK_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_FAILED`, `PAYMENT_CANCELLED`, `PAYMENT_STATE_CONFLICT`) record only safe operational identifiers: `paymentOrderId`, `bidIntentId`, `businessId`, `providerTransactionId`, `amountRupees`, and `status`.
+   - Hashes, merchant salts, credit card details, CVVs, and raw customer passwords are explicitly omitted.
+
+5. **Webhook Replay & Duplicate Attack Protection:**
+   - Incoming webhook payloads generate a deterministic SHA-256 fingerprint (`payloadHash`) across sorted parameters.
+   - Replayed or duplicate webhooks match existing event records and return HTTP 200 without creating secondary financial records or re-triggering state machine transitions.
+
+6. **Cross-Tenant Business Isolation:**
+   - `POST /api/bid-intents/:id/payment-order` and `GET /api/bid-intents/:id/payment` enforce session authentication and `BusinessMembership` verification.
+   - Members from Business A cannot create, inspect, or cancel payment orders belonging to Business B (`403 Forbidden`).
+
+7. **Zero Ranking Mutation Security Barrier:**
+   - Under no circumstances does a verified payment callback or webhook directly update `ranking_entries`, modify `MarketParticipation.currentPosition`, or create `PositionHistory` rows. Ranking mutation remains strictly gated for Milestone 0.13.0.
+
+---
+
+## 12. Atomic Ranking Settlement Security Controls & Concurrency Invariants (Milestone 0.13.0)
+
+1. **Zero Client Ranking Authority:**
+   - Client applications cannot supply authoritative positions, ranking orders, displacement targets, or qualifying amounts.
+   - The ranking settlement boundary resolves target position, business ID, market ID, and paid amount exclusively from the verified server-side `PaymentOrder` and `BidIntent`.
+
+2. **Confirmed Payment Prerequisite Gate:**
+   - Only payments in `CONFIRMED` state can initiate a settlement transaction.
+   - State `SUCCEEDED` is insufficient (requires independent PayU reconciliation before crossing the ranking boundary).
+   - In-flight (`PENDING`), initial (`CREATED`), or terminated (`FAILED`, `CANCELLED`, `EXPIRED`) orders are strictly rejected (`422 PAYMENT_NOT_CONFIRMED`).
+
+3. **Settlement RBAC & Object-Level Authorization:**
+   - Initiating ranking settlement requires active business membership with `rankingSettlement.create` permission (`OWNER`, `ADMIN`).
+   - Roles `EDITOR` and `FINANCE` are denied (`403 UnauthorizedSettlementAccessError`).
+   - Members from Business A cannot trigger or inspect settlements for Business B (`403 Forbidden`).
+
+4. **Market-Level Concurrency & Serialization Defense:**
+   - Ranking mutations require an exclusive lock on the target market entity (`SELECT ... FOR UPDATE` in PostgreSQL, `ACTIVE_MARKET_LOCKS` in memory).
+   - Prevents lost updates, double-occupancy race conditions, and corrupted position orderings when two businesses settle concurrently within the same market.
+
+5. **Stale Pricing & Race Condition Defense:**
+   - Ranking calculation re-reads live market participations inside the transaction lock.
+   - If market state shifted between intent creation and payment confirmation such that the incumbent floor now exceeds the paid amount, the transaction safely aborts without mutating ranking, marking the settlement `FAILED` with `failureReason = 'RANKING_TARGET_NO_LONGER_ACHIEVABLE'`.
+   - The payment remains `CONFIRMED`; no extra money is charged and no partial position changes occur.
+
+6. **All-or-Nothing Transaction Atomicity:**
+   - If any step during settlement (ranking mutation, participation update, `PositionHistory` append, audit logging) encounters an error, the entire transaction rolls back.
+   - Ranking state is restored to its exact pre-transaction state. Zero partial mutations are permitted.
+
+7. **Idempotency & Replay Attack Defense:**
+   - Backed by database uniqueness on `payment_order_id`. Replayed settlement calls return the existing settlement outcome without repeating position movements or duplicating `PositionHistory` entries.
+
+8. **Audit Trail Redaction:**
+   - Ranking settlement audit records (`RANKING_SETTLEMENT_STARTED`, `RANKING_SETTLEMENT_SUCCEEDED`, `RANKING_POSITION_CHANGED`, etc.) log operational identifiers (`settlementId`, `paymentOrderId`, `targetPosition`, `amountRupees`).
+   - Payment provider secrets, merchant salts, webhook tokens, and user credentials are strictly excluded.
+
+---
+
+## 13. Production PostgreSQL Persistence & Settlement Recovery Security Controls (Milestone 0.14.0)
+
+1. **Server-Only Database Credentials:**
+   - Database connection strings (`DATABASE_URL`, `DATABASE_DIRECT_URL`) are strictly restricted to server-side environments and never exposed via `NEXT_PUBLIC_*` prefixes.
+   - Connection credentials, passwords, and TLS private keys are never included in error responses, log outputs, or client bundles.
+
+2. **Strict Production Persistence Guard:**
+   - `assertProductionPersistence()` executes before every financial operation (`createBidIntent`, `createPaymentOrder`, `processPayUWebhook`, `reconcilePaymentOrder`, `settleRanking`).
+   - If running in production mode (`NODE_ENV=production` or `PERSISTENCE_MODE=postgres`) and `DATABASE_URL` is missing or unreachable, the system fails closed immediately with an operational error.
+   - Silently falling back to volatile in-memory storage for financial transactions is architecturally prevented.
+
+3. **Concurrency & Race Condition Defense:**
+   - Database-level row locking (`SELECT id FROM markets WHERE id = $1 FOR UPDATE`) prevents concurrent ranking mutations within the same market across distributed application instances.
+   - Polling workers claim recovery jobs with `SELECT ... FOR UPDATE SKIP LOCKED` to prevent duplicate concurrent settlement executions across worker processes.
+   - Partial unique index `uq_market_participations_active_position` enforces that at most one active business occupies each integer position in a market.
+
+4. **Settlement Recovery RBAC & Operator Authorization:**
+   - The operational endpoint `POST /api/admin/settlement-recovery` is protected by user authentication and requires active administrator credentials (`admin:manage`).
+   - Non-admin or unauthenticated callers are rejected (`401 Unauthenticated` / `403 Forbidden`).
+
+5. **Tenant Isolation Across Repositories:**
+   - All repository query methods (`getPaymentOrdersByBusiness`, `getBidIntentsByBusiness`, `getSettlementsByBusiness`) enforce tenant scoping by `businessId`.
+   - Direct database queries validate foreign keys against canonical `businesses` and `markets` entities, preventing orphan or spoofed records.
+
+---
+
+## 14. Cache Security, Tenant Privacy & Edge Rate Limiting (Milestone 0.18.0)
+
+1. **Shared Cache Isolation & Private No-Store Enforcement:**
+   - All private business workspace endpoints (`/business/dashboard/**`), financial operations (`/api/markets/*/pricing`, `/api/payments/**`, `/api/bid-intents/**`), and administrative operations (`/admin/**`, `/api/admin/**`) strictly emit `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate`.
+   - Sensitive tenant ranking histories, business profiles, and notification feeds are strictly prohibited from being stored in shared CDN or browser caches.
+
+2. **Post-Commit Invalidation Ordering & Consistency:**
+   - Cache invalidation triggers strictly *after* ranking settlement transactions commit to persistent storage.
+   - Cache invalidation failures are captured to a resilient recovery queue and will never cause a committed transaction or verified payment to abort or rollback.
+   - Uncommitted or speculative ranking states are never published or cached.
+
+3. **Privacy-Preserving IP Hashing & Edge Perimeter Defense:**
+   - Client IP addresses are hashed using SHA-256 with a secret server salt before evaluating sliding-window rate limit counters.
+   - Raw IP addresses are never retained in memory caches, telemetry tables, or operational audit logs.
+   - Rate limiting headers (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`) provide transparent feedback to API consumers without exposing internal network details.
+
+4. **Production Persistence Enforcement on Operational SEO Repositories:**
+   - `PostgresSeoAuditRepository` implements zero silent fallback in production environments (`NODE_ENV=production` or `PERSISTENCE_MODE=postgres`).
+   - If PostgreSQL persistence is unreachable or unconfigured, administrative audit operations fail closed with explicit configuration errors rather than quietly substituting volatile memory caches.
+
+---
+
+## 15. Distributed State Security, Proxy Anti-Spoofing & Crawler Defense (Milestone 0.19.0)
+
+1. **Proxy Anti-Spoofing & Trusted Upstream Invariant:**
+   - Client-supplied `X-Forwarded-For` and `X-Real-IP` headers are strictly rejected unless the immediate network socket originates from an explicitly trusted proxy CIDR or loopback interface (`isTrustedProxy`).
+   - Untrusted connections default to the direct connection IP address, neutralizing IP-spoofing attempts aimed at bypassing rate limits or impersonating tenants.
+
+2. **Cryptographic IP Token Derivation (Zero Collision Risk):**
+   - Client IP addresses are normalized and hashed using FIPS 180-4 SHA-256 combined with a high-entropy secret salt (`RATE_LIMIT_SALT`).
+   - Replaces vulnerable bitwise and truncated hashes with a full 256-bit entropy space, guaranteeing zero token collisions across distributed clusters.
+
+3. **Verified Crawler Authorization Policy:**
+   - Client requests asserting `User-Agent: Googlebot` or `Bingbot` are treated as unverified public clients by default.
+   - Elevated crawler rate-limit headroom (2x) is granted strictly when validated through infrastructure-level edge bot headers (`cf-verified-bot: true` or `x-verified-bot: true`).
+   - Prevents scrapers and malicious bots from bypassing discovery rate limits by spoofing well-known crawler signatures.
+
+4. **Distributed Outbox Security & Single-Active Worker Lease:**
+   - Durable outboxes (`cache_invalidation_jobs`, `settlement_recovery_jobs`) utilize PostgreSQL `FOR UPDATE SKIP LOCKED` and explicit lease timestamps (`locked_until`).
+   - Prevents double-processing of financial settlement jobs or redundant cache flushes across horizontally scaled application instances.
+   - Session-level advisory locking (`pg_try_advisory_lock(829104812)`) guarantees single-active runner status for the background reconciler worker without external distributed locking infrastructure.
+
+
+
+

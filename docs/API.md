@@ -41,19 +41,353 @@ GET  /api/v1/auth/me
 
 ---
 
-## 4. Public Discovery Endpoints (Read-Only)
+## 4. Public Discovery & Directory Endpoints (Read-Only)
 
 ```http
-GET /api/v1/markets
+GET /api/markets
+GET /api/markets/search
 GET /api/v1/markets/:marketId
 GET /api/v1/markets/:marketId/ranking
 GET /api/v1/businesses/:businessId
 ```
 
-### Public Data Masking Rules:
+### 4.1 Market Directory Listing (`GET /api/markets`)
+Returns paginated published markets for public discovery. Only exposes markets where `publicationStatus === 'PUBLISHED' && status === 'PUBLISHED'`.
+
+**Query Parameters:**
+- `page` (integer, default: `1`): Current page index.
+- `pageSize` (integer, default: `24`, max: `100`): Records per page.
+- `location` (string, optional): City slug filter (e.g. `jaipur`, `delhi`, `mumbai`).
+- `category` (string, optional): Category slug filter (e.g. `interior-designers`, `restaurants`).
+- `sortBy` (enum, optional):
+  - `qualifying_amount_desc` (default): Highest top qualifying floor first.
+  - `alphabetical`: Ascending by market slug.
+  - `recent`: Most recently published first.
+
+**Success Response (HTTP 200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "mkt-jaipur-interior-designers",
+      "slug": "jaipur/interior-designers",
+      "cityId": "city-jaipur",
+      "cityName": "Jaipur",
+      "citySlug": "jaipur",
+      "stateId": "state-rajasthan",
+      "stateName": "Rajasthan",
+      "countryName": "India",
+      "categoryId": "cat-interior-designers",
+      "categoryName": "Interior Designers",
+      "categorySlug": "interior-designers",
+      "publicUrl": "/jaipur/interior-designers",
+      "publicationStatus": "PUBLISHED",
+      "relevantPublicMetrics": {
+        "totalBusinesses": 48,
+        "activePositions": 8,
+        "topQualifyingAmountMinor": 2600000
+      },
+      "publishedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 24,
+    "total": 6,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPrevPage": false
+  }
+}
+```
+
+### 4.2 Unified Market Search (`GET /api/markets/search`)
+Executes canonical taxonomy resolution over user input query strings across cities, categories, and direct markets.
+
+**Query Parameters:**
+- `q` (string, required): Free-text query (e.g. `Jaipur`, `Interior Designers`, `Delhi Restaurants`).
+
+**Success Response (HTTP 200 OK):**
+```json
+{
+  "query": "Delhi Restaurants",
+  "results": [
+    {
+      "type": "MARKET",
+      "label": "Delhi × Restaurants",
+      "sublabel": "Published Market",
+      "href": "/delhi/restaurants",
+      "marketCard": { ... },
+      "found": true
+    }
+  ]
+}
+```
+
+### 4.3 Commercial Locations Listing (`GET /api/locations`)
+Returns published commercial locations for public directory and city page routing. Only exposes cities with at least one active published market.
+
+**Query Parameters:**
+- `slug` (string, optional): Look up specific canonical location by slug or alias (e.g. `jaipur`, `bombay`).
+- `state` (string, optional): Filter locations by state slug (e.g. `rajasthan`, `haryana`).
+- `search` (string, optional): Free-text search matching city name, slug, state, or alias.
+
+**Success Response (HTTP 200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "city-jaipur",
+      "name": "Jaipur",
+      "slug": "jaipur",
+      "state": "Rajasthan",
+      "stateName": "Rajasthan",
+      "stateSlug": "rajasthan",
+      "country": "India",
+      "countryName": "India",
+      "countrySlug": "india",
+      "status": "PUBLISHED",
+      "marketCount": 2,
+      "activeMarketCount": 2,
+      "publicUrl": "/jaipur"
+    }
+  ],
+  "pagination": {
+    "total": 3
+  }
+}
+```
+
+### 4.4 Category Directory & Discovery Listing (`GET /api/categories`)
+Returns published business categories for public directory and category page routing. Only exposes categories with at least one active published market.
+
+**Query Parameters:**
+- `slug` (string, optional): Look up specific canonical category by slug or alias (e.g. `interior-designers`, `restaurants`).
+- `search` (string, optional): Free-text search matching category name, slug, description, or aliases.
+
+**Success Response (HTTP 200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "cat-interior-designers",
+      "name": "Interior Designers",
+      "slug": "interior-designers",
+      "description": "Professional residential, commercial, and modular interior designers competing for local market visibility.",
+      "status": "PUBLISHED",
+      "marketCount": 3,
+      "activeMarketCount": 3,
+      "publicUrl": "/categories/interior-designers"
+    }
+  ],
+  "pagination": {
+    "total": 2
+  }
+}
+```
+
+### 4.5 Business Directory & Public Profile Listing (`GET /api/businesses`)
+Returns published business summaries or detailed profiles. Enforces separation between Business identity, Market participations, and paid visibility rankings.
+
+**Query Parameters:**
+- `slug` (string, optional): Look up specific canonical business profile by slug (e.g. `royal-interiors-jaipur`).
+- `search` (string, optional): Free-text search matching business name, slug, tagline, or description.
+- `category` (string, optional): Filter by category slug (e.g. `interior-designers`).
+- `location` (string, optional): Filter by location slug (e.g. `jaipur`).
+- `verification` (string, optional): Filter by verification status (`VERIFIED`).
+- `page` / `pageSize` (integers, optional): Pagination controls.
+
+**Success Response (HTTP 200 OK — List):**
+```json
+{
+  "data": [
+    {
+      "id": "biz-royal-interiors",
+      "name": "Royal Interiors Studio",
+      "slug": "royal-interiors-jaipur",
+      "description": "Architectural interior design firm delivering luxury residences...",
+      "verificationStatus": "VERIFIED",
+      "publicationStatus": "PUBLISHED",
+      "primaryCategory": {
+        "id": "cat-interior-designers",
+        "name": "Interior Designers",
+        "slug": "interior-designers"
+      },
+      "primaryLocation": {
+        "id": "city-jaipur",
+        "name": "Jaipur",
+        "slug": "jaipur",
+        "stateName": "Rajasthan"
+      },
+      "activeMarketCount": 1,
+      "publicUrl": "/businesses/royal-interiors-jaipur"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 24,
+    "total": 6,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPrevPage": false
+  }
+}
+```
+
+**Success Response (HTTP 200 OK — Detail Profile `?slug=royal-interiors-jaipur`):**
+```json
+{
+  "data": {
+    "id": "biz-royal-interiors",
+    "name": "Royal Interiors Studio",
+    "slug": "royal-interiors-jaipur",
+    "legalName": "Royal Interiors Architectural Solutions Pvt Ltd",
+    "tagline": "Refined bespoke architectural & modular interior living spaces across Rajasthan.",
+    "description": "Architectural interior design firm delivering luxury residences...",
+    "verificationStatus": "VERIFIED",
+    "publicationStatus": "PUBLISHED",
+    "categories": [
+      {
+        "id": "cat-interior-designers",
+        "name": "Interior Designers",
+        "slug": "interior-designers",
+        "publicUrl": "/categories/interior-designers"
+      }
+    ],
+    "locationsServed": [
+      {
+        "id": "city-jaipur",
+        "name": "Jaipur",
+        "slug": "jaipur",
+        "stateName": "Rajasthan",
+        "publicUrl": "/jaipur"
+      }
+    ],
+    "marketParticipations": [
+      {
+        "id": "mp-royal-interiors-jaipur",
+        "marketId": "mkt-jaipur-interior-designers",
+        "marketSlug": "jaipur/interior-designers",
+        "marketName": "Jaipur × Interior Designers",
+        "marketUrl": "/jaipur/interior-designers",
+        "cityName": "Jaipur",
+        "citySlug": "jaipur",
+        "categoryName": "Interior Designers",
+        "categorySlug": "interior-designers",
+        "participationStatus": "ACTIVE",
+        "currentPosition": 3,
+        "qualifyingAmountRupees": 24500
+      }
+    ],
+    "activeMarketCount": 1,
+    "publicUrl": "/businesses/royal-interiors-jaipur"
+  }
+}
+```
+
+### 4.6 Public Data Masking Rules:
 - Returns public business name, slug, category, location, verification status, and public visibility position.
 - **NEVER EXPOSES:** Owner user IDs, private contact details, gateway payment references, internal transaction IDs, or risk scores.
-- Cached at edge/CDN with strict revalidation tags (TTL 30s to 3600s).
+- Cached at edge/CDN with strict revalidation tags (TTL 60s to 300s).
+
+---
+
+## 4.7 Authentication, Claim, Membership & Workspace API Contracts
+
+### 4.7.1 Authentication Endpoints
+
+#### `GET /api/auth/me`
+Resolves current user identity from authenticated session.
+- **Response (200 OK):**
+  ```json
+  {
+    "user": {
+      "id": "user-ajay",
+      "email": "ajay@royalinteriors.example.com",
+      "displayName": "Ajay Sharma",
+      "status": "ACTIVE",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  }
+  ```
+- **Response (401 Unauthorized):**
+  ```json
+  { "error": "Unauthenticated" }
+  ```
+
+#### `GET /api/auth/session`
+Returns active session tokens and expiration timestamp.
+
+#### `POST /api/auth/logout`
+Terminates active session and clears auth cookies.
+
+### 4.7.2 Business Claim Endpoints
+
+#### `GET /api/business-claims`
+- **Query Params:** `?businessId=...` or `?claimantUserId=...`
+- Returns claims matching criteria. Non-admin users are restricted to their own claims.
+
+#### `POST /api/business-claims`
+- **Access:** Authenticated claimant only.
+- **Payload:**
+  ```json
+  {
+    "businessId": "biz-artisanal-decor",
+    "claimantName": "Rahul Nair",
+    "claimantEmail": "rahul@prospective.example.com",
+    "claimantRoleDescription": "Founder & Managing Director",
+    "evidenceType": "GSTIN",
+    "evidenceReference": "08AAACR1234F1Z5"
+  }
+  ```
+- **Responses:**
+  - `201 Created`: Claim registered in `PENDING` status.
+  - `400 Bad Request`: Missing mandatory verification evidence.
+  - `401 Unauthorized`: Claimant not authenticated.
+  - `409 Conflict`: Active claim for this business + claimant is already pending.
+
+#### `POST /api/business-claims/:id/review`
+- **Access:** Platform Admin / Reviewer only.
+- **Payload:** `{ "decision": "APPROVE" | "REJECT", "rejectionReason": "..." }`
+- **Effect:** If approved, atomically creates an `ACTIVE` `OWNER` `BusinessMembership`.
+
+### 4.7.3 Business Membership Endpoints
+
+#### `GET /api/businesses/:businessId/members`
+- **Access:** Requires `business.members.view` permission (`OWNER`, `ADMIN`).
+- Returns list of authorized members, assigned roles (`OWNER`, `ADMIN`, `EDITOR`, `FINANCE`), and statuses.
+
+#### `POST /api/businesses/:businessId/members`
+- **Access:** Requires `business.members.invite` permission (`OWNER`, `ADMIN`).
+
+### 4.7.4 Business Workspace Endpoints
+
+#### `GET /api/businesses/:businessId/workspace`
+- **Access:** Requires `workspace.access` permission.
+- **Response (200 OK):**
+  ```json
+  {
+    "overview": {
+      "business": { "id": "biz-royal-interiors", "name": "Royal Interiors Studio", "verificationStatus": "VERIFIED" },
+      "membership": { "role": "OWNER", "status": "ACTIVE" },
+      "activeMarketsCount": 1,
+      "eligibleMarketsCount": 0,
+      "participatingMarketsCount": 1,
+      "hasPaidPosition": true,
+      "visibilitySummary": { "status": "ACTIVE", "message": "Business is actively listed with a qualifying paid visibility position." }
+    }
+  }
+  ```
+
+#### `GET /api/businesses/:businessId/markets`
+- **Access:** Requires `market.participation.view` permission.
+- Returns market items with truthful positions and qualifying floor amounts.
+
+#### `PATCH /api/businesses/:businessId/profile`
+- **Access:** Requires `business.update` permission.
+- Allows editing: `tagline`, `description`, `website`, `phone`, `email`, `address`, `logo`, `coverImage`.
+- Prevents mutation of canonical identity fields (`name`, `legalName`) without administrative verification.
 
 ---
 
@@ -152,6 +486,80 @@ X-Provider-Signature: <hmac-signature>
 
 ---
 
+## 4.8 Market Position Pricing Calculator & Floor Engine (Read-Only)
+
+```http
+GET /api/markets/:marketId/pricing
+```
+
+Authoritative, API-ready, read-only pricing engine endpoint calculating the exact minimum qualifying amount required for a business to target a specific position within a market.
+
+**Design Guarantees:**
+- **Read-Only / Zero Mutation:** Performs NO database mutation, creates NO transactions, bids, holds, or position history records.
+- **Whole Indian Rupee Rule:** All qualifying amounts must be positive whole Indian Rupees only (`amountMinor % 100 === 0`). Rejects decimals/paise without rounding.
+- **Strict Superseding Rule:** A target position occupied by an incumbent requires strictly exceeding the current qualifying amount by at least ₹1 (100 paise).
+- **Vacant Position Entry Floor:** Unoccupied target positions use the market's initial base floor (default ₹1,000 / 100,000 paise).
+- **Client is Never Authoritative:** Server resolves current occupant amounts, market status, and requesting business context.
+
+**Query Parameters:**
+- `targetPosition` (integer, required): Positive target position integer (1 to market capacity).
+- `businessId` (string, optional): Contextual business ID to resolve current position and handle edge cases (`ALREADY_HOLDING_POSITION`, `LOWER_POSITION`).
+
+**Success Response (HTTP 200 OK — Strict Superseding Example):**
+```json
+{
+  "data": {
+    "marketId": "mkt-jaipur-interior-designers",
+    "marketSlug": "jaipur/interior-designers",
+    "targetPosition": 1,
+    "currentPosition": null,
+    "currentBusinessPosition": null,
+    "currentQualifyingAmountMinor": 2850000,
+    "relevantCurrentQualifyingAmountMinor": 2850000,
+    "relevantCurrentQualifyingAmountRupees": 28500,
+    "requiredQualifyingAmountMinor": 2850100,
+    "requiredQualifyingAmountRupees": 28501,
+    "currency": "INR",
+    "calculationMode": "STRICT_SUPERSEDING",
+    "status": "CALCULATED",
+    "reason": "Required amount must strictly exceed the qualifying amount of ₹28,500 currently associated with Position #1 by at least ₹1.",
+    "calculatedAt": "2026-10-08T15:00:00.000Z",
+    "disclaimer": "This calculation reflects current market conditions and does not reserve a position, lock the required amount, or guarantee future visibility."
+  }
+}
+```
+
+**Success Response (HTTP 200 OK — Vacant Tail Position Example):**
+```json
+{
+  "data": {
+    "marketId": "mkt-jaipur-interior-designers",
+    "marketSlug": "jaipur/interior-designers",
+    "targetPosition": 20,
+    "currentPosition": null,
+    "currentBusinessPosition": null,
+    "currentQualifyingAmountMinor": null,
+    "relevantCurrentQualifyingAmountMinor": null,
+    "relevantCurrentQualifyingAmountRupees": null,
+    "requiredQualifyingAmountMinor": 100000,
+    "requiredQualifyingAmountRupees": 1000,
+    "currency": "INR",
+    "calculationMode": "INITIAL_FLOOR",
+    "status": "CALCULATED",
+    "reason": "Position #20 is currently unoccupied. Required amount is determined by this market's base entry floor of ₹1,000.",
+    "calculatedAt": "2026-10-08T15:00:00.000Z",
+    "disclaimer": "This calculation reflects current market conditions and does not reserve a position, lock the required amount, or guarantee future visibility."
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Missing or malformed `targetPosition` (e.g. non-numeric, decimal `1.5`, $\le 0$).
+- `404 Not Found`: Market ID does not exist in registry.
+- `422 Unprocessable Entity`: Target position exceeds market capacity, or market status does not permit pricing (e.g. `DRAFT`, `ARCHIVED`).
+
+---
+
 ## 7. Business & Claim Management
 
 ```http
@@ -213,3 +621,512 @@ GET   /api/v1/admin/audit-logs
 | `PAYMENT_AMOUNT_MISMATCH` | 400 | Gateway webhook amount differs from internal transaction |
 | `TRANSACTION_EXPIRED` | 410 | Payment hold window has elapsed |
 | `RATE_LIMIT_EXCEEDED` | 429 | Request rate exceeded allowable threshold |
+| `IDEMPOTENCY_KEY_REUSED` | 409 | Idempotency key reused with conflicting target position or payload |
+| `PRICING_CHANGED` | 409 | Market floor or requirement changed since client quote; requires recalculation |
+| `BID_INTENT_EXPIRED` | 410 | Bid intent TTL (15m) has elapsed; cannot be transitioned or used |
+| `BID_INTENT_NOT_CANCELLABLE` | 422 | Bid intent is not in PENDING_PAYMENT status |
+
+---
+
+## 10. Market Position Pricing API (Read-Only)
+
+```http
+GET /api/markets/:marketId/pricing?targetPosition=1&businessId=biz-abc
+```
+
+- Authoritative, point-in-time calculation of minimum qualifying amount to occupy a target position in a market.
+- Zero financial or ranking mutation.
+- Enforces whole Indian Rupee increments (`amountMinor % 100 === 0`).
+- Strict superseding rule (`incumbentAmount + 100 paise`).
+
+---
+
+## 11. Authenticated Bid Intent Creation & Idempotency Boundary API (Milestone 0.11.0)
+
+Boundary between read-only pricing calculation and future payment processing.
+**Crucial Invariant:** BidIntent creation executes zero financial mutation, zero position reservation, and zero ranking modification.
+
+```http
+POST /api/bid-intents
+GET  /api/bid-intents/:id
+POST /api/bid-intents/:id/cancel
+GET  /api/businesses/:businessId/bid-intents
+```
+
+### 11.1 Create Bid Intent (`POST /api/bid-intents`)
+Converts an authorized pricing requirement into an immutable, idempotent BidIntent.
+
+**Headers:**
+- `Authorization: Bearer <session-token>` (Required; rejects unauthenticated with `401`)
+- `Idempotency-Key: <unique-string>` (Mandatory; rejects missing with `400 IDEMPOTENCY_KEY_REQUIRED`)
+
+**Request Body:**
+```json
+{
+  "businessId": "biz-abc-interiors",
+  "marketId": "mkt-jaipur-interior-designers",
+  "targetPosition": 1,
+  "clientCalculatedAmountMinor": 2850100
+}
+```
+
+**Key Behaviors:**
+1. **RBAC:** Requires `OWNER` or `ADMIN` membership in target business (`EDITOR` and `FINANCE` rejected with `403`).
+2. **Re-evaluates Pricing:** Server recalculates current required amount from authoritative state. Client amounts are never trusted.
+3. **Stale Pricing Check:** If `clientCalculatedAmountMinor` differs from current server requirement, rejects with `409 PRICING_CHANGED` containing current required amount.
+4. **Scoped Idempotency:** Keys are scoped to `actorUserId:::businessId:::idempotencyKey`.
+   - Exact repeat request returns original `BidIntent` (no duplicate record, no duplicate audit event).
+   - Reused key with different payload returns `409 IDEMPOTENCY_KEY_REUSED`.
+5. **Expiration:** Fixed 15-minute TTL (`expiresAt = createdAt + 15m`).
+6. **Audit Trail:** Writes `BID_INTENT_CREATED` to append-only audit log on initial creation.
+
+**Response (`201 Created` or `200 OK` on Idempotent Replay):**
+```json
+{
+  "data": {
+    "id": "bi_9a8b7c6d5e4f3a2b1c",
+    "businessId": "biz-abc-interiors",
+    "marketId": "mkt-jaipur-interior-designers",
+    "createdByUserId": "usr-owner-1",
+    "membershipId": "mem-1",
+    "targetPosition": 1,
+    "qualifyingAmountMinor": 2850100,
+    "qualifyingAmountRupees": 28501,
+    "currency": "INR",
+    "status": "PENDING_PAYMENT",
+    "idempotencyKey": "9f8c1234-abcd",
+    "expiresAt": "2026-10-08T10:45:00.000Z",
+    "createdAt": "2026-10-08T10:30:00.000Z",
+    "pricingSnapshot": {
+      "marketId": "mkt-jaipur-interior-designers",
+      "marketSlug": "jaipur/interior-designers",
+      "targetPosition": 1,
+      "relevantCurrentQualifyingAmountMinor": 2850000,
+      "relevantCurrentQualifyingAmountRupees": 28500,
+      "requiredQualifyingAmountMinor": 2850100,
+      "requiredQualifyingAmountRupees": 28501,
+      "calculationMode": "STRICT_SUPERSEDING",
+      "reason": "Supersedes incumbent at Position #1 (₹28,500) by minimum increment of ₹1.",
+      "calculatedAt": "2026-10-08T10:30:00.000Z"
+    }
+  }
+}
+```
+
+### 11.2 Get Bid Intent (`GET /api/bid-intents/:id`)
+Retrieves an existing BidIntent. Enforces business membership authorization (`403` for callers not belonging to associated business). Dynamically reports `EXPIRED` if current time exceeds `expiresAt`.
+
+### 11.3 Cancel Bid Intent (`POST /api/bid-intents/:id/cancel`)
+Transitions a `PENDING_PAYMENT` intent to `CANCELLED`. Enforces RBAC (`OWNER` or `ADMIN`).
+Emits `BID_INTENT_CANCELLED` audit log. Rejects expired or already cancelled intents with `422 BID_INTENT_NOT_CANCELLABLE`.
+
+### 11.4 List Business Bid Intents (`GET /api/businesses/:businessId/bid-intents`)
+Lists historical and active bid intents for a business with pagination support. Enforces business membership.
+
+---
+
+## 12. Payment Gateway & Order Endpoints (Milestone 0.12.0)
+
+> **CRITICAL INVARIANT:** Payment confirmation in Milestone 0.12.0 does NOT mutate ranking. Position shifts, `PositionHistory` records, and `currentPosition` modifications remain strictly deferred to the future Atomic Ranking Engine.
+
+### 12.1 Create / Retrieve Payment Order (`POST /api/bid-intents/:id/payment-order`)
+Creates or idempotently retrieves a PayU payment order associated with a valid `PENDING_PAYMENT` BidIntent.
+
+**Authentication & RBAC:**
+- Requires authenticated user session.
+- Requires active `BusinessMembership` in the intent's business.
+- Requires permission `paymentOrder.create` (`OWNER` or `ADMIN`). `FINANCE` and `EDITOR` rejected with `403`.
+
+**Request Headers:**
+- `Authorization: Bearer <token>` or session cookie
+- `Idempotency-Key: <unique-string>` (Mandatory)
+- `Content-Type: application/json`
+
+**Request Body (Optional overrides for customer metadata):**
+```json
+{
+  "customerName": "Ajay Malik",
+  "customerEmail": "ajay@royalinteriors.com",
+  "customerPhone": "+919876543210"
+}
+```
+
+**Key Behaviors:**
+1. **Server Derives Amount:** Reads `qualifyingAmountMinor` strictly from the server-side `BidIntent`. Client amount is never accepted.
+2. **Whole Rupee Enforced:** Rejects decimal bid amounts (`amountMinor % 100 === 0`).
+3. **Currency Invariant:** Enforces `currency === 'INR'`.
+4. **BidIntent State Check:** Rejects expired (`409 BID_INTENT_EXPIRED`) or cancelled intents.
+5. **Scoped Idempotency:** Scoped to `actorUserId:::businessId:::bidIntentId:::idempotencyKey`. Exact retries return the existing order and checkout payload without double-creating PayU orders. Reused keys with conflicting parameters return `409 IDEMPOTENCY_KEY_REUSED`.
+6. **Checkout Payload:** Generates PayU India hosted checkout payload with SHA-512 request hash (`key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT`). Never exposes merchant salt.
+
+**Response (`201 Created` or `200 OK` on Idempotent Replay):**
+```json
+{
+  "data": {
+    "paymentOrder": {
+      "id": "po_1728384000000_abcd1234",
+      "bidIntentId": "bi_1728384000000_efgh5678",
+      "businessId": "biz-royal-interiors",
+      "marketId": "mkt-jaipur-interior-designers",
+      "createdByUserId": "user-ajay",
+      "membershipId": "mem-ajay-royal",
+      "provider": "PAYU",
+      "providerTransactionId": "txn_1728384000000_ijkl9012",
+      "amountMinor": 2850100,
+      "amountRupees": 28501,
+      "currency": "INR",
+      "status": "CREATED",
+      "idempotencyKey": "order-idem-1",
+      "createdAt": "2026-10-08T10:30:00.000Z",
+      "updatedAt": "2026-10-08T10:30:00.000Z"
+    },
+    "checkout": {
+      "provider": "PAYU",
+      "action": "https://test.payu.in/_payment",
+      "method": "POST",
+      "fields": {
+        "key": "gtKFFx",
+        "txnid": "txn_1728384000000_ijkl9012",
+        "amount": "28501.00",
+        "productinfo": "AageOnline Paid Visibility - Position #1",
+        "firstname": "Ajay Malik",
+        "email": "ajay@royalinteriors.com",
+        "phone": "+919876543210",
+        "surl": "http://localhost:3000/api/payments/callback/payu",
+        "furl": "http://localhost:3000/api/payments/callback/payu",
+        "udf1": "bi_1728384000000_efgh5678",
+        "udf2": "po_1728384000000_abcd1234",
+        "hash": "a1b2c3d4..."
+      }
+    }
+  }
+}
+```
+
+---
+
+### 12.2 Get Payment Order by BidIntent (`GET /api/bid-intents/:id/payment`)
+Retrieves the payment order associated with a BidIntent.
+
+**Authentication & RBAC:**
+- Requires `paymentOrder.view` permission (`OWNER`, `ADMIN`, `FINANCE`).
+- Rejects non-members and other businesses with `403`.
+- Returns `404` if no payment order has been initiated for the intent.
+
+**Response (`200 OK`):**
+```json
+{
+  "data": {
+    "id": "po_1728384000000_abcd1234",
+    "bidIntentId": "bi_1728384000000_efgh5678",
+    "businessId": "biz-royal-interiors",
+    "marketId": "mkt-jaipur-interior-designers",
+    "provider": "PAYU",
+    "amountRupees": 28501,
+    "amountMinor": 2850100,
+    "currency": "INR",
+    "status": "SUCCEEDED",
+    "createdAt": "2026-10-08T10:30:00.000Z",
+    "paidAt": "2026-10-08T10:32:00.000Z"
+  }
+}
+```
+
+---
+
+### 12.3 Cancel Payment Order (`POST /api/payments/:id/cancel`)
+Locally cancels an in-flight payment order prior to payment confirmation.
+
+**Authentication & RBAC:**
+- Requires `paymentOrder.cancel` permission (`OWNER`, `ADMIN`).
+- Cannot cancel already confirmed/succeeded orders (`422 PAYMENT_ORDER_NOT_CANCELLABLE`).
+
+---
+
+### 12.4 PayU Webhook Endpoint (`POST /api/payments/webhooks/payu`)
+Server-to-server webhook callback receiving official PayU payment notifications (`success`, `failure`).
+
+**Security & Verification:**
+1. **Public Endpoint with Provider Authentication:** No session authentication required; authenticated strictly via PayU reverse-hash signature.
+2. **Reverse Hash Verification:** Calculates expected SHA-512 hash (`SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key`) and validates with constant-time byte comparison (`timingSafeEqual`).
+3. **Invalid Hash:** Rejection with `400 Bad Request` and `PAYMENT_WEBHOOK_REJECTED` audit log.
+4. **Duplicate Protection:** Stores event fingerprint (`payloadHash`). Identical events return `DUPLICATE` with HTTP 200 without duplicate state transitions or duplicate audit entries.
+5. **Amount & Transaction Integrity:** Cross-checks `txnid`, `amountMinor`, and `currency`. Amount mismatch triggers security quarantine.
+6. **Zero Ranking Mutation:** Successful webhook transitions payment order to `SUCCEEDED` with `paidAt` timestamp and emits `PAYMENT_CONFIRMED` audit log. **Mutates 0 ranking positions.**
+
+**Response (`200 OK`):**
+```json
+{
+  "status": "SUCCESS",
+  "result": "PROCESSED",
+  "orderStatus": "SUCCEEDED"
+}
+```
+
+---
+
+### 12.5 Browser Callback Route (`POST` / `GET` `/api/payments/callback/payu`)
+Receives customer browser redirect from PayU after payment completion.
+- Verifies reverse-hash if present in form POST parameters.
+- Reconciles order state with server store.
+- Issues HTTP `303 See Other` redirecting customer back to `/business/dashboard/markets` with clean query params (`payment=success` or `payment=failed`).
+- Untrusted transport: Never updates payment state without valid server-verified cryptographic evidence.
+
+---
+
+## 13. Atomic Ranking Settlement API (Milestone 0.13.0)
+
+Production boundary transitioning verified, confirmed payments into atomic ranking mutations and append-only position history records.
+
+```http
+POST /api/payments/:id/settle-ranking
+GET  /api/payments/:id/settle-ranking
+```
+
+### 13.1 Execute Ranking Settlement (`POST /api/payments/:id/settle-ranking`)
+
+Orchestrates atomic market ranking mutation following independent payment verification.
+
+**Authentication & Authorization:**
+- Bearer session required.
+- Caller must belong to the business associated with the target `PaymentOrder`.
+- Requires `rankingSettlement.create` permission (`OWNER`, `ADMIN`).
+- Roles `EDITOR` and `FINANCE` are denied (`403 Forbidden`).
+
+**Core Invariants Enforced:**
+1. **Confirmed Payment Gate:** Strictly requires `paymentOrder.status === 'CONFIRMED'`. Statuses `CREATED`, `PENDING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED` are rejected with `422 PAYMENT_NOT_CONFIRMED`.
+2. **Zero Client Authority:** Request body parameters specifying amounts, positions, or businesses are ignored. All values are recalculated from the authoritative server-side `PaymentOrder`, `BidIntent`, and current market ranking state.
+3. **Idempotency Guarantee:** Backed by database uniqueness on `payment_order_id`. Replay requests return the existing settlement record without repeating ranking updates or generating duplicate `PositionHistory` records (`200 OK`).
+4. **Market-Level Concurrency Locking:** Acquires exclusive transaction lock on the target market before re-reading current ranking positions.
+5. **Strict Greater-Than Displacement:** Re-evaluates whether `paidAmountMinor > incumbentQualifyingAmountMinor`. If market state shifted between intent creation and settlement such that the floor exceeds paid amount, transaction safely aborts without mutating ranking, marking settlement `FAILED` with reason `RANKING_TARGET_NO_LONGER_ACHIEVABLE`. Payment remains `CONFIRMED`.
+6. **Append-Only History:** Emits immutable `PositionHistory` records for the target business and all shifted incumbents with cause `'PAID_VISIBILITY_SETTLEMENT'`.
+7. **All-or-Nothing Atomicity:** If any step (market participation update, history insertion, settlement persistence) fails, entire transaction rolls back to pre-settlement state.
+
+**Response (`200 OK` on Success or Idempotent Repeat):**
+```json
+{
+  "data": {
+    "settlement": {
+      "id": "rs_1728385000000_abcd12",
+      "paymentOrderId": "po_1728384000000_abcd1234",
+      "bidIntentId": "bi_1728384000000_efgh5678",
+      "businessId": "biz-royal-interiors",
+      "marketId": "mkt-jaipur-interior-designers",
+      "status": "SETTLED",
+      "targetPosition": 1,
+      "paidAmountMinor": 2850100,
+      "paidAmountRupees": 28501,
+      "previousPosition": 3,
+      "finalPosition": 1,
+      "createdAt": "2026-10-08T11:00:00.000Z",
+      "updatedAt": "2026-10-08T11:00:00.000Z",
+      "settledAt": "2026-10-08T11:00:00.000Z"
+    }
+  }
+}
+```
+
+**Conflict Response (`409 Conflict` - Business Condition):**
+```json
+{
+  "error": {
+    "code": "RANKING_TARGET_NO_LONGER_ACHIEVABLE",
+    "message": "Target Position #1 is no longer achievable with paid amount ₹28,501. Current required floor is strictly > ₹30,000.",
+    "settlementId": "rs_1728385000000_abcd12",
+    "status": "FAILED"
+  }
+}
+```
+
+**Retryable Failure Response (`503 Service Unavailable` - Transient / DB Error):**
+```json
+{
+  "error": {
+    "code": "RANKING_SETTLEMENT_RETRYABLE",
+    "message": "Market concurrency conflict: Target market is currently locked by another transaction.",
+    "settlementId": "rs_1728385000000_abcd12",
+    "status": "RETRYABLE"
+  }
+}
+```
+
+---
+
+### 13.2 Query Settlement Status (`GET /api/payments/:id/settle-ranking`)
+
+Inspects the ranking settlement record associated with a payment order.
+
+**Authentication & Authorization:**
+- Requires `rankingSettlement.view` permission (`OWNER`, `ADMIN`, `FINANCE`).
+- Tenant isolated: verified against caller's active business membership.
+
+**Response (`200 OK`):**
+```json
+{
+  "data": {
+    "settlement": {
+      "id": "rs_1728385000000_abcd12",
+      "paymentOrderId": "po_1728384000000_abcd1234",
+      "status": "SETTLED",
+      "marketId": "mkt-jaipur-interior-designers",
+      "businessId": "biz-royal-interiors",
+      "previousPosition": 3,
+      "finalPosition": 1,
+  ```
+
+---
+
+## 14. Administrative Operations & Reconciler APIs (Milestone 0.15.0)
+
+All administrative operations endpoints enforce strict server-side authorization. Callers must possess platform administrator privileges (`SUPERADMIN` or `ADMIN` role) or provide a valid worker secret (`x-admin-worker-secret` or `Authorization: Bearer <secret>`).
+
+### 14.1 Operations Overview Summary (`GET /api/admin/operations/summary`)
+Returns database-derived operational metrics, queue health, worker heartbeat, and readiness status.
+
+### 14.2 Payment Operations Listing (`GET /api/admin/payments`)
+Paginated and searchable query across all payment orders with sanitized failure classifications.
+- Query parameters: `page`, `limit`, `status`, `search`.
+
+### 14.3 Payment Order Detail (`GET /api/admin/payments/:id`)
+Inspects a single payment order, correlated ranking settlement, and provider events.
+
+### 14.4 On-Demand Payment Reconciliation (`POST /api/admin/payments/:id/reconcile`)
+Re-verifies an unresolved payment order with PayU outside ranking transactions, updates state, and enqueues settlement recovery if confirmed. Audited with operator ID.
+
+### 14.5 Trigger Payment Reconciliation Sweep (`POST /api/admin/payment-reconciliation`)
+Runs a bounded reconciliation sweep across unresolved payments.
+- Body parameters: `batchSize` (default: 20, max: 100), `olderThanMinutes` (default: 2).
+
+### 14.6 Ranking Settlements Listing (`GET /api/admin/settlements`)
+Paginated view of ranking settlements across all markets.
+- Query parameters: `page`, `limit`, `status`.
+
+### 14.7 Settlement Recovery Jobs (`GET /api/admin/recovery-jobs`)
+Paginated queue of settlement recovery jobs with status, attempt counter, and next eligible retry time.
+
+### 14.8 Manual Recovery Job Retry (`POST /api/admin/recovery-jobs/:id/retry`)
+Resets an eligible `FAILED` or `RETRYABLE` recovery job to `PENDING` and executes atomic settlement immediately.
+
+### 14.9 Trigger Settlement Recovery Sweep (`POST /api/admin/settlement-recovery`)
+Runs a bounded recovery cycle across claimed recovery jobs and orphaned confirmed payments.
+- Body parameters: `batchSize` (default: 20, max: 100).
+
+### 14.10 Reconciliation Run History (`GET /api/admin/reconciliation-runs`)
+Retrieves durable execution records of scheduled and manual reconciliation runs.
+
+### 14.11 Provider Webhook Events (`GET /api/admin/provider-events`)
+Paginated audit of persisted webhook/provider events with validation outcomes.
+
+---
+
+## 15. Business Workspace Ranking History & Notification APIs (Milestone 0.16.0)
+
+All business workspace endpoints enforce server-side authentication and tenant authorization through active `business_memberships`. Cross-business access is strictly rejected with `403 Forbidden`. Financial amounts and internal audit logs are excluded from member and public views.
+
+### 15.1 Workspace Markets Overview (`GET /api/business/dashboard/markets`)
+Lists all market participations for the caller's active business with current position, eligibility status, and latest historical movement context.
+
+### 15.2 Paginated Ranking Movement History (`GET /api/business/dashboard/ranking-history`)
+Auditable, append-only history of verified position movements for the authenticated business.
+- **Query Parameters:**
+  - `page`: integer (default: 1, min: 1)
+  - `limit`: integer (default: 20, max: 100)
+  - `marketId`: string (optional filter)
+  - `direction`: string (`UP`, `DOWN`, `ENTRY`, `ALL`, optional filter)
+- **Response (`200 OK`):**
+  - `data.history`: Array of `RankingHistoryItem` (`id`, `businessId`, `marketId`, `marketName`, `previousPosition`, `newPosition`, `direction`, `movementText`, `disclosure`, `createdAt`).
+  - `data.pagination`: Standard pagination object (`page`, `limit`, `totalCount`, `totalPages`).
+
+### 15.3 Business Notifications Inbox (`GET /api/business/dashboard/notifications`)
+Retrieves durable notifications for the business workspace (ranking drops, milestone crossings).
+- **Query Parameters:**
+  - `page`: integer (default: 1, min: 1)
+  - `limit`: integer (default: 20, max: 100)
+  - `unreadOnly`: boolean (`true` / `false`)
+
+### 15.4 Unread Notification Count (`GET /api/business/dashboard/notifications/unread-count`)
+Returns `{ data: { unreadCount: number } }` for workspace badges and notification icons.
+
+### 15.5 Mark Notification as Read (`POST /api/business/dashboard/notifications/:id/read`)
+Idempotently marks a business notification as read (`is_read = true`, `read_at = NOW()`). Validates caller membership in the target business.
+
+### 15.6 Notification Preferences (`GET / PUT /api/business/dashboard/notification-preferences`)
+- **GET:** Returns caller's notification settings (`emailRankingDrops`, `inAppRankingDrops`, `digestWindowMinutes`).
+- **PUT:** Updates preferences. Defaults ensure in-app notices are enabled and optional email alerts require explicit opt-in.
+
+---
+
+## 16. Search Engine Visibility & Discovery Audit APIs (Milestone 0.17.0)
+
+All SEO audit operations require administrative authorization (`ADMIN` or internal `WORKER_SECRET` bearer token). Public or unauthenticated calls return `401 Unauthorized` or `403 Forbidden`.
+
+### 16.1 SEO Operational Audit Status & History (`GET /api/admin/seo/audit`)
+Retrieves the latest audit summary, route exclusion tallies, quality findings, and Search Console adapter configuration.
+
+- **Headers:**
+  - `Authorization: Bearer <admin-token>`
+  - or `X-Worker-Secret: <WORKER_SECRET>`
+- **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "latestRun": {
+      "id": "seo-audit-1728469000000",
+      "startedAt": "2026-10-09T08:00:00.000Z",
+      "completedAt": "2026-10-09T08:00:01.000Z",
+      "totalCandidates": 15,
+      "eligibleCount": 11,
+      "excludedCount": 4,
+      "validationFailures": 0,
+      "sitemapChecksum": "3a8c1f...",
+      "exclusionsByReason": {
+        "UNPUBLISHED_STATUS": 2,
+        "THIN_DOORWAY_PAGE": 1,
+        "CANONICAL_CONFLICT": 1
+      },
+      "searchConsoleStatus": {
+        "configured": false,
+        "message": "Google Search Console credentials not configured (GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL / GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY missing)."
+      }
+    },
+    "searchConsole": {
+      "configured": false,
+      "message": "Google Search Console credentials not configured (GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL / GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY missing)."
+    },
+    "history": []
+  }
+}
+```
+
+### 16.2 Trigger Full SEO & Sitemap Audit (`POST /api/admin/seo/audit`)
+Executes an on-demand audit cycle: evaluates candidate URLs against the centralized eligibility policy, computes sitemap checksum, audits market taxonomy health, and records an append-only audit event.
+
+- **Headers:**
+  - `Authorization: Bearer <admin-token>`
+  - `Content-Type: application/json`
+- **Request Body (Optional):**
+```json
+{
+  "persistSnapshot": true
+}
+```
+- **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "run": { ... },
+    "audit": {
+      "findings": [],
+      "uncoveredCombinations": [],
+      "summary": { ... }
+    }
+  }
+}
+```
+- **Error Codes:**
+  - `401 Unauthorized`: Missing or invalid session/token.
+  - `403 Forbidden`: Authenticated user lacks `ADMIN` role.
+  - `500 Internal Server Error`: Audit execution failed (sanitized error message).
+

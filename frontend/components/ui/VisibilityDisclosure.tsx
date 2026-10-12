@@ -13,14 +13,14 @@ export const VisibilityDisclosure: React.FC<VisibilityDisclosureProps> = ({ comp
         padding: compact ? 'var(--space-2) var(--space-3)' : 'var(--space-4)',
         borderRadius: 'var(--radius-sm)',
         backgroundColor: 'rgba(11, 31, 59, 0.04)',
-        borderLeft: '3px solid var(--brand-teal)',
+        borderLeft: '3px solid #EA580C',
         margin: 'var(--space-3) 0',
       }}
       className="aage-visibility-disclosure"
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--brand-deep-emerald)', textTransform: 'uppercase' }}>
-          Sponsored Visibility Notice
+        <span style={{ fontSize: '12px', fontWeight: 800, color: '#EA580C', textTransform: 'uppercase' }}>
+          Paid Visibility Disclosure
         </span>
       </div>
       <p

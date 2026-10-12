@@ -157,7 +157,7 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
           transform: 'translateX(-50%)',
           width: '700px',
           height: '400px',
-          background: 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.2) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(234, 88, 12, 0.15) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -183,7 +183,7 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: 'var(--brand-lime)',
+                backgroundColor: '#EA580C',
               }}
               className="live-indicator-dot"
             />
@@ -193,7 +193,7 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
                 fontWeight: 800,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: 'var(--brand-lime)',
+                color: '#FB923C',
               }}
             >
               Live Competitive Stage
@@ -258,12 +258,12 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
             style={{
               padding: '6px 16px',
               borderRadius: 'var(--radius-pill)',
-              backgroundColor: 'var(--brand-lime)',
-              color: 'var(--brand-deep-navy)',
+              backgroundColor: '#EA580C',
+              color: '#ffffff',
               fontWeight: 800,
               fontSize: '12px',
               textDecoration: 'none',
-              boxShadow: '0 2px 8px rgba(199, 240, 0, 0.3)',
+              boxShadow: '0 2px 8px rgba(234, 88, 12, 0.35)',
             }}
           >
             Explore Market Ladder →
@@ -288,7 +288,7 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
           zIndex: 2,
         }}
       >
-        <span style={{ color: 'var(--brand-lime)', fontWeight: 800 }}>● ACTIVITY:</span>
+        <span style={{ color: '#FB923C', fontWeight: 800 }}>● ACTIVITY:</span>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {activeShiftNotice}
         </span>
@@ -313,8 +313,8 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
             borderRadius: 'var(--radius-lg)',
             padding: 'var(--space-6)',
-            border: '2px solid var(--brand-lime)',
-            boxShadow: '0 0 35px rgba(199, 240, 0, 0.25)',
+            border: '2px solid #EA580C',
+            boxShadow: '0 0 35px rgba(234, 88, 12, 0.3)',
             textAlign: 'center',
             position: 'relative',
           }}
@@ -325,8 +325,8 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
               top: '-14px',
               left: '50%',
               transform: 'translateX(-50%)',
-              backgroundColor: 'var(--brand-lime)',
-              color: 'var(--brand-deep-navy)',
+              backgroundColor: '#EA580C',
+              color: '#ffffff',
               fontSize: '11px',
               fontWeight: 900,
               letterSpacing: '0.06em',
@@ -358,7 +358,7 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              backgroundColor: 'rgba(16, 185, 129, 0.2)',
+              backgroundColor: 'rgba(234, 88, 12, 0.2)',
               padding: '4px 12px',
               borderRadius: 'var(--radius-pill)',
               marginBottom: 'var(--space-4)',
@@ -382,7 +382,7 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
               <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', display: 'block' }}>
                 Leading Qualifying Amount
               </span>
-              <span style={{ fontSize: '24px', fontWeight: 900, color: 'var(--brand-lime)' }}>
+              <span style={{ fontSize: '24px', fontWeight: 900, color: '#FB923C' }}>
                 {formatINR(leader.amountMinor)}
               </span>
             </div>
@@ -546,7 +546,7 @@ export const LiveSpotlight: React.FC<LiveSpotlightProps> = ({
           style={{
             fontSize: '13px',
             fontWeight: 700,
-            color: 'var(--brand-lime)',
+            color: '#FB923C',
             textDecoration: 'none',
           }}
         >

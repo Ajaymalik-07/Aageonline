@@ -28,7 +28,7 @@ export const PositionMovement: React.FC<PositionMovementProps> = ({
         }}
         aria-label="Leading qualifying position"
       >
-        <span aria-hidden="true" style={{ color: 'var(--brand-lime)', fontSize: '14px' }}>●</span>
+        <span aria-hidden="true" style={{ color: '#FB923C', fontSize: '14px' }}>●</span>
         Leading qualifying position
       </span>
     );
@@ -45,7 +45,7 @@ export const PositionMovement: React.FC<PositionMovementProps> = ({
           fontSize: '12px',
           fontWeight: 700,
           color: 'var(--brand-emerald)',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          backgroundColor: 'rgba(234, 88, 12, 0.1)',
           padding: '2px 8px',
           borderRadius: 'var(--radius-pill)',
         }}
@@ -91,7 +91,7 @@ export const PositionMovement: React.FC<PositionMovementProps> = ({
           fontSize: '12px',
           fontWeight: 700,
           color: 'var(--brand-teal)',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          backgroundColor: 'rgba(234, 88, 12, 0.1)',
           padding: '2px 8px',
           borderRadius: 'var(--radius-pill)',
         }}

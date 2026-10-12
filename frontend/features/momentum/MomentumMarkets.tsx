@@ -13,7 +13,15 @@ export const MomentumMarkets: React.FC<MomentumMarketsProps> = ({ markets }) => 
   const momentumList = markets.slice(1, 5);
 
   return (
-    <section className="container" aria-label="Markets Gaining Momentum">
+    <section
+      aria-label="Markets Gaining Momentum"
+      style={{
+        padding: 'clamp(var(--space-8), 5vw, var(--space-12)) 0',
+        backgroundColor: '#ffffff',
+        borderBottom: '1px solid var(--border-subtle)',
+      }}
+    >
+      <div className="container">
       <div
         style={{
           display: 'flex',
@@ -109,7 +117,7 @@ export const MomentumMarkets: React.FC<MomentumMarketsProps> = ({ markets }) => 
                     fontWeight: 800,
                     padding: '2px 8px',
                     borderRadius: 'var(--radius-pill)',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    backgroundColor: 'rgba(234, 88, 12, 0.1)',
                     color: 'var(--brand-emerald)',
                   }}
                 >
@@ -181,6 +189,7 @@ export const MomentumMarkets: React.FC<MomentumMarketsProps> = ({ markets }) => 
             </a>
           </div>
         ))}
+      </div>
       </div>
     </section>
   );

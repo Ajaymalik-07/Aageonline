@@ -12,11 +12,7 @@ export function Container({ children, as: Component = 'div', className = '', sty
     <Component
       className={`container ${className}`.trim()}
       style={{
-        width: '100%',
-        maxWidth: '1280px',
-        marginLeft: 'auto',
-        marginRight: 'auto',
-        overflowX: 'clip',
+        maxWidth: 'var(--container-max)',
         ...style,
       }}
       {...props}

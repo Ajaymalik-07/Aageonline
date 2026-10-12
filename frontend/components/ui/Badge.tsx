@@ -26,15 +26,15 @@ export const Badge: React.FC<BadgeProps> = ({
 
   const variantStyles: Record<string, React.CSSProperties> = {
     'position-1': {
-      backgroundColor: 'var(--brand-lime)',
-      color: 'var(--brand-deep-navy)',
+      backgroundColor: '#EA580C',
+      color: '#ffffff',
       fontWeight: 800,
-      border: '1px solid #a3c400',
+      border: '1px solid #EA580C',
     },
     'position-top': {
-      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+      backgroundColor: 'rgba(234, 88, 12, 0.15)',
       color: 'var(--brand-teal)',
-      border: '1px solid rgba(16, 185, 129, 0.3)',
+      border: '1px solid rgba(234, 88, 12, 0.3)',
     },
     'position-default': {
       backgroundColor: 'rgba(100, 116, 139, 0.1)',
@@ -42,9 +42,9 @@ export const Badge: React.FC<BadgeProps> = ({
       border: '1px solid var(--border-subtle)',
     },
     verified: {
-      backgroundColor: 'rgba(5, 150, 105, 0.12)',
-      color: 'var(--brand-emerald)',
-      border: '1px solid rgba(5, 150, 105, 0.25)',
+      backgroundColor: 'rgba(234, 88, 12, 0.12)',
+      color: '#EA580C',
+      border: '1px solid rgba(234, 88, 12, 0.25)',
     },
     sponsored: {
       backgroundColor: 'rgba(11, 31, 59, 0.08)',

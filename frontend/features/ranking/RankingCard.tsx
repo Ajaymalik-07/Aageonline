@@ -31,12 +31,12 @@ export const RankingCard: React.FC<RankingCardProps> = ({
       style={{
         backgroundColor: 'var(--surface-card)',
         borderRadius: 'var(--radius-lg)',
-        border: isFirst ? '1px solid rgba(199, 240, 0, 0.5)' : '1px solid var(--border-subtle)',
+        border: isFirst ? '1px solid rgba(234, 88, 12, 0.5)' : '1px solid var(--border-subtle)',
         padding: 'var(--space-4) var(--space-5)',
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--space-3)',
-        boxShadow: isFirst ? 'var(--elevation-2), 0 4px 14px rgba(199, 240, 0, 0.12)' : 'var(--elevation-1)',
+        boxShadow: isFirst ? 'var(--elevation-2), 0 4px 14px rgba(234, 88, 12, 0.15)' : 'var(--elevation-1)',
         position: 'relative',
         transition: 'transform var(--motion-fast), box-shadow var(--motion-fast)',
       }}

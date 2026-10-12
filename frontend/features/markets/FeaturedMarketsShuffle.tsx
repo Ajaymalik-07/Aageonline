@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Market } from '../../types/market';
 import { formatINR } from '../../lib/utils/format';
+import { getCategoryImage } from '../../lib/category-images';
 
 export interface FeaturedMarketsShuffleProps {
   markets: Market[];
@@ -12,9 +13,20 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
   markets,
 }) => {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
-  const [displayedIndices, setDisplayedIndices] = useState<number[]>([0, 1, 2, 3]);
-  const [shufflingIndex, setShufflingIndex] = useState<number | null>(null);
+  const [windowOffset, setWindowOffset] = useState<number>(0);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [isAutoShuffling, setIsAutoShuffling] = useState<boolean>(true);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   const filteredMarkets = activeCategoryFilter === 'ALL'
     ? markets
@@ -26,47 +38,44 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
         return true;
       });
 
-  // Ensure displayedIndices point within valid filtered markets
-  const pool = filteredMarkets.length > 0 ? filteredMarkets : markets;
+  // Sort pool primarily by highest top floor (topQualifyingAmountMinor) descending:
+  const basePool = filteredMarkets.length > 0 ? filteredMarkets : markets;
+  const pool = [...basePool].sort(
+    (a, b) => (b.topQualifyingAmountMinor ?? 0) - (a.topQualifyingAmountMinor ?? 0)
+  );
 
-  // Single card 1-by-1 shuffle transition
-  const shuffleNextCard = () => {
-    if (pool.length <= 4) return;
-
-    // Pick slot 0 to cycle out
-    setShufflingIndex(0);
-
+  // Advance to next data-driven market set in the sorted pool
+  const advanceNext = () => {
+    if (pool.length <= 4 || isTransitioning) return;
+    setIsTransitioning(true);
     setTimeout(() => {
-      setDisplayedIndices((prev) => {
-        const next = [...prev];
-        // Find next market index not currently displayed
-        const currentlyShown = new Set(next);
-        let candidate = (next[next.length - 1] + 1) % pool.length;
-        while (currentlyShown.has(candidate) && currentlyShown.size < pool.length) {
-          candidate = (candidate + 1) % pool.length;
-        }
-
-        // Shift array: remove first, add new at end
-        next.shift();
-        next.push(candidate);
-        return next;
-      });
-      setShufflingIndex(null);
+      setWindowOffset((prev) => (prev + 1) % pool.length);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
     }, 450);
   };
 
   useEffect(() => {
-    if (!isAutoShuffling) return;
+    if (!isAutoShuffling || isHovered || pool.length <= 4) return;
 
     const timer = setInterval(() => {
-      shuffleNextCard();
+      advanceNext();
     }, 5500);
 
     return () => clearInterval(timer);
-  }, [isAutoShuffling, pool.length]);
+  }, [isAutoShuffling, isHovered, pool.length, isTransitioning]);
+
+  const displayedMarkets = pool.length <= 4
+    ? pool
+    : [0, 1, 2, 3].map((i) => pool[(windowOffset + i) % pool.length]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}
+    >
       {/* Section Header with Category Tabs & Shuffle Controls */}
       <div
         style={{
@@ -78,7 +87,7 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
         }}
       >
         <div>
-          <div style={{ display: 'inline-flex', marginBottom: '6px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span
               style={{
                 fontSize: '11px',
@@ -87,11 +96,26 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                 letterSpacing: '0.08em',
                 padding: '2px 10px',
                 borderRadius: 'var(--radius-pill)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                color: 'var(--brand-emerald)',
+                backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                color: '#EA580C',
               }}
             >
               Active Local Markets ({pool.length})
+            </span>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                padding: '1px 8px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'rgba(234, 88, 12, 0.08)',
+                color: '#EA580C',
+                border: '1px solid rgba(234, 88, 12, 0.25)',
+              }}
+            >
+              Illustrative Markets
             </span>
           </div>
 
@@ -104,11 +128,11 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
               margin: 0,
             }}
           >
-            Featured City <span style={{ color: 'var(--brand-emerald)' }}>Position Ladders</span>
+            Featured City <span style={{ color: '#EA580C' }}>Market Ladders</span>
           </h2>
 
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
-            Live business discovery ladders. Smooth 1-by-1 market card shuffle.
+            Explore illustrative Location + Category markets and see how paid visibility positions are formed.
           </p>
         </div>
 
@@ -136,13 +160,13 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                 type="button"
                 onClick={() => {
                   setActiveCategoryFilter(cat.id);
-                  setDisplayedIndices([0, 1, 2, 3]);
+                  setWindowOffset(0);
                 }}
                 style={{
                   padding: '6px 12px',
                   borderRadius: 'var(--radius-pill)',
                   border: 'none',
-                  backgroundColor: activeCategoryFilter === cat.id ? 'var(--brand-emerald)' : 'transparent',
+                  backgroundColor: activeCategoryFilter === cat.id ? '#EA580C' : 'transparent',
                   color: activeCategoryFilter === cat.id ? '#ffffff' : 'var(--text-secondary)',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -157,7 +181,8 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
 
           <button
             type="button"
-            onClick={shuffleNextCard}
+            onClick={advanceNext}
+            title="Rotate to next data-driven market set"
             style={{
               padding: '8px 14px',
               borderRadius: 'var(--radius-pill)',
@@ -175,6 +200,7 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
           <button
             type="button"
             onClick={() => setIsAutoShuffling(!isAutoShuffling)}
+            title={isAutoShuffling ? 'Pause automatic market rotation' : 'Resume automatic market rotation'}
             style={{
               padding: '8px 12px',
               borderRadius: 'var(--radius-pill)',
@@ -190,7 +216,7 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
         </div>
       </div>
 
-      {/* 4-Card Grid with 1-by-1 FLIP-style card shuffle */}
+      {/* 4-Card Grid with smooth transform & opacity transitions */}
       <div
         style={{
           display: 'grid',
@@ -198,11 +224,8 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
           gap: 'var(--space-5)',
         }}
       >
-        {displayedIndices.map((marketIndex, slotIndex) => {
-          const market = pool[marketIndex % pool.length];
-          const isShuffling = shufflingIndex === slotIndex;
-
-          const imageNumber = ((marketIndex % 18) + 1);
+        {displayedMarkets.map((market, slotIndex) => {
+          const categoryImage = getCategoryImage(market.category.slug || market.category.name);
 
           return (
             <a
@@ -220,9 +243,11 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                 justifyContent: 'space-between',
                 position: 'relative',
                 overflow: 'hidden',
-                transition: 'transform var(--motion-normal), opacity var(--motion-normal), box-shadow var(--motion-normal)',
-                opacity: isShuffling ? 0.3 : 1,
-                transform: isShuffling ? 'translateY(12px) scale(0.96)' : 'none',
+                transition: prefersReducedMotion
+                  ? 'opacity 300ms ease, box-shadow var(--motion-normal)'
+                  : 'transform 500ms cubic-bezier(0.16, 1, 0.3, 1), opacity 500ms ease, box-shadow var(--motion-normal)',
+                opacity: isTransitioning ? (prefersReducedMotion ? 0.7 : 0.35) : 1,
+                transform: isTransitioning && !prefersReducedMotion ? 'translateY(10px) scale(0.98)' : 'none',
               }}
             >
               {/* Visual Card Image Header with Floating Badges */}
@@ -236,7 +261,7 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                 }}
               >
                 <img
-                  src={`/assets/markets/auction-img${imageNumber}.jpg`}
+                  src={categoryImage}
                   alt={`${market.category.name} in ${market.location.name}`}
                   style={{
                     width: '100%',
@@ -292,7 +317,7 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                       fontWeight: 800,
                       padding: '3px 8px',
                       borderRadius: 'var(--radius-pill)',
-                      backgroundColor: 'rgba(5, 150, 105, 0.9)',
+                      backgroundColor: 'rgba(234, 88, 12, 0.9)',
                       color: '#ffffff',
                       boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                     }}
@@ -308,8 +333,8 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                   <span
                     style={{
                       fontSize: '11px',
-                      fontWeight: 700,
-                      color: 'var(--brand-teal)',
+                      fontWeight: 800,
+                      color: '#EA580C',
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
                       display: 'block',
@@ -344,16 +369,16 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Top Position Floor</span>
-                      <strong style={{ fontSize: '15px', color: 'var(--brand-deep-emerald)', fontWeight: 900 }}>
+                      <strong style={{ fontSize: '15px', color: '#EA580C', fontWeight: 900 }}>
                         {formatINR(market.topQualifyingAmountMinor)}
                       </strong>
                     </div>
 
                     {/* Mini Position Preview Ladder Bars */}
                     <div style={{ display: 'flex', gap: '3px', marginTop: '6px' }}>
-                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-lime)', borderRadius: '2px' }} title="#1 Active" />
-                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-teal)', borderRadius: '2px' }} title="#2 Active" />
-                      <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--brand-emerald)', borderRadius: '2px' }} title="#3 Active" />
+                      <div style={{ flex: 1, height: '4px', backgroundColor: '#EA580C', borderRadius: '2px' }} title="#1 Active" />
+                      <div style={{ flex: 1, height: '4px', backgroundColor: '#F97316', borderRadius: '2px' }} title="#2 Active" />
+                      <div style={{ flex: 1, height: '4px', backgroundColor: '#FB923C', borderRadius: '2px' }} title="#3 Active" />
                       <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--border-strong)', borderRadius: '2px' }} title="#4 Active" />
                       <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--border-subtle)', borderRadius: '2px' }} title="20+ Open" />
                     </div>
@@ -378,7 +403,7 @@ export const FeaturedMarketsShuffle: React.FC<FeaturedMarketsShuffleProps> = ({
                     style={{
                       fontSize: '13px',
                       fontWeight: 800,
-                      color: 'var(--brand-emerald)',
+                      color: '#EA580C',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',

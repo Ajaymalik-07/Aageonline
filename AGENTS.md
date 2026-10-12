@@ -96,6 +96,10 @@ Every AI agent working in this repository must strictly adhere to the following 
 10. **Accessibility & Design Token Compliance:**
     - Reference tokens defined in [DESIGN.md](file:///d:/Aage%20online/DESIGN.md).
     - Every interactive element must satisfy WCAG 2.2 AA standards (visible focus, minimum contrast, keyboard navigation, accessible states).
+11. **No Automated Browser Launching:**
+    - Coding agents must **NEVER** launch `browser_subagent`, `browser-use`, or automated browser navigation tools to open links, localhost, or preview pages.
+    - Never open a browser to visually inspect pages, scroll sections, or test UI flows unless the user explicitly commands it.
+    - Perform all validations via unit/integration tests, build scripts, or static code analysis.
 
 ---
 

@@ -9,10 +9,15 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node --experimental-strip-types --test tests/**/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node --experimental-strip-types scripts/migrate.ts",
+    "worker": "node --experimental-strip-types scripts/worker.ts",
+    "worker:once": "node --experimental-strip-types scripts/worker.ts --once"
   },
   "dependencies": {
+    "@types/pg": "^8.23.1",
     "next": "^15.2.0",
+    "pg": "^8.23.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
