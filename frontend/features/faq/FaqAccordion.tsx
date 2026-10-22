@@ -164,20 +164,23 @@ export const FaqAccordion: React.FC = () => {
                   </span>
                 </button>
 
-                {isOpen && (
-                  <div
-                    style={{
-                      padding: '0 var(--space-5) var(--space-5) var(--space-5)',
-                      fontSize: '14px',
-                      lineHeight: 1.6,
-                      color: 'var(--text-secondary)',
-                      borderTop: '1px solid var(--border-subtle)',
-                      paddingTop: 'var(--space-3)',
-                    }}
-                  >
-                    {faq.answer}
-                  </div>
-                )}
+                <div
+                  id={`faq-answer-${index}`}
+                  role="region"
+                  aria-labelledby={`faq-question-${index}`}
+                  style={{
+                    display: isOpen ? 'block' : 'none',
+                    padding: isOpen ? '0 var(--space-5) var(--space-5) var(--space-5)' : '0',
+                    fontSize: '14px',
+                    lineHeight: 1.6,
+                    color: 'var(--text-secondary)',
+                    borderTop: isOpen ? '1px solid var(--border-subtle)' : 'none',
+                    paddingTop: isOpen ? 'var(--space-3)' : '0',
+                    animation: isOpen ? 'fadeIn var(--motion-duration-fast) var(--motion-ease-out)' : 'none',
+                  }}
+                >
+                  {faq.answer}
+                </div>
               </div>
             );
           })}

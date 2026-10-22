@@ -27,14 +27,33 @@ export class PostgresHeartbeatRepository {
     workerId: string,
     workerType: string,
     metadata: Record<string, unknown> = {},
+    statusOrClient?: WorkerHeartbeat['status'] | pg.PoolClient,
     client?: pg.PoolClient
   ): Promise<WorkerHeartbeat> {
     const nowIso = new Date().toISOString();
+
+    let explicitStatus: WorkerHeartbeat['status'] | undefined;
+    let effectiveClient = client;
+
+    if (statusOrClient) {
+      if (typeof statusOrClient === 'string') {
+        explicitStatus = statusOrClient;
+      } else {
+        effectiveClient = statusOrClient;
+      }
+    }
+
+    const resolvedStatus: WorkerHeartbeat['status'] =
+      explicitStatus ||
+      (typeof metadata.status === 'string' && (['ACTIVE', 'STOPPED', 'STALE'] as const).includes(metadata.status as any)
+        ? (metadata.status as WorkerHeartbeat['status'])
+        : 'ACTIVE');
+
     const heartbeat: WorkerHeartbeat = {
       workerId,
       workerType,
       lastHeartbeatAt: nowIso,
-      status: 'ACTIVE',
+      status: resolvedStatus,
       metadata,
     };
 
@@ -43,16 +62,16 @@ export class PostgresHeartbeatRepository {
       return heartbeat;
     }
 
-    const db = this.getClient(client);
+    const db = this.getClient(effectiveClient);
     await db.query(
       `INSERT INTO worker_heartbeats (worker_id, worker_type, last_heartbeat_at, status, metadata)
-       VALUES ($1, $2, NOW(), 'ACTIVE', $3)
+       VALUES ($1, $2, NOW(), $3, $4)
        ON CONFLICT (worker_id)
        DO UPDATE SET
          last_heartbeat_at = NOW(),
-         status = 'ACTIVE',
-         metadata = $3`,
-      [workerId, workerType, JSON.stringify(metadata)]
+         status = $3,
+         metadata = $4`,
+      [workerId, workerType, resolvedStatus, JSON.stringify(metadata)]
     );
 
     return heartbeat;
@@ -100,15 +119,25 @@ export class PostgresHeartbeatRepository {
     return result.rows.map(this.mapRow);
   }
 
-  private mapRow(row: Record<string, unknown>): WorkerHeartbeat {
+  public mapRow(row: Record<string, unknown>): WorkerHeartbeat {
+    const rawMetadata = typeof row.metadata === 'string'
+      ? JSON.parse(row.metadata)
+      : (row.metadata as Record<string, unknown> || {});
+
+    const rawStatus = row.status as string;
+    let status: WorkerHeartbeat['status'] = 'ACTIVE';
+    if (rawStatus === 'ACTIVE' || rawStatus === 'STOPPED' || rawStatus === 'STALE') {
+      status = rawStatus;
+    } else if (rawMetadata.status === 'STOPPED' || rawMetadata.status === 'ACTIVE' || rawMetadata.status === 'STALE') {
+      status = rawMetadata.status as WorkerHeartbeat['status'];
+    }
+
     return {
       workerId: String(row.workerId),
       workerType: String(row.workerType),
       lastHeartbeatAt: new Date(row.lastHeartbeatAt as string | Date).toISOString(),
-      status: row.status as 'ACTIVE' | 'STOPPED' | 'STALE',
-      metadata: typeof row.metadata === 'string'
-        ? JSON.parse(row.metadata)
-        : (row.metadata as Record<string, unknown> || {}),
+      status,
+      metadata: rawMetadata,
     };
   }
 }

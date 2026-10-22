@@ -133,7 +133,7 @@ export const MarketHero: React.FC<MarketHeroProps> = ({ market }) => {
                 Explore Market Ranking ↓
               </a>
               <a
-                href="/claim"
+                href="/business/claim"
                 style={{
                   padding: '12px 24px',
                   borderRadius: 'var(--radius-pill)',

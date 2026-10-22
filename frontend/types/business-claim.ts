@@ -14,6 +14,9 @@ export type ClaimStatus =
 export type ClaimEvidenceType =
   | 'BUSINESS_EMAIL'
   | 'GSTIN'
+  | 'UDYAM'
+  | 'SHOP_ESTABLISHMENT'
+  | 'COMMERCIAL_PAN'
   | 'OFFICIAL_DOCUMENT'
   | 'PHONE_VERIFICATION'
   | 'WEBSITE_DOMAIN';

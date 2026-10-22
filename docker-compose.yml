@@ -1,5 +1,5 @@
-# AageOnline — Production Docker Compose Configuration
-# Milestone 0.20.6: Local Development → Production Deployment Architecture
+# AageOnline — Multi-Service Production Docker Compose Configuration
+# Independent Services: web (website:3000), api (api:4000), admin (admin:3001), worker, caddy
 # Usage: docker compose -f docker-compose.yml --env-file .env.production up -d
 
 services:
@@ -22,6 +22,16 @@ services:
     depends_on:
       web:
         condition: service_healthy
+      api:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2019/config/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - aageonline-net
     logging:
@@ -30,7 +40,7 @@ services:
         max-size: "10m"
         max-file: "5"
 
-  # 2. Next.js Web Application (Standalone Node.js Server)
+  # 2. Public Website & Business Workspace (aageonline.com)
   web:
     build:
       context: ./frontend
@@ -38,9 +48,11 @@ services:
       target: web
     container_name: aageonline_web
     restart: unless-stopped
-    # Port 3000 is exposed ONLY to the private Docker bridge network; never published to host interface
     expose:
       - "3000"
+    environment:
+      - PORT=3000
+      - NEXT_PUBLIC_API_URL=https://api.${SITE_ADDRESS:-aageonline.com}
     env_file:
       - .env.production
     networks:
@@ -57,7 +69,65 @@ services:
         max-size: "10m"
         max-file: "5"
 
-  # 3. Dedicated Background Reconciler Worker
+  # 3. Standalone Authoritative REST API Service (api.aageonline.com)
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: aageonline_api
+    restart: unless-stopped
+    expose:
+      - "4000"
+    environment:
+      - PORT=4000
+      - CORS_ORIGINS=https://${SITE_ADDRESS:-aageonline.com},https://www.${SITE_ADDRESS:-aageonline.com},https://admin.${SITE_ADDRESS:-aageonline.com}
+    env_file:
+      - .env.production
+    networks:
+      - aageonline-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # 4. Dedicated Admin Control Center (admin.aageonline.com)
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: aageonline_admin
+    restart: unless-stopped
+    expose:
+      - "3001"
+    environment:
+      - PORT=3001
+      - INTERNAL_API_URL=http://api:4000
+      - NEXT_PUBLIC_API_URL=https://api.${SITE_ADDRESS:-aageonline.com}
+      - NEXT_PUBLIC_WEBSITE_URL=https://${SITE_ADDRESS:-aageonline.com}
+    env_file:
+      - .env.production
+    networks:
+      - aageonline-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # 5. Dedicated Background Reconciler Worker
   worker:
     build:
       context: ./frontend
@@ -65,7 +135,6 @@ services:
       target: worker
     container_name: aageonline_worker
     restart: unless-stopped
-    # No exposed ports: background worker communicates strictly outbound to PostgreSQL
     env_file:
       - .env.production
     networks:
@@ -82,7 +151,7 @@ services:
         max-size: "10m"
         max-file: "5"
 
-  # 4. Database Migrations One-Off Runner
+  # 6. Database Migrations One-Off Runner
   migrator:
     build:
       context: ./frontend
@@ -97,6 +166,37 @@ services:
     networks:
       - aageonline-net
 
+  # 7. Optional Same-Host PostgreSQL Database (Option A Architecture)
+  # Activated only when using the "local-db" profile: docker compose --profile local-db up -d
+  # When using Managed PostgreSQL (Option B Architecture), this service remains inactive.
+  db:
+    image: postgres:16-alpine
+    container_name: aageonline_db
+    restart: unless-stopped
+    profiles:
+      - local-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aageonline}
+      POSTGRES_USER: ${POSTGRES_USER:-aageonline}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - aageonline-net
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aageonline} -d ${POSTGRES_DB:-aageonline}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
 networks:
   aageonline-net:
     driver: bridge
@@ -106,3 +206,5 @@ volumes:
     name: aageonline_caddy_data
   caddy_config:
     name: aageonline_caddy_config
+  pgdata:
+    name: aageonline_pgdata

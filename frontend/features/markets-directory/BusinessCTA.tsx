@@ -59,7 +59,7 @@ export function BusinessCTA() {
           }}
         >
           <a
-            href="/claim"
+            href="/business/claim"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -78,7 +78,7 @@ export function BusinessCTA() {
             Claim Your Business
           </a>
           <a
-            href="/how-it-works"
+            href="/#how-it-works"
             style={{
               display: 'inline-flex',
               alignItems: 'center',

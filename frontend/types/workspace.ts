@@ -59,4 +59,5 @@ export interface UpdateBusinessProfileInput {
   phone?: string;
   email?: string;
   address?: string;
+  socialLinks?: import('./business.ts').BusinessSocialLinks;
 }

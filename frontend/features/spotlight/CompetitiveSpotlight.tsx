@@ -449,6 +449,7 @@ export const CompetitiveSpotlight: React.FC = () => {
 
   return (
     <section
+      id="rankings"
       aria-label="Live Market Rankings"
       style={{
         backgroundColor: 'var(--surface-soft)', // #FFF7ED brand soft background

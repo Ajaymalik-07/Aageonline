@@ -32,6 +32,7 @@ export interface MarketPricingResult {
   currentQualifyingAmountMinor?: MoneyMinor | null;
   relevantCurrentQualifyingAmountMinor?: MoneyMinor | null;
   relevantCurrentQualifyingAmountRupees?: MoneyRupees | null;
+  occupantBusinessName?: string | null;
   requiredQualifyingAmountMinor: MoneyMinor;
   requiredQualifyingAmountRupees: MoneyRupees;
   currency: 'INR';

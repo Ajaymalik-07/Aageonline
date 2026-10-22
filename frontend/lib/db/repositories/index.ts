@@ -15,3 +15,5 @@ export * from './ranking-change-event-repository.ts';
 export * from './notification-repository.ts';
 export * from './seo-audit-repository.ts';
 export * from './session-repository.ts';
+export * from './user-repository.ts';
+export * from './business-repository.ts';

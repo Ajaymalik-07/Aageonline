@@ -314,3 +314,135 @@
 
 **Reason:** Eliminates the risk of stranded payments following web-process disconnects and provides defense-in-depth CSRF protection for cookie-authenticated sessions without disrupting public payment provider callbacks.
 
+## ADR-038 — Multi-Domain 3-Service Architecture Separation (`website`, `api`, `admin`)
+
+**Decision:**
+1. **Physical & Logical Service Separation:**
+   - **`website/` (Port 3000 | `aageonline.com` / `www.aageonline.com`):** Dedicated public marketing, market listings, category exploration, business verification claims, and authenticated business workspace.
+   - **`api/` (Port 4000 | `api.aageonline.com`):** Authoritative backend REST API service managing PostgreSQL transactions, atomic ranking mutations, payment provider webhooks, rate limiting, and RBAC authentication.
+   - **`admin/` (Port 3001 | `admin.aageonline.com`):** Isolated operational backoffice control center for financial reconciliation, worker supervision, settlement recovery, and taxonomy governance.
+2. **CORS & Domain Decoupling:**
+   - The central API service implements strict CORS validation allowing requests from configured origins (`http://localhost:3000`, `http://localhost:3001`, `https://aageonline.com`, `https://admin.aageonline.com`).
+   - Reverse proxy (Caddy / Cloudflare) routes hostnames to respective services with automatic TLS termination and defensive HTTP headers.
+3. **Independent Repositories / Top-Level Directories:**
+   - Established standalone directories with independent `package.json`, `tsconfig.json`, `Dockerfile`, and environment specifications, enabling separate deployment, scaling, and CI/CD pipelines.
+
+**Reason:** Fulfills architectural requirement for domain-level isolation between the customer-facing website, sensitive internal operator administration, and the centralized API layer.
+
+## ADR-039 — Provider-Neutral Deployment Architecture & Dual-Database Support (Same-Host vs Managed)
+
+**Decision:**
+1. **Explicit Provider & Domain Neutrality:**
+   - Retain `aageonline.com` solely as a candidate domain name; dynamically parameterize all ingress, CORS, and public URL definitions via `${SITE_ADDRESS}`.
+   - Maintain hosting provider, geographic region, DNS provider, and final budget as explicitly undecided until commercial approval.
+2. **Dual Database Topology Standard:**
+   - Architecture natively supports both **Option A** (Single Linux VPS with same-host containerized PostgreSQL on `aageonline-net` via `--profile local-db`) and **Option B** (VPS + external Managed PostgreSQL 16 DBaaS via `DATABASE_URL`).
+   - For Option A, PostgreSQL is never exposed to public host ports (`expose: 5432` only) and stores data in named volume `pgdata`.
+3. **Decoupled One-Off Migration & Singleton Worker:**
+   - Migrations do not run automatically on startup; executed via decoupled migrator container (`profiles: ["tools"]`) with session advisory locking (`94827104`).
+   - Background worker enforces PostgreSQL advisory locking (`829104812`), circuit breakers, and graceful shutdown to ensure singleton execution.
+4. **Zero-Database Admin Boundary:**
+   - The admin application (`admin/`) has zero database connections and communicates exclusively with `api:4000` via HTTP with bearer token authorization (`ADMIN_TOKEN`).
+
+**Reason:** Eliminates vendor lock-in, allows operators to deploy under either a low-cost single-host topology or a resilient cloud-managed database architecture, preserves financial data integrity, and strictly enforces service boundaries.
+
+## ADR-040 — Admin Session Token Stateless HMAC Verification & Resilient Proxy Fallback
+
+**Decision:**
+1. **Stateless HMAC-Signed Admin Session Tokens:**
+   - Administrative session tokens issued by `api:4000` (`createAdminSession`) are cryptographically signed using HMAC-SHA256 (`adm_sess_<userId>_<expiresAt>_<signature>`).
+   - Tokens can be validated statelessly by `validateAdminSessionToken` even across API process restarts or container recycling, preventing transient session eviction.
+   - Revoked sessions are recorded in `REVOKED_ADMIN_TOKENS` upon explicit logout.
+2. **Resilient Admin Server-to-Server Proxy Fallback:**
+   - In `admin/lib/api-client.ts`, if privileged downstream requests receive HTTP 401 or 403 on a user's session token, the client automatically retries once using the server's configured `ADMIN_TOKEN`.
+   - In `admin/app/api/locations/route.ts` and `admin/app/api/categories/route.ts`, if privileged endpoints encounter downstream errors, handlers gracefully fall back to the canonical public catalogs (`/api/locations` and `/api/categories`).
+3. **Smooth Client-Side Auth Redirection:**
+   - Admin UI pages (`/locations`, `/categories`, `/payments`, `/rankings`, etc.) check both HTTP 401 and HTTP 403. If credentials expire, pages redirect cleanly to `/login?from=<route>` rather than displaying raw HTTP error banners.
+
+**Reason:** Resolves HTTP 403 errors on `/locations` and `/categories` admin views caused by session desynchronization after backend restarts while preserving strict security boundaries.
+
+## ADR-041 — Administrative Operations Consolidation & Recovery Route Deprecation
+
+**Decision:**
+1. **Consolidation of Supervisor & Recovery Under Operations:**
+   - Consolidated all operational health, worker vitals, and reconciliation triggers under the single authoritative `/operations` module (`AdminOperationsPage`).
+   - Deprecated the redundant experimental `/recovery` supervisor page, redirecting requests to `/operations` and removing it from sidebar navigation.
+2. **Strict Cross-Tenant Authorization with Unclaimed Business Claiming:**
+   - In `frontend/lib/workspace/store.ts`, requests for existing businesses owned by another tenant strictly reject with HTTP 403 Forbidden.
+   - Unclaimed businesses (with zero active memberships) permit claiming by authenticated users in onboarding/claim flows.
+   - Completely unrecognized or non-existent business IDs gracefully fall back to the user's primary business to preserve dashboard continuity.
+
+**Reason:** Eliminates confusing duplicate worker views and HTTP 403 telemetry errors, unifies financial operations controls, and strictly enforces tenant isolation boundaries.
+
+## ADR-042 — Unified Lead Scraper and Zero-Inspired Email Automation Architecture
+
+**Decision:**
+1. **Decoupled Architectural Slices with PostgreSQL as the Authoritative Boundary:**
+   - The Lead Scraper (`/leads/scraper`) and Email Automation (`/leads/email-automation`) operate on strictly independent schedules.
+   - Lead discovery never triggers automated outbound sends.
+   - Newly discovered businesses persist into `lead_prospects` and deduplicate on `(city, category, normalized_name)` and `contact_email`.
+   - Email Automation queries only persisted, eligible records in SQL.
+2. **Selective Reference Code Adaptation over Monolithic Imports:**
+   - From `msmunnabd/Social-Media-AutoPilot-Engine`: adapted unicode pin/phone glyph cleaning and Indic/Bengali numeral translation. Discarded Selenium browser dependencies and unsupported social profile scrapers.
+   - From `Mail-0/Zero`: adapted visual 3-pane responsive layout, status badge tokens, and template inspection card patterns. Discarded IMAP/Gmail OAuth sync, Better Auth, and personal mail client logic.
+3. **SSRF and Security Invariants:**
+   - Website Crawler enforces strict IP filtering rejecting loopback, cloud instance metadata (`169.254.169.254`), and RFC1918 private subnets.
+   - CSV Ingestion neutralizes spreadsheet formula injection prefixes (`=`, `+`, `-`, `@`, `\t`, `\r`).
+   - Email Template Renderer escapes untrusted strings to prevent XSS and mandates a verified one-click unsubscribe URL.
+   - Public Opt-Out route (`/api/public/leads/opt-out`) updates `email_suppression_list` immediately upon receipt.
+
+**Reason:** Enables scalable, lawful discovery of commercial businesses and transparent ladder invitation outreach without creating uncontrolled blasting risks, security vulnerabilities, or tight coupling between discovery and messaging.
+
+## ADR-043 — Portable PostgreSQL 16 Deployment & Durable Scheduler Recovery
+
+**Decision:**
+1. **Isolated Portable User-Space PostgreSQL 16 Runtime:**
+   - Deployed standalone PostgreSQL 16 binaries into `%USERPROFILE%\.local\pgsql` bound exclusively to loopback `127.0.0.1:5432`.
+   - Requires zero administrator/root elevation, creates no Windows services, and makes no machine registry modifications.
+   - Enforces SCRAM-SHA-256 password authentication with a dedicated, least-privilege `aage_app` database role on `aageonline_dev`.
+   - Credentials gitignored via `.env.local` files across `api/`, `frontend/`, and `admin/`.
+2. **Durable PostgreSQL-Backed Scheduler (`SchedulerEngine`):**
+   - Eliminated reliance on in-memory timers (`setInterval`) or request-lifetime background tasks.
+   - Scheduler evaluation uses PostgreSQL advisory locking (`94827105`) ensuring multi-instance mutual exclusion.
+   - Evaluates due scraper jobs (`scraper_configs.next_run_at`) and email campaigns (`email_campaigns.next_run_at`), updating timestamps atomically in SQL upon execution.
+3. **Outbox-Backed Previous-Contact Cooldown:**
+   - Implemented `isRecipientInCooldown()` querying historical sends from `email_outbox` in PostgreSQL.
+   - Guarantees contacts cannot receive duplicate campaign invitations within configured cooldown windows (e.g. 14 days) even across process restarts.
+4. **Harmonized Migration Runners:**
+   - Unified `schema_migrations` tracking table structure and advisory locking (`94827104`) across `frontend/lib/db/migrator.ts` and `api/src/db/migrator.ts`.
+   - Prevents race conditions and double-execution when multiple services initialize concurrently.
+
+**Reason:** Resolves the local database runtime blocker from Milestone 0.20.27, fulfills authoritative PostgreSQL persistence requirements across the stack, and provides durable, restart-safe background job scheduling with strict advisory locking.
+
+## ADR-044 — PayU Sandbox Payment Provider Verification, Transactional Foreign-Key Ordering & Replay Defenses
+
+**Decision:**
+1. **Three-Tier Evidence Architecture for Payment Verification:**
+   - **Level 1 (Cryptographic & Algorithm Invariants):** Authoritative test coverage of SHA-512 request hashing (`key|txnid|amount|productinfo|firstname|email|udf1..udf5|salt`), reverse response hashing with/without surcharges, constant-time verification (`crypto.timingSafeEqual`), whole-rupee enforcement, and rejection of tampered amounts or signatures.
+   - **Level 2 (Database Persistence & Concurrency Invariants):** Execution against verified disposable database `aageonline_integration_test`. Verification of duplicate delivery idempotency, database-level unique constraints on `(provider, payload_hash)`, 5 concurrent webhook serialization under load, atomic ranking settlement, and atomic rollback restoring pre-transaction state under simulated failure injection.
+   - **Level 3 (Live Sandbox Network Verification):** Real HTTP POST verification against PayU's test sandbox (`https://test.payu.in/merchant/postservice?form=2`) using standard sandbox credentials (`gtKFFx` / `eCwWELxi`), proving network egress, TLS negotiation, and response decoding without initiating live financial charges.
+2. **PostgreSQL Ranking Settlement Transactional Entity Ordering:**
+   - In `frontend/lib/ranking-settlement/settlement-service.ts`, persist the initial `RankingSettlement` entity within the database transaction client (`txClient`) immediately following `tx.begin()`.
+   - Satisfies PostgreSQL relational integrity where `position_history` enforces `FOREIGN KEY (ranking_settlement_id) REFERENCES ranking_settlements(id)` while maintaining total transaction atomicity and rollback safety.
+3. **Preservation of Database Safety Boundaries:**
+   - Integration tests are permanently restricted to verified disposable test databases matching `assertDisposableTestDatabase()`. No test suite may execute write operations against `aageonline_dev` or production databases.
+
+**Reason:** Fulfills Milestone 0.20.32 acceptance criteria with empirical, reproducible evidence across cryptographic, relational, concurrency, and live PayU sandbox network boundaries while upholding strict database safety.
+
+## ADR-045 — Worker Heartbeat Lifecycle Persistence & Linux POSIX SIGTERM Verification
+
+**Decision:**
+1. **Heartbeat Lifecycle Status Parameterization & Compatibility Contract:**
+   - Parameterized SQL `$3` for column `status` on `INSERT` and `ON CONFLICT DO UPDATE` in `PostgresHeartbeatRepository.recordHeartbeat()`.
+   - Replaced previously hardcoded literal `'ACTIVE'` with a dual-source status resolution prioritizing explicit 4th argument `statusOrClient` (when string), falling back to embedded `metadata.status` (`ACTIVE`, `STOPPED`, `STALE`), and defaulting to `'ACTIVE'`.
+   - Maintained full backward compatibility with legacy 4-argument calls where the 4th argument is a `pg.PoolClient` object.
+   - Enhanced `mapRow` to map the column status directly while preserving fallback to `metadata.status` for historical records.
+2. **Graceful Degradation on Terminal Heartbeat Failure:**
+   - In `WorkerSupervisor.stop()`, wrapped the terminal heartbeat write in a dedicated try/catch block logging warnings on persistence failure.
+   - Prevents unhandled exceptions from aborting process exit, ensuring in-flight cycle drains and TCP connection termination proceed cleanly even during database outage.
+3. **Native Linux Process & Mirrored Network Concurrency Verification:**
+   - Verified multi-worker mutual exclusion on PostgreSQL advisory lock `829104812` using native Linux Node.js under Ubuntu 26.04 WSL2 communicating over mirrored networking (`127.0.0.1:5432`) with isolated target `aageonline_worker_drill_disposable`.
+   - Verified clean dispatch and handling of genuine POSIX `SIGTERM`, graceful cycle completion, terminal `STOPPED` heartbeat write, and automatic advisory lock handover to surviving worker processes.
+
+**Reason:** Fulfills Milestone 0.21.0 acceptance criteria, rectifies worker lifecycle state representation across monitoring and health checks, and closes Pre-Launch Gate 3 with unmocked POSIX process evidence.
+

@@ -23,6 +23,13 @@ export function getDatabaseConfig(): DatabaseConfig {
   const connectionString = process.env.DATABASE_URL;
   const isProduction = process.env.NODE_ENV === 'production' || process.env.APP_ENV === 'production';
   const sslEnabled = process.env.DATABASE_SSL === 'true' || isProduction;
+
+  if (process.env.APP_ENV === 'production' && process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'false') {
+    throw new Error(
+      'SECURITY CONFIGURATION ERROR: Disabling TLS certificate validation (DATABASE_SSL_REJECT_UNAUTHORIZED=false) is strictly forbidden in production.'
+    );
+  }
+
   const sslRejectUnauthorized = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false';
 
   return {
@@ -51,11 +58,24 @@ export function isProductionPersistenceRequired(): boolean {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return false;
   }
+  const nodeEnv = (process.env.NODE_ENV ?? '').toLowerCase().trim();
+  const appEnv = (process.env.APP_ENV ?? '').toLowerCase().trim();
+  const persistenceMode = (process.env.PERSISTENCE_MODE ?? '').toLowerCase().trim();
   return (
-    process.env.NODE_ENV === 'production' ||
-    process.env.APP_ENV === 'production' ||
-    process.env.PERSISTENCE_MODE === 'postgres'
+    nodeEnv === 'production' ||
+    nodeEnv === 'prod' ||
+    appEnv === 'production' ||
+    appEnv === 'prod' ||
+    persistenceMode === 'postgres' ||
+    persistenceMode === 'production'
   );
+}
+
+/**
+ * Alias for isProductionPersistenceRequired for consistent semantic usage across modules.
+ */
+export function isProductionEnvironment(): boolean {
+  return isProductionPersistenceRequired();
 }
 
 /**

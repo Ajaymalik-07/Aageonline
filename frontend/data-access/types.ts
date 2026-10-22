@@ -198,6 +198,14 @@ export interface BusinessProfile extends BusinessSummary {
   phone?: string;
   email?: string;
   address?: string;
+  socialLinks?: {
+    instagram?: string;
+    linkedin?: string;
+    facebook?: string;
+    twitter?: string;
+    youtube?: string;
+    whatsapp?: string;
+  };
   categories: {
     id: string;
     name: string;

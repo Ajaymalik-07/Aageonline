@@ -74,6 +74,7 @@ export const BidModal: React.FC<BidModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="bid-modal-title"
+      className="aage-modal-backdrop"
       style={{
         position: 'fixed',
         inset: 0,

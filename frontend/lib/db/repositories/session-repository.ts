@@ -118,6 +118,7 @@ export class PostgresSessionRepository {
         s.updated_at AS session_updated_at,
         u.id AS user_pk,
         u.email,
+        u.phone,
         u.name,
         u.role,
         u.status,
@@ -157,8 +158,9 @@ export class PostgresSessionRepository {
 
     const user: User = {
       id: String(row.user_pk),
-      email: String(row.email),
-      displayName: String(row.name),
+      email: row.email ? String(row.email) : '',
+      phone: row.phone ? String(row.phone) : undefined,
+      displayName: row.name ? String(row.name) : undefined,
       role: (row.role || 'USER') as UserRole,
       status: (row.status || 'ACTIVE') as UserStatus,
       createdAt: new Date(row.user_created_at).toISOString(),

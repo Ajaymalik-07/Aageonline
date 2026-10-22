@@ -52,6 +52,7 @@ export interface CreateBidIntentInput {
   marketId: string;
   targetPosition: number;
   clientCalculatedAmountMinor?: MoneyMinor;
+  offeredAmountMinor?: MoneyMinor;
   idempotencyKey: string;
 }
 

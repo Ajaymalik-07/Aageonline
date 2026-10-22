@@ -233,7 +233,8 @@ export const HeroSection: React.FC = () => {
 
           {/* Filter Action Button */}
           <a
-            href={`/explore?location=${encodeURIComponent(selectedLocation.toLowerCase())}&category=${encodeURIComponent(selectedCategory.toLowerCase())}`}
+            href={`/markets?location=${encodeURIComponent(selectedLocation.toLowerCase())}&category=${encodeURIComponent(selectedCategory.toLowerCase())}`}
+            className="aage-button"
             style={{
               padding: '12px 24px',
               borderRadius: 'var(--radius-pill)',
@@ -265,7 +266,8 @@ export const HeroSection: React.FC = () => {
           }}
         >
           <a
-            href="/explore"
+            href="/markets"
+            className="aage-button"
             style={{
               padding: '14px 32px',
               borderRadius: 'var(--radius-pill)',
@@ -286,7 +288,8 @@ export const HeroSection: React.FC = () => {
           </a>
 
           <a
-            href="/claim"
+            href="/business/claim"
+            className="aage-button"
             style={{
               padding: '14px 32px',
               borderRadius: 'var(--radius-pill)',

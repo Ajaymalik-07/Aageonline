@@ -493,6 +493,76 @@ No deployment to staging or production is permitted if any of the following rele
    - Prevents double-processing of financial settlement jobs or redundant cache flushes across horizontally scaled application instances.
    - Session-level advisory locking (`pg_try_advisory_lock(829104812)`) guarantees single-active runner status for the background reconciler worker without external distributed locking infrastructure.
 
+---
+
+## 16. Administrative Authentication & Multi-Tenant Boundary Isolation (Milestone 0.20.25)
+
+1. **Stateless Administrative Session Tokens:**
+   - Administrative session tokens issued by the central API service (`createAdminSession`) are cryptographically signed using Web Crypto HMAC-SHA256 (`adm_sess_<userId>_<expiresAt>_<signature>`).
+   - Every administrative request validates tokens in constant time (`crypto.timingSafeEqual`) against the signature salt. Expired or tampered tokens are rejected with HTTP 403 Forbidden.
+   - Explicit revocation sets tokens in `REVOKED_ADMIN_TOKENS`.
+
+2. **Cross-Tenant Business Boundary Isolation:**
+   - In `resolveWorkspaceContext`, requests targeting another tenant's business strictly reject with `HTTP 403 Forbidden` (`You do not have permission to access this business`).
+   - Tenant boundaries check active membership status across all system businesses. Unclaimed businesses (with zero memberships) permit claims by authorized users, while foreign businesses owned by another tenant remain inaccessible.
+
+3. **Zero Direct Database Driver in Admin Portal:**
+   - The administrative Control Center (`admin/`) has zero direct PostgreSQL drivers or network connections to PostgreSQL.
+   - All mutations execute through server-to-server proxy route handlers to `api:4000` with Bearer token authentication, preventing direct database exposure or credential leakage to client bundles.
+
+4. **Fail-Closed Policy on Administrative Tokens:**
+   - In production environments, if `ADMIN_TOKEN` is unset or blank, `authenticateAdminRequest` fails closed with HTTP 500 configuration errors rather than allowing unauthenticated access.
+
+---
+
+## 17. Authoritative PostgreSQL Persistence & Fail-Closed Security (Milestone 0.20.26)
+
+1. **Elimination of Process-Local Authoritative Storage:**
+   - Ephemeral in-memory Maps and objects in the standalone REST API (`api/`) are eliminated as authoritative sources of truth for mutable business, financial, content, ranking, and audit state.
+   - All mutations write durably to PostgreSQL using parameterized queries ($1, $2, ...) to prevent SQL injection.
+
+2. **Fail-Closed Persistence Boundary:**
+   - When `DATABASE_URL` is configured, API readiness `/api/health/ready` evaluates connectivity using `checkDatabaseHealth()`.
+   - If PostgreSQL is unreachable, timed out, or unready, the API immediately marks itself `DEGRADED` (HTTP 503) and fails closed.
+   - The API server never falls back silently to in-memory fixtures or mock datasets when the real database is unavailable.
+
+3. **Atomic Market Row-Level Concurrency:**
+   - Mutating a business ranking locks the target market row via `SELECT id FROM markets WHERE id = $1 FOR UPDATE`.
+   - Ranking settlements, displacements, and `position_history` append records occur inside a single ACID transaction block (`withTransaction`), preventing lost updates, race conditions, or uncoordinated ranking positions.
+
+---
+
+## 18. Lead Discovery & Email Outreach Security Controls (Milestone 0.20.27)
+
+1. **SSRF & Private Network Defense (`WebsiteCrawlerConnector`)**:
+   - The crawler strictly checks URLs with `isSafeUrl()` before opening network sockets.
+   - Blocks loopback addresses (`127.0.0.1`, `localhost`, `::1`), RFC1918 private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local IPs (`169.254.0.0/16`), and AWS/GCP cloud instance metadata services.
+   - Bounded by a 5-second socket timeout and a 1MB maximum memory buffer ceiling.
+
+2. **Spreadsheet Formula Injection Sanitization (`CsvConnector`)**:
+   - Sanitizes untrusted CSV cell values starting with dangerous spreadsheet formula triggers (`=`, `+`, `-`, `@`, `\t`, `\r`).
+   - Automatically prefixes risky cells with a single quote (`'`), ensuring back-office operators opening exported CSVs in Microsoft Excel or Google Sheets are protected from Remote Code Execution (RCE) and DDE attacks.
+
+3. **Email Template XSS Defense & Output Escaping (`template-renderer.ts`)**:
+   - Scraped candidate data (business names, locations, contact names) are treated as untrusted user input.
+   - All personalization variables are converted through `escapeHtml()` converting `<` to `&lt;`, `>` to `&gt;`, `"` to `&quot;`, and `'` to `&#39;`.
+
+4. **Authoritative Suppression List Invariant (`email_suppression_list`)**:
+   - Suppression lists are permanently stored in PostgreSQL.
+   - Checks execute immediately before every dispatch cycle; suppressed recipients are excluded prior to outbox queueing.
+   - Public one-click unsubscribe links (`/api/public/leads/opt-out`) permanently register opt-outs without requiring user authentication.
+
+5. **Server-Side Gemini API Isolation & Anti-Hallucination Constraints**:
+   - `GEMINI_API_KEY` is restricted strictly to server-side Node processes and never sent to browser bundles.
+   - Gemini prompts instruct the model **never** to invent business emails, phone numbers, or addresses.
+   - If unconfigured or on failure, the system falls back safely to deterministic taxonomy mapping.
+
+6. **Decoupled Outreach Boundary**:
+   - Scraper runs on an isolated schedule and cannot trigger automatic email delivery.
+   - Email Automation runs independently on SQL-persisted leads, strictly enforcing contact cooldown periods (default: 30 days) and per-campaign volume limits.
+
+
+
 
 
 

@@ -107,12 +107,24 @@
   --elevation-3: 0 10px 15px -3px rgba(11, 31, 51, 0.12), 0 4px 6px -4px rgba(11, 31, 51, 0.08);
   --elevation-4: 0 20px 25px -5px rgba(11, 31, 51, 0.18);
 
-  /* Motion Tokens */
-  --motion-instant:    120ms ease-out;
-  --motion-fast:       180ms ease-out;
-  --motion-normal:     280ms cubic-bezier(0.16, 1, 0.3, 1);
-  --motion-slow:       450ms cubic-bezier(0.16, 1, 0.3, 1);
-  --motion-expressive: 650ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Motion Tokens — Authoritative Milestone 0.20.15 */
+  --motion-instant:              120ms ease-out;
+  --motion-fast:                 180ms ease-out;
+  --motion-normal:               280ms cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-slow:                 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-expressive:           650ms cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-duration-micro: 140ms;
+  --motion-duration-fast: 180ms;
+  --motion-duration-normal: 260ms;
+  --motion-duration-reveal: 380ms;
+  --motion-duration-deliberate: 450ms;
+  --motion-stagger-step: 60ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-stagger-step:         60ms;
+  --motion-ease-out:             cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out:          cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-spring:          cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Dark Theme Semantics */
@@ -405,15 +417,25 @@ body {
   flex: 0 0 auto;
 }
 
-/* Card Hover Border Highlights (No Vertical Motion) */
-.card-lift {
-  transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
+/* Card Hover Elevation & Subtle Lift */
+.card-lift,
+.aage-card-interactive {
+  cursor: pointer;
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-out),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+              transform var(--motion-duration-fast) var(--motion-ease-out);
 }
 
-.card-lift:hover {
-  transform: none;
+.card-lift:hover,
+.aage-card-interactive:hover {
+  transform: translateY(-2px);
   box-shadow: var(--elevation-2);
   border-color: var(--brand-orange-support) !important;
+}
+
+.card-lift:active,
+.aage-card-interactive:active {
+  transform: translateY(0);
 }
 
 /* Marquee / Live Ticker Container */
@@ -429,9 +451,182 @@ body {
   gap: var(--space-6);
 }
 
+/* ==========================================================================
+   Keyframe Animations (Milestone 0.20.15)
+   ========================================================================== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ==========================================================================
+   Component Interaction & Motion Classes (Milestone 0.20.15)
+   ========================================================================== */
+.aage-button {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-out),
+              border-color var(--motion-duration-fast) var(--motion-ease-out),
+              color var(--motion-duration-fast) var(--motion-ease-out),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+              transform var(--motion-duration-micro) var(--motion-ease-out);
+  will-change: transform;
+}
+
+.aage-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
+.aage-button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+.aage-card {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-out),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+              transform var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.aage-card-interactive {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-out),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+              transform var(--motion-duration-fast) var(--motion-ease-out);
+  will-change: transform;
+}
+
+.aage-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-3);
+}
+
+.card-lift {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-out),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+              border-color var(--motion-duration-fast) var(--motion-ease-out);
+  will-change: transform;
+}
+
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-2);
+}
+
+.card-lift:active {
+  transform: translateY(0);
+}
+
+
+.aage-input {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-out),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.aage-input:focus {
+  border-color: var(--brand-emerald) !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.16) !important;
+}
+
+.aage-nav-link {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-out),
+              color var(--motion-duration-fast) var(--motion-ease-out),
+              transform var(--motion-duration-micro) var(--motion-ease-out);
+}
+
+.aage-nav-link:hover {
+  background-color: var(--surface-card);
+  color: var(--brand-emerald) !important;
+}
+
+.aage-nav-link:active {
+  transform: scale(0.98);
+}
+
+.aage-ranking-card {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-out),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+              transform var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.aage-ranking-card:hover {
+  border-color: var(--brand-orange-support) !important;
+  box-shadow: var(--elevation-2), 0 4px 14px rgba(234, 88, 12, 0.12);
+  transform: translateY(-1px);
+}
+
+.aage-modal-backdrop {
+  animation: fadeIn var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.aage-bid-modal-content {
+  animation: scaleIn var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+/* Stagger Utilities */
+.stagger-1 { transition-delay: calc(var(--motion-stagger-step) * 1) !important; }
+.stagger-2 { transition-delay: calc(var(--motion-stagger-step) * 2) !important; }
+.stagger-3 { transition-delay: calc(var(--motion-stagger-step) * 3) !important; }
+.stagger-4 { transition-delay: calc(var(--motion-stagger-step) * 4) !important; }
+.stagger-5 { transition-delay: calc(var(--motion-stagger-step) * 5) !important; }
+.stagger-6 { transition-delay: calc(var(--motion-stagger-step) * 6) !important; }
+
+/* Reduced Motion Override (WCAG 2.2 AA) */
 @media (prefers-reduced-motion: reduce) {
-  .card-lift:hover {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
     transform: none !important;
   }
+  .card-lift:hover,
+  .aage-card-interactive:hover,
+  .aage-button:hover,
+  .aage-button:active,
+  .aage-ranking-card:hover,
+  .aage-nav-link:active {
+    transform: none !important;
+  }
+  .aage-motion-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
+
+/* Business Profile Public Showcase Layout */
+@media (max-width: 960px) {
+  .business-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 

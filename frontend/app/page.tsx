@@ -10,7 +10,6 @@ import { CategoryRail } from '../features/categories/CategoryRail';
 import { FeaturedMarketsShuffle } from '../features/markets/FeaturedMarketsShuffle';
 import { CompetitiveSpotlight } from '../features/spotlight/CompetitiveSpotlight';
 import { WhatIsAageOnline } from '../features/about/WhatIsAageOnline';
-import { MomentumMarkets } from '../features/momentum/MomentumMarkets';
 import { HowItWorksJourney } from '../features/process/HowItWorksJourney';
 import { TrustGovernance } from '../features/trust/TrustGovernance';
 import { FaqAccordion } from '../features/faq/FaqAccordion';
@@ -36,6 +35,7 @@ export default function HomePage() {
 
       {/* 4. Explore Business Categories (Dark Navy Immersive Surface) */}
       <section
+        id="categories"
         style={{
           backgroundColor: '#071526',
           borderTop: '1px solid rgba(255, 255, 255, 0.08)',
@@ -48,6 +48,7 @@ export default function HomePage() {
 
       {/* 5. Active Local Markets (Warm Soft Surface) */}
       <section
+        id="cities"
         style={{
           backgroundColor: 'var(--surface-soft)',
           borderBottom: '1px solid var(--border-subtle)',
@@ -65,10 +66,7 @@ export default function HomePage() {
       {/* 7. What is AageOnline? (Clean White Surface + 5-Stage Architecture) */}
       <WhatIsAageOnline />
 
-      {/* 8. Markets Gaining Momentum */}
-      <MomentumMarkets markets={INITIAL_FEATURED_MARKETS} />
-
-      {/* 9. How AageOnline Works (Deep Navy Infographic Journey) */}
+      {/* 8. How AageOnline Works (Deep Navy Infographic Journey) */}
       <HowItWorksJourney />
 
       {/* 10. Trust & Governance (Clean White / 4 Integrity Pillars) */}

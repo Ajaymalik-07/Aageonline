@@ -24,6 +24,7 @@ import {
   getSessionByToken,
   getUserById,
   invalidateSession,
+  registerUserInStore,
 } from './store.ts';
 
 let cachedSessionRepo: PostgresSessionRepository | null = null;
@@ -61,6 +62,7 @@ export async function getServerSession(
       }
 
       const { session: record, user } = sessionWithUser;
+      registerUserInStore(user);
 
       return {
         token: rawToken,

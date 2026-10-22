@@ -16,43 +16,43 @@ const FEATURED_GUIDE: KnowledgeItem = {
   id: 'featured-1',
   tag: 'Market Architecture',
   type: 'Guide',
-  title: 'Local Positioning vs. Broad Advertising: The Defined Market Edge',
-  readTime: '5 min read',
+  title: 'Startup Website Development: Complete Guide for Founders',
+  readTime: '6 min read',
   excerpt:
-    'Why competing inside exactly one Location + Category pair delivers transparent commercial reach without pay-per-click wastage or unpredictable advertising budgets.',
-  slug: 'local-positioning-vs-broad-advertising',
+    'Comprehensive architectural blueprint for modern businesses and founders looking to establish market authority and high-converting local presence in India.',
+  slug: 'startup-website-development-complete-guide',
 };
 
 const SECONDARY_ITEMS: KnowledgeItem[] = [
   {
     id: 'k-1',
-    tag: 'Ladder Mechanics',
+    tag: 'Technology Strategy',
     type: 'Market Insight',
-    title: 'Navigating Position Floors: How Qualifying Calculations Update Rankings',
-    readTime: '4 min read',
+    title: 'Custom Software Development vs Off-the-Shelf Software: Strategic Analysis',
+    readTime: '5 min read',
     excerpt:
-      'An explanation of qualifying calculations, whole-rupee amounts, and how positions are updated across the market ladder.',
-    slug: 'navigating-position-floors',
+      'Evaluate the ROI, scaling limits, vendor lock-in risks, and maintenance total cost of ownership between bespoke software engineering and canned SaaS.',
+    slug: 'custom-software-development-vs-off-the-shelf-software',
   },
   {
     id: 'k-2',
-    tag: 'Platform FAQ',
-    type: 'Question',
-    title: 'Does a higher paid visibility position certify business quality?',
-    readTime: '3 min read',
+    tag: 'Vendor Selection',
+    type: 'Guide',
+    title: 'How to Choose a Website Development Company In India',
+    readTime: '4 min read',
     excerpt:
-      'No. Paid visibility is strictly commercial positioning. Transparent statutory disclosures ensure consumers evaluate businesses independently.',
-    slug: 'does-paid-visibility-certify-quality',
+      'Avoid opaque contracts, hidden maintenance markups, and vanity metrics by using this battle-tested vendor selection scorecard.',
+    slug: 'how-to-choose-a-website-development-company-in-india',
   },
   {
     id: 'k-3',
-    tag: 'Governance',
-    type: 'Glossary',
-    title: 'Glossary: Qualifying Payment, Defined Market, and Immutable Position History',
-    readTime: '3 min read',
+    tag: 'Regional Insight',
+    type: 'Market Insight',
+    title: 'Website Development Company in Noida: What Businesses Need to Look For',
+    readTime: '4 min read',
     excerpt:
-      'Core definitions of key terms governing AageOnline markets, qualifying payments, and ranking positions.',
-    slug: 'aageonline-core-glossary',
+      'Strategic criteria for commercial enterprises in Delhi NCR choosing verified engineering partners, contract terms, and local visibility guarantees.',
+    slug: 'website-development-company-in-noida-what-businesses-look-for',
   },
 ];
 
@@ -112,7 +112,7 @@ export const KnowledgeGuides: React.FC = () => {
           </div>
 
           <a
-            href="/knowledge"
+            href="/blog"
             style={{
               fontSize: '13px',
               fontWeight: 800,
@@ -123,7 +123,7 @@ export const KnowledgeGuides: React.FC = () => {
               gap: '6px',
             }}
           >
-            Explore Full Knowledge Base →
+            Explore All Articles &amp; Guides →
           </a>
         </div>
 
@@ -253,7 +253,7 @@ export const KnowledgeGuides: React.FC = () => {
               </div>
 
               <a
-                href={`/knowledge/${FEATURED_GUIDE.slug}`}
+                href={`/blog/${FEATURED_GUIDE.slug}`}
                 style={{
                   marginTop: 'var(--space-6)',
                   padding: '12px 24px',
@@ -346,7 +346,7 @@ export const KnowledgeGuides: React.FC = () => {
                 </p>
 
                 <a
-                  href={`/knowledge/${item.slug}`}
+                  href={`/blog/${item.slug}`}
                   style={{
                     fontSize: '13px',
                     fontWeight: 700,

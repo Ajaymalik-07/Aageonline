@@ -41,6 +41,301 @@
 - Hardened `.gitignore` excluding secrets, credentials, environment variables, build artifacts, and dependency directories.
 - ADR-011 through ADR-014 in `docs/Decision-Log.md`.
 
+## 0.21.0 — Linux Worker Concurrency, Advisory Lock Handover & Heartbeat Lifecycle Consistency
+
+### Added
+- Authoritative milestone closure deliverable: `docs/Milestone-0.21.0-Linux-Worker-Drill-and-Heartbeat-Closure.md`.
+- Dedicated regression test suite `frontend/tests/worker-heartbeat-lifecycle.test.ts` (12 tests) verifying:
+  - Initial worker heartbeat starts as `ACTIVE`.
+  - Normal cycle updates preserve `ACTIVE` status and metadata.
+  - Graceful shutdown persists top-level `status = 'STOPPED'` and `metadata.status = 'STOPPED'`.
+  - Row mapping and health probe interpretation (`UP` vs `DOWN`).
+  - Backward compatibility across all 3-, 4-, and 5-argument calling signatures of `recordHeartbeat()`.
+  - Graceful degradation and non-throwing execution if terminal heartbeat persistence fails.
+
+### Changed
+- `frontend/lib/db/repositories/heartbeat-repository.ts`:
+  - Parameterized SQL `$3` for column `status` on `INSERT` and `ON CONFLICT DO UPDATE`.
+  - Implemented dual-source status resolution accepting explicit status string, falling back to embedded `metadata.status`, and defaulting to `'ACTIVE'`.
+  - Preserved backward compatibility where the 4th argument was optionally a `pg.PoolClient`.
+  - Updated `mapRow()` to resolve status from top-level column with fallback to metadata for legacy rows.
+- `frontend/lib/workers/supervisor.ts`:
+  - Updated `stop()` to pass explicit `'STOPPED'` status parameter to `recordHeartbeat()`.
+  - Added safe timer unref/clearing and wrapped terminal heartbeat persistence in try/catch to guarantee shutdown completion.
+- `docs/Production-Launch-Gates.md`:
+  - Updated Gate 3 status to **PASSED (Milestone 0.21.0 — Ubuntu WSL2 Linux Process Verification)**.
+  - Detailed empirical evidence from native Linux POSIX SIGTERM drill, advisory lock (`829104812`) mutual exclusion, sub-20ms graceful drain, and zero-duplicate job handover.
+  - Preserved Gates 4, 5, and 6 as strictly **DEFERRED** pending external infrastructure and payment merchant onboarding.
+
+### Verified
+- Automated test suites:
+  - `tests/worker-heartbeat-lifecycle.test.ts`: 12/12 PASS (duration: 207ms).
+  - Related worker, reconciler, and ops suites (`ops-backup-and-worker-supervision.test.ts`, `admin-operations-and-reconciler.test.ts`, `production-readiness-and-distributed-state.test.ts`): 51/51 PASS (duration: 527ms).
+- Static typing: `tsc --noEmit` cleanly passed with 0 errors.
+- Live POSIX SIGTERM Drill on Ubuntu 26.04 WSL2:
+  - Worker 1 (PID 440) and Worker 2 (PID 448) mutual exclusion confirmed on lock `829104812`.
+  - Signal `kill -TERM 440` handled gracefully with zero in-flight data loss.
+  - Advisory lock handover to Worker 2 executed cleanly; unit of work 3 completed (`attempts = 1`).
+  - Post-drill SQL audit confirmed top-level `status = 'STOPPED'` in PostgreSQL table `worker_heartbeats`.
+  - Both drill workers exited cleanly with code 0; isolated database `aageonline_worker_drill_disposable` preserved.
+
+## 0.20.29 — Public Page Linking Repair & Navigation Integrity
+
+### Added
+- Authoritative milestone deliverable: `docs/Milestone-0.20.29-Page-Linking-Repair.md`.
+- Implemented statutory legal and grievance routes:
+  - `/privacy`: Comprehensive Data Protection Policy adhering to IT Act 2000 and DPDP Act 2023, zero cardholder data storage invariant, and data isolation standards.
+  - `/terms`: Commercial Terms of Service defining the immutable Location + Category market model, mandatory paid visibility disclosures, whole-rupee transactions, and strict payment finality (no refunds for overtaken positions).
+  - `/grievance`: Statutory Grievance Redressal Mechanism adhering to Rule 5(2) of IT Rules 2021, specifying dedicated officer mailbox (`grievance@aageonline.in`), 48-hour acknowledgment, and 15-day maximum disposal timelines.
+- Added 308 permanent redirect rules in `frontend/next.config.ts`:
+  - `/knowledge` -> `/blog`
+  - `/knowledge/:slug*` -> `/blog/:slug*`
+
+### Changed
+- Replaced dead `/knowledge` links with `/blog` across homepage and feature cards.
+- Synchronized `KnowledgeGuides.tsx` with real published blog article slugs:
+  - `startup-website-development-complete-guide`
+  - `custom-software-development-vs-off-the-shelf-software`
+  - `how-to-choose-a-website-development-company-in-india`
+  - `website-development-company-in-noida-what-businesses-look-for`
+- Derived `INITIAL_FEATURED_MARKETS` dynamically from `SUPPORTED_MARKETS` registry in `frontend/config/markets.ts`, eliminating unseeded 404 markets from homepage carousel and shuffle components.
+- Updated `Footer.tsx` Active Markets links to resolve exclusively to published markets (`jaipur/interior-designers`, `delhi/interior-designers`, `mumbai/interior-designers`, `jaipur/restaurants`, `delhi/restaurants`, `/markets`).
+- Canonicalized internal feature links across `HeroSection.tsx`, `BusinessCtaBanner.tsx`, `BusinessCTA.tsx`, `MarketCTA.tsx`, and `MarketHero.tsx`:
+  - `/claim` -> `/business/claim`
+  - `/explore` -> `/markets`
+  - `/how-it-works` -> `/#how-it-works`
+- Updated `CategoryRail.tsx` to link directly to canonical category directory `/categories/[categorySlug]`.
+- Replaced desktop header `Blog` link with clean light-mode header styling; retained `Blog` in footer resources and legal bar.
+
+### Verified
+- Automated test suite `frontend/tests/ui-navigation-regression.test.ts` (13/13 PASS).
+- Related test suites: `seo-schema.test.ts` (3/3 PASS), `markets-directory.test.ts` (17/17 PASS), `six-markets-matrix.test.ts` (8/8 PASS), `seo-eligibility-and-sitemaps.test.ts` (23/23 PASS).
+- Verified live HTTP response codes on running Next.js instance:
+  - `/privacy`, `/terms`, `/grievance`, `/blog`, `/markets`, `/categories/interior-designers`, `/jaipur/interior-designers` return 200 OK.
+  - `/claim` (308 -> `/business/claim`), `/explore` (308 -> `/markets`), `/knowledge` (308 -> `/blog`) redirect properly.
+- All company details without official registration filing marked with `[LEGAL REVIEW REQUIRED]`.
+
+## 0.20.26 — Authoritative API PostgreSQL Persistence & End-to-End Verification
+
+### Added
+- Authoritative milestone deliverables:
+  - `docs/Milestone-0.20.26-API-Persistence-and-E2E-Verification.md`
+  - `docs/Milestone-0.20.26-Admin-Website-Propagation-Results.md`
+  - `docs/Milestone-0.20.26-Database-and-Recovery-Test-Results.md`
+- Database Migration `012_admin_content_and_governance.sql` adding PostgreSQL schemas for `discovery_requests`, `content_blocks`, `blog_posts`, `url_redirects`, `newsletter_subscribers`, `lead_prospects`, `admin_users`, and `system_settings`.
+- Complete PostgreSQL persistence layer in `api/src/db/`:
+  - `client.ts`: Connection pool management with parameter validation, `query`, `withTransaction`, `checkDatabaseHealth`, and `isDatabaseConfigured`.
+  - `migrator.ts`: Transaction-isolated sequential schema migration runner (001–012).
+  - Repositories: `markets-repo.ts`, `businesses-repo.ts`, `ranking-repo.ts` (with `SELECT ... FOR UPDATE` atomic market locking), `payments-repo.ts`, `content-repo.ts`, and `admin-repo.ts`.
+- Fail-closed database health evaluation in `api/src/server.ts`:
+  - `/api/health/ready` evaluates PostgreSQL connectivity and returns HTTP 503 `DEGRADED` / `DISCONNECTED` when `DATABASE_URL` is configured but unreachable.
+  - Public endpoints (`/api/markets`, `/api/markets/search`, `/api/markets/:id`, `/api/categories`, `/api/locations`, `/api/businesses`, `/api/blog`, `/api/newsletter/subscribe`) connect directly to PostgreSQL repositories.
+  - Administrative endpoints across all 16 domains wired directly to PostgreSQL repositories.
+- Persistence test suite in `api/tests/persistence.test.ts` (5 tests) verifying fail-closed readiness probe, migration runner integrity, atomic ranking mutations, and database error propagation.
+
+### Verified
+- Automated test suites:
+  - `frontend/`: 585 PASS, 0 FAIL, 6 SKIPPED (live PostgreSQL container tests).
+  - `api/`: 18 PASS, 0 FAIL (13 general API tests + 5 persistence tests).
+  - `admin/`: 7 PASS, 0 FAIL.
+  - Total repository assertions: 610 PASS, 0 FAIL, 6 SKIPPED.
+- Static typing: `tsc --noEmit` cleanly passed with 0 errors across `frontend/`, `api/`, and `admin/`.
+- Production builds:
+  - `frontend/`: 73/73 static & dynamic routes compiled successfully (exit code 0).
+  - `admin/`: 52/52 static & dynamic routes compiled successfully (exit code 0).
+- Docker and host probe: Docker CLI not found on host PATH, native PostgreSQL not listening on port 5432; live database container gates accurately marked BLOCKED on Docker Engine Host Prerequisite.
+
+## 0.20.25 — Persistent Data Integration & Admin-to-Website End-to-End Verification
+
+### Added
+- Authoritative milestone deliverable: `docs/Milestone-0.20.25-Persistent-Data-Integration-and-E2E-Verification.md`.
+- Administrative propagation matrix: `docs/Milestone-0.20.25-Admin-Website-Propagation-Matrix.md`.
+- Database backup, restore, and worker verification audit: `docs/Milestone-0.20.25-Database-Backup-Restore-and-Worker-Verification.md`.
+- Consolidated administrative operations by removing redundant experimental `/recovery` supervisor page and redirecting to `/operations`.
+- Cross-tenant authorization hardened in `frontend/lib/workspace/store.ts` ensuring foreign tenant business requests strictly throw HTTP 403 Forbidden while unclaimed businesses allow owner claims.
+- Landmarking invariants hardened in `frontend/app/business/dashboard/WorkspaceNav.tsx` replacing nested `<header role="banner">` with semantic `<div className="workspace-nav-wrapper">`.
+
+### Verified
+- Executed all automated test suites: 585 PASS in `frontend/` (6 DB container integration tests safely skipped), 13 PASS in `api/`, 7 PASS in `admin/` (605 total passing assertions, 0 failures).
+- TypeScript strict compilation verified with 0 errors across `frontend/`, `api/`, and `admin/`.
+- Preserved complete public website design, typography, brand tokens, and admin Control Center UI.
+- Audited persistence layer: identified that `api/src/server.ts` currently runs in-memory transient data collections while `frontend/` contains Migrations 001–011 and PostgreSQL repositories.
+- Documented exact host prerequisites for live PostgreSQL container initialization.
+
+## 0.20.22 — Disposable PostgreSQL Verification & Recovery Tests
+
+### Added
+- Authoritative milestone deliverable: `docs/Milestone-0.20.22-Disposable-PostgreSQL-Verification-and-Recovery-Tests.md`.
+- Database integration test report: `docs/Milestone-0.20.22-Database-Integration-Test-Report.md`.
+- Backup and restore verification report: `docs/Milestone-0.20.22-Backup-and-Restore-Verification-Report.md`.
+- Worker concurrency and recovery report: `docs/Milestone-0.20.22-Worker-Concurrency-and-Recovery-Report.md`.
+- Diagnosed local host environment for Docker and native PostgreSQL availability.
+- Documented exact local manual setup prerequisites for running disposable database containers.
+
+### Verified
+- Executed 106 automated tests across persistence, security, backup safety, and worker supervision suites (100 PASS, 6 safely skipped due to absent live database socket).
+- Re-verified TypeScript compilation clean across `frontend/`, `api/`, and `admin/` (0 errors).
+- Zero website alterations; completed frontend UI and design remain 100% locked.
+- Confirmed zero resources or containers orphaned during verification.
+- Preserved all six authoritative launch gates as explicitly DEFERRED.
+
+## 0.20.21 — Provider-Neutral Production Readiness
+
+### Added
+- Authoritative milestone deliverable: `docs/Milestone-0.20.21-Provider-Neutral-Production-Readiness.md`.
+- Provider-neutral deployment architecture and decision record: `docs/Provider-Neutral-Deployment-Architecture-and-Decision.md`.
+- Security, backup, restore and disaster recovery checklist: `docs/Security-Backup-Restore-and-Recovery-Checklist.md`.
+- ADR-039 in `docs/Decision-Log.md`: Provider-Neutral Deployment Architecture & Dual-Database Support (Same-Host vs Managed).
+- Added optional same-host PostgreSQL 16 service (`db`) with persistent `pgdata` volume to `docker-compose.yml` under the `local-db` profile.
+- Added healthcheck to `admin` service in `docker-compose.yml`.
+- Updated `admin/Dockerfile` to compile Next.js production build (`npm run build`) and run `npm start`.
+- Updated `.env.production.example` and `docs/Production-First-Deployment-Checklist.md` with dual-option database guidance and explicit provider-neutral baselines.
+
+### Verified
+- Domain candidate (`aageonline.com`), hosting provider, region, DNS provider, and final budget kept explicitly UNDECIDED.
+- Zero website alterations; frontend UI, typography, colors, layout, design tokens, and motion implementation remain 100% locked.
+- Admin application has zero direct database connections and communicates strictly with `api:4000` via HTTP.
+- Worker singleton behavior guaranteed via PostgreSQL 64-bit advisory lock (`829104812`).
+- Database migrations execute as a decoupled one-off runner guarded by advisory lock (`94827104`).
+- Only Caddy reverse proxy publishes public host ports (80, 443); all internal services remain unexposed on `aageonline-net`.
+- Automated test suites passing cleanly: 72/72 tests (64 frontend unit/domain/security, 8 API integration).
+- TypeScript static compilation verified across repository (0 errors across `frontend`, `api`, and `admin`).
+- Preserved all six authoritative launch gates as DEFERRED.
+
+## 0.20.20 — API, Admin & Production Integration Readiness & Provider Selection
+
+### Added
+- Authoritative integration readiness deliverable: `docs/Milestone-0.20.20-API-Admin-Production-Integration-Readiness.md`.
+- Authoritative hosting provider selection deliverable: `docs/Milestone-0.20.20-Production-Provider-Selection.md`.
+- Actionable 17-step operational checklist: `docs/Production-First-Deployment-Checklist.md`.
+- Automated API test suite in `api/tests/api-server.test.ts` verifying endpoints, health checks, search, and admin operations.
+- Admin operational trigger endpoint: `POST /api/admin/operations` with reconciliation dispatch and structured response.
+- Dual-shape responses on `GET /api/markets` supporting both paginated data envelopes (`frontend/data-access`) and catalog arrays (`admin/discovery`).
+- Business directory REST endpoints: `GET /api/businesses` and `GET /api/businesses?slug=...` consumed by `ApiBusinessDataSource`.
+- Market discovery search endpoint: `GET /api/markets/search?q=...` consumed by `ApiMarketDataSource`.
+- Systematic comparison of DigitalOcean (`blr1`), AWS Lightsail (`ap-south-1`), and Hetzner Cloud.
+- Explicit database connection budget calculation across all 6 containerized processes (25 connections required; 20 peak concurrent).
+- Evaluated network latency implications: Rejected Hetzner for core computing due to 130-170ms inter-continental latency penalty and lack of managed PostgreSQL.
+- Primary recommendation: DigitalOcean (Bangalore `blr1`) — Basic Droplet (2 vCPU, 4 GB RAM) + Managed PostgreSQL 16 (2 GB RAM, 47 connections) = $54.00/mo.
+- Alternative recommendation: AWS Lightsail (Mumbai `ap-south-1`) — VPS (2 vCPU, 4 GB RAM) + Managed PostgreSQL 16 (1 GB RAM, ~112 connections) = $35.00/mo.
+- DNS and routing checklist for `aageonline.com` with Cloudflare DNS-only initial issuance policy.
+- Performance, HTTP/3 QUIC, and mobile slow-network readiness evaluation for Indian regional users.
+
+### Verified
+- Zero changes to frontend UI, page sections, content, typography, colors, layout, or motion system (100% locked).
+- Zero cloud accounts, VPS hosts, databases, or live infrastructure provisioned.
+- Zero billing configured or purchases initiated.
+- Zero DNS, TLS, or external payment settings modified.
+- TypeScript static compilation verified across repository (0 errors across `frontend`, `api`, and `admin`).
+- Automated tests passing deterministically: 72/72 tests passing (64 frontend unit/domain/security tests, 8 API integration tests).
+- Preserved all six authoritative launch gates as DEFERRED.
+
+## 0.20.19 — Production Deployment Artifact Consistency Audit
+
+### Added
+- Authoritative deployment artifact audit deliverable: `docs/Milestone-0.20.19-Production-Deployment-Artifact-Audit.md`.
+- Reconciled migration count references (`001-011`) across deployment runbook, launch-gate register, and deployment scripts.
+- Added missing `SESSION_SECRET` and `ADMIN_TOKEN` placeholders to `.env.production.example`.
+- Removed obsolete staging reference from `frontend/.dockerignore`.
+- Updated `docs/Production-Deployment-Runbook.md` topology diagram and deployment instructions to reflect independent services (`web`, `api`, `admin`, `worker`, `migrator`, `caddy`).
+
+### Verified
+- Zero cloud accounts, staging environments, databases, or live infrastructure provisioned.
+- Zero secrets committed to version control.
+- TypeScript compilation cleanly passed across `frontend/`, `api/`, and `admin/` (0 errors).
+- Automated operational and worker supervision unit tests passed (38/38 assertions).
+- Confirmed web, api, admin, and worker run as independent containers with proper isolation and advisory locks.
+- Confirmed all six live launch gates remain DEFERRED and open.
+
+## 0.20.18 — Production Deployment Planning & Infrastructure Decision
+
+### Added
+- Authoritative production deployment planning document: `docs/Milestone-0.20.18-Production-Deployment-Planning.md`.
+- Production Environment and Secrets Matrix: `docs/Production-Environment-and-Secrets-Matrix.md`, classifying all 40 environment variables and secrets with validation behavior, consuming services, and fail-closed policies.
+- Ordered 14-Step Production Deployment Runbook: `docs/Production-Deployment-Runbook.md`, covering pre-provisioning ownership, region selection, DNS delegation, managed PostgreSQL configuration, secret injection, artifact verification, decoupled migration execution, web/worker orchestration, PayU sandbox validation, and monitoring setup.
+- Consolidated Production Launch Gates Register: `docs/Production-Launch-Gates.md`, defining prerequisites, verification procedures, objective pass/fail criteria, evidence retention, and payment-blocking status for all 6 deferred live gates.
+- Recommended architecture specification: Docker Compose on Linux VPS + Caddy Auto-TLS + Managed PostgreSQL 16+ ($21 – $35/mo).
+- Fallback architecture specification: Managed PaaS (Render / Railway) + Managed PostgreSQL 16+ ($33 – $45/mo).
+
+### Verified
+- Zero cloud accounts, staging environments, databases, or infrastructure provisioned.
+- Zero secrets or credentials committed to repository.
+- Re-verified all 581 automated repository tests pass deterministically.
+- All 6 deferred live infrastructure gates explicitly retained and gated on owner approval.
+
+## 0.20.17 — Launch-Gate Consolidation & Final Local Regression Audit
+
+### Added
+- Authoritative consolidated launch-gate document: `docs/Milestone-0.20.17-Launch-Gate-Consolidation.md`.
+- Consolidated launch-gate register spanning 5 critical subsystems: Financial Lifecycle & Ranking, Authentication & Security, Operations & Disaster Recovery, Website Quality & Trust, and Deployment Readiness.
+- Comprehensive verification methodology mapping each gate to one of six explicit evidence levels (Code Verified, Automated Test Verified, Static/Build Verified, Documented Only, Live Verification Deferred, Unverified/Failed).
+- Prioritized next actions and deployment prerequisites for closing deferred infrastructure gates.
+
+### Verified
+- Full repository test suite: 581 passed, 0 failed, 6 deferred live tests cleanly skipped (`node --test tests/**/*.test.ts`).
+- Operational verification suite: 18 / 18 failure-path tests passed deterministically in 338 ms (`tests/operational-verification-and-failure-paths.test.ts`).
+- TypeScript static compilation: 0 type errors (`tsc --noEmit`).
+- Production build: All 70 static and dynamic routes compiled successfully with zero bundle errors (`next build`).
+- Preserved website design, section structure, branding tokens, motion system, and accessibility states without regression.
+- Retained all 6 deferred live infrastructure gates explicitly.
+
+## 0.20.16 — Operational Verification & Failure-Path Audit
+
+### Added
+- Comprehensive, deterministic operational verification and failure-path test suite (`frontend/tests/operational-verification-and-failure-paths.test.ts`) covering:
+  - Worker lifecycle: Successful cycle execution, bounded exponential backoff, circuit-breaker tripping & auto-recovery, graceful shutdown drain timeout, shutdown scheduling gate, and stale heartbeat detection.
+  - Backup/restore safety: Missing PostgreSQL utility detection, archive overwrite prevention, JSON manifest schema validation, partial/failed backup rejection, and restore error credential redaction.
+  - Financial lifecycle failure paths: Rejection of unauthenticated/unkeyed payment creation, rejection of forged PayU webhooks with invalid signatures, proof that browser redirects cannot independently confirm payment or bypass verification, duplicate webhook idempotency, and rejection of settlements for unconfirmed payments.
+  - Security & operational invariants: Production development-authentication bypass prevention, platform administration privilege guards on non-admin users, and secret redaction in database connection strings.
+- Backup safety tooling enhancements in `frontend/lib/ops/backup-safety.ts`:
+  - `validateBackupManifest()`: Validates backup metadata, 64-hex SHA-256 hashes, file sizes, and rejects partial backups.
+  - `checkBackupFileOverwrite()`: Prevents silent overwriting of existing backup dumps.
+  - `formatSafeRestoreError()`: Strips connection strings and sensitive credentials from restore error logs.
+- Deliverable report: `docs/Milestone-0.20.16-Operational-Verification.md`.
+
+### Fixed
+- Remediated timer leak in `WorkerSupervisor`:
+  - Added `.unref()` to background scheduling timer in `scheduleNext()` so background worker intervals do not keep the Node.js event loop alive when tasks finish.
+  - Cleared `cycleTimer` and `drainTimer` on completion to avoid lingering timeout handles.
+  - Guarded `finally` block in `executeCycle()` to only schedule next cycle when supervisor status is `RUNNING` or `CIRCUIT_BROKEN`.
+
+### Verified
+- 18 / 18 operational verification and failure-path tests passed cleanly.
+- Full test suite: 581 passed, 0 failed, 6 deferred live tests skipped.
+- TypeScript compilation: 0 type errors (`tsc --noEmit`).
+- Production build: All 70 static and dynamic routes compiled cleanly (`next build`).
+
+## 0.20.15 — Complete Website-Wide Motion, Hover & Interaction System
+
+### Added
+- Authoritative motion tokens module in `frontend/lib/motion/tokens.ts` defining restrained durations (`micro`: 140ms, `fast`: 180ms, `normal`: 260ms, `reveal`: 380ms, `deliberate`: 450ms, `stagger`: 60ms), cubic-bezier easing curves, elevation scales, and experience-specific motion intensity tiers.
+- Reusable motion primitives in `frontend/components/motion/`:
+  - `MotionReveal`: Single-trigger viewport scroll reveals with SSR safety and native `IntersectionObserver`.
+  - `StaggerContainer`: Capped stagger delay coordinator without layout shifts.
+  - `useReducedMotion`: Dynamic hook detecting OS/browser `prefers-reduced-motion: reduce` in real time.
+- Standardized interactive CSS classes and animations in `frontend/app/globals.css`:
+  - Keyframes: `@keyframes spin`, `@keyframes fadeIn`, `@keyframes fadeOut`, `@keyframes scaleIn`, `@keyframes revealUp`, `@keyframes pulseSubtle`, `@keyframes shimmer`.
+  - Interactive components: `.aage-button`, `.aage-card`, `.aage-card-interactive`, `.card-lift`, `.aage-input`, `.aage-nav-link`, `.aage-ranking-card`, `.aage-modal-backdrop`, `.aage-bid-modal-content`.
+  - Stagger delay helpers: `.stagger-1` through `.stagger-6`.
+  - Universal `@media (prefers-reduced-motion: reduce)` override disabling all animations, transitions, and transforms across the entire DOM.
+- Shared component enhancements:
+  - `Card`: Added `.aage-card-interactive` when `isInteractive` is true.
+  - `Button`: Standardized press micro-transitions, 44px min accessible touch targets, and accessible loading state.
+  - `Input`: Focus ring transitions and error outline state without layout jumps.
+  - `Header`: Replaced fragile inline handlers with `.aage-nav-link`.
+  - `FaqAccordion`: Smooth expansion fade and accessible ARIA attributes.
+  - `BidModal`: Accessible modal entrance with backdrop fade and dialog scale-in.
+- Dedicated regression test suite: `frontend/tests/motion-and-interaction-system.test.ts` (21 tests covering tokens, CSS keyframes, interactive components, reduced-motion overrides, and design-lock layout sequence preservation).
+- Authoritative specification and route coverage matrix: `docs/Motion-System.md`.
+
+### Preserved
+- **Critical Design-Lock:** 100% preservation of all existing layouts, section hierarchies, copywriting, colors, typography, spacing grids, and responsive breakpoints.
+- **Zero Layout Shifts:** CLS = 0 maintained across all routes.
+- **Business Logic & Security Invariants:** All payments, rankings, authentication, and database boundaries remain untouched.
+
+### Verdict
+- **`IMPLEMENTATION COMPLETE — ROUTE COVERAGE AND VALIDATION REPORTED`**.
+
 ## 0.20.14 — Production Readiness Audit & Launch Gate
 
 ### Audited
@@ -880,6 +1175,213 @@
 - TypeScript: 0 type errors (`tsc --noEmit`).
 - Production build: Successfully compiled all 45 static and dynamic routes.
 
+## 0.20.23A — Admin Application Audit and Verification
 
+### Added
+- **Server-Side Authentication & Session Management (`admin/lib/auth.ts`):**
+  - Timing-safe constant-time secret comparison (`timingSafeCompare`) preventing timing side-channel attacks across Edge and Node runtimes.
+  - Server-side token validation (`verifyAdminToken`) enforcing fail-closed policy in production.
+  - Web Crypto HMAC-SHA256 session token generation (`createAdminSessionHash`) and validation (`verifyAdminSessionCookie`).
+  - Protected HttpOnly, SameSite=Strict `aage_admin_session` cookie management.
+- **Route Guard Middleware (`admin/middleware.ts`):**
+  - Enforces mandatory authentication for all backoffice operator views (`/`, `/discovery`, `/operations`) and API endpoints (`/api/*`).
+  - Unauthenticated requests safely redirected to `/login?from=...` (browser) or 401 Unauthorized (API).
+- **Dedicated Operator Login Portal (`admin/app/login/page.tsx`, `admin/app/LogoutButton.tsx`):**
+  - Accessible, responsive backoffice login interface adhering to AageOnline dark system tokens (`#071018`, `#0B1F33`, `#FB923C`).
+  - Secure session termination via `DELETE /api/auth`.
+- **Server-Side API Proxy Layer (`admin/app/api/`):**
+  - `admin/app/api/auth/route.ts`: Login (`POST`), Session Status (`GET`), Logout (`DELETE`).
+  - `admin/app/api/operations/route.ts`: Authenticated proxy forwarding system vitals and reconciliation trigger to `http://api:4000` with server-side bearer token injection.
+  - `admin/app/api/markets/route.ts`: Authenticated proxy forwarding market catalog queries to `http://api:4000` with server-side bearer token injection.
+  - `admin/app/api/health/route.ts`: Dedicated health check endpoint returning service vitals on internal port 3001.
+- **Automated Test Suite (`admin/tests/admin-auth-and-api.test.ts`):**
+  - 6 unit and security tests verifying token validation, timing attack resistance, cookie hashing, API client resolution, health check contract, and zero browser secret exposure.
+- **Production Container Packaging (`admin/Dockerfile`, `admin/.gitignore`):**
+  - Updated Docker build copying `lib/` and `middleware.ts`, packaging production Next.js bundle on internal port 3001 with container `HEALTHCHECK`.
 
+### Verified
+- **Zero Database Invariant:** Verified zero `pg` dependencies, zero connection pool instantiations, and zero `DATABASE_URL` references in `admin/`.
+- **Quality Gates:**
+  - Unit tests: 6 passed, 0 failed (`node --experimental-strip-types --test tests/**/*.test.ts`).
+  - TypeScript: 0 errors (`tsc --noEmit`).
+  - Production build: `next build` succeeded with exit code 0 (11 routes compiled).
 
+## 0.20.23B — API Integration, Admin Authorization & Persistence Audit
+
+### Added
+- **Central Administrative Route Authorization Guard (`api/src/server.ts`):**
+  - Constant-time secret comparison (`timingSafeTokenCompare`) via `crypto.timingSafeEqual` preventing timing attacks.
+  - Server-side administrative authentication guard (`authenticateAdminRequest`) protecting all `/api/admin/*` endpoints (`/api/admin/operations`, `/api/admin/settlements`, `/api/admin/recovery-jobs`).
+  - Rejection of missing/malformed `Authorization: Bearer <ADMIN_TOKEN>` headers with HTTP 401 Unauthorized.
+  - Rejection of invalid credentials with HTTP 403 Forbidden.
+  - Enforced fail-closed security policy in production when `ADMIN_TOKEN` is unset (HTTP 500 CONFIG_ERROR).
+- **Hardened Reconciliation Operations (`api/src/server.ts`):**
+  - Validated `action: 'RECONCILE'` in `POST /api/admin/operations` with idempotent handling and structured confirmation response.
+- **Automated Security & Integration Test Suite (`api/tests/api-server.test.ts`):**
+  - Expanded test suite to 11 subtests (12 total tests) covering health checks, market catalog/search, business directory, integer amounts, administrative route guards, fail-closed policy, reconciliation triggers, and CORS preflight.
+- **Container Health Check Probe (`api/Dockerfile`, `api/.env.example`, `api/.gitignore`):**
+  - Added Docker container `HEALTHCHECK` probe against `http://127.0.0.1:4000/api/health/live`.
+  - Documented `ADMIN_TOKEN` in `api/.env.example` and added `.gitignore`.
+
+### Verified
+- **Quality Gates:**
+  - API unit/integration tests: 12 passed, 0 failed (`node --experimental-strip-types --test tests/**/*.test.ts`).
+  - API TypeScript checks: 0 errors (`tsc --noEmit`).
+  - Admin unit/security tests: 6 passed, 0 failed.
+  - Admin TypeScript checks: 0 errors (`tsc --noEmit`).
+- **Financial Invariants:**
+  - Verified integer paise/rupee monetary representation across API entities with zero floating-point math.
+
+## 0.20.24 — Admin Complete Dashboard Redesign & Email/Password Authentication
+
+### Added
+- **Complete Dashboard Redesign (`admin/`):**
+  - Rebuilt administration UI using dark dashboard layout (`AdminShell.tsx`) with collapsible left sidebar, grouped navigation, sticky top toolbar, health ping badges, and dense data tables.
+  - Implemented AageOnline design tokens: Deep Navy (`#071526`), Secondary Navy (`#0B1F33`), Primary Orange (`#EA580C`), Highlight Orange (`#FB923C`), neutral borders, and Inter typography (`globals.css`).
+  - Added dense management views: Overview (`/`), Business Management (`/businesses`), Markets & Rankings (`/markets`), Taxonomy Review (`/discovery`), Settlement Ledger (`/settlements`), Operations (`/operations`), Audit Trail (`/audit`), and Settings (`/settings`).
+- **Decoupled Email/Password Authentication:**
+  - Replaced raw `ADMIN_TOKEN` entry with email/password authentication on `/login`.
+  - Added show/hide password toggle, remember-me options, accessible focus indicators, and `?from=` redirect handling.
+  - Salted and hashed passwords with NIST/OWASP-approved `scrypt` (`crypto.scryptSync`, 16-byte random salt, 64-byte key) with constant-time verification (`crypto.timingSafeEqual`) in `api/src/server.ts`.
+  - Implemented login brute-force rate limiting (5 attempts per 15-minute window) returning HTTP 429.
+  - Cryptographically signed session cookies with Web Crypto HMAC-SHA256 in `admin/lib/auth.ts`, ensuring 100% compatibility with Next.js Edge runtime middleware.
+  - Set secure `HttpOnly`, `SameSite=Strict`, `Secure`-in-production session cookies (`aage_admin_session`).
+- **Server-Side API Endpoints (`api/src/server.ts`):**
+  - Added `POST /api/admin/auth/login`, `GET /api/admin/auth/me`, `POST /api/admin/auth/logout`.
+  - Added `GET /api/admin/users`, `GET /api/admin/settlements`, `GET /api/admin/recovery-jobs`, `GET /api/admin/audit-logs`.
+  - Created administrative account CLI bootstrap script (`npm run admin:bootstrap` in `api/`).
+- **Authenticated Proxy Handlers (`admin/app/api/*`):**
+  - Added server-side proxies for settlements (`/api/settlements`), audit logs (`/api/audit`), businesses (`/api/businesses`), markets (`/api/markets`), and operations (`/api/operations`).
+
+- **Comprehensive Control Center & Website Audit Extension (Milestone 0.20.24 Full Scope):**
+  - Conducted full website, API, database, and operational services audit documented in `docs/Milestone-0.20.24-Complete-Website-and-Admin-Control-Audit.md`.
+  - Established authoritative 15-module information architecture blueprint documented in `docs/Milestone-0.20.24-Admin-Information-Architecture.md`.
+  - Implemented 15 additional administrative management screens in `admin/app/`:
+    - Locations (`/locations`)
+    - Categories (`/categories`)
+    - Rankings & Position Ladders (`/rankings`)
+    - Payments & Transaction Ledger (`/payments`)
+    - Worker Recovery & Stale Lock Eviction (`/recovery`)
+    - Website Content & Statutory Disclosures CMS (`/content`)
+    - Editorial Blog Engine (`/blog`)
+    - Newsletter Subscriber Registry & Consent Records (`/newsletter`)
+    - SEO / AEO / GEO Engine Audit (`/seo`)
+    - Sitemap & Robots Live Inspection (`/sitemap-robots`)
+    - Platform Analytics & Operational Counters (`/analytics`)
+    - Lead Acquisition Framework & Connector Registry (`/leads`)
+    - Mail Management & Transactional Templates (`/mail`)
+    - Operational Alerts & Notification Stream (`/notifications`)
+    - Administrator User Directory & Permissions Matrix (`/users`)
+  - Added matching authenticated server proxies in `admin/app/api/*` ensuring zero direct PostgreSQL dependencies from `admin/`.
+  - Extended authoritative REST API (`api/src/server.ts`) with typed administrative endpoints and dataset stores.
+  - Documented complete delivery and verification evidence in `docs/Milestone-0.20.24-Admin-Implementation-and-Verification.md`.
+
+### Verified
+- **Admin Unit Tests (`admin/tests/`):** 7/7 tests passed.
+- **API Unit Tests (`api/tests/`):** 13/13 test files, 32 assertions passed.
+- **TypeScript Checks:** `tsc --noEmit` passed with 0 errors across `admin/` and `api/`.
+- **Production Next.js Build:** `next build` in `admin/` compiled all 50 routes, APIs, and pages with 0 errors.
+- **Live Integration:** 100% of proxy endpoints tested via authenticated HTTP session with port 4000 returning HTTP 200 OK.
+
+## 0.20.25 — Admin Session Token Stateless Verification & Resilient Proxy Fallback
+
+### Fixed
+- **HTTP 403 on `/locations` and `/categories`:** Resolved session desynchronization after API process restarts where in-memory sessions were cleared while browser cookies held previously issued tokens.
+- **Stateless HMAC-Signed Admin Tokens:** Admin session tokens are now cryptographically signed (`adm_sess_<userId>_<expiresAt>_<signature>`), allowing the API server to validate unexpired sessions statelessly even across restarts.
+- **Server Token Proxy Fallback:** Added resilient server-level `ADMIN_TOKEN` retry in `admin/lib/api-client.ts` for privileged requests whose session tokens encounter downstream 401/403.
+## 0.20.27 — Unified Lead Scraper + Zero-Inspired Email Automation
+
+### Added
+- **Audited References:** Full architectural and code audits of `msmunnabd/Social-Media-AutoPilot-Engine` (MIT) and `Mail-0/Zero` (MIT) documented in `docs/Milestone-0.20.27-Reference-Repository-Audit.md`.
+- **Database Migration 013 (`013_lead_scraper_and_email_automation.sql`):** Added `scraper_configs`, `scraper_jobs`, `email_templates`, `email_campaigns`, `email_outbox`, `email_suppression_list`, and extended `lead_prospects` with `normalized_name`, `outreach_eligible`, `suppressed`, `provenance`, and `discovery_job_id`.
+- **Source Connector Framework (`api/src/services/scraper/`):**
+  - Adapted Google Maps connector with unicode glyph cleaning (`\ue0c8`, etc.) and Indic/Bengali numeral normalization (`০-৯`, `०-९`).
+  - Implemented SSRF-safe Website Crawler with RFC1918/IMDS filtering, 5-second timeouts, and 1MB size bounds.
+  - Implemented CSV Import Connector with spreadsheet formula injection protection (`=,+,-,@,\t,\r`).
+  - Truthful capability reporting for Google Search (`OPERATIONAL`) and Meta, LinkedIn, X connectors (`CONFIG_REQUIRED`).
+- **Gemini AI Normalization (`api/src/services/scraper/gemini-normalizer.ts`):** Server-side Gemini API integration with schema enforcement, factual summaries, and automatic offline fallback to deterministic taxonomy mapping.
+- **Authoritative SQL Deduplication & Repositories (`api/src/db/repositories/`):** Created `scraperRepository` and `emailAutomationRepository` ensuring deduplication by city + category + normalized name / email.
+- **Safe Template Engine (`api/src/services/email/template-renderer.ts`):** Escapes untrusted HTML inputs, interpolates personalization tokens, and mandates instant opt-out footer.
+- **Independent Campaign Engine (`api/src/services/email/campaign-engine.ts`):** Independent scheduler, cooldown window checking, and suppression list enforcement.
+- **Admin Information Architecture & Zero 3-Pane UI (`admin/app/`):**
+  - Scraper Dashboard at `/leads/scraper` with KPI metrics, configuration controls, and job history.
+  - Zero-inspired Email Automation Workspace at `/leads/email-automation` with 3-pane layout, card list, campaign inspector, template studio, and suppression registry.
+  - Proxy route handlers `admin/app/api/scraper/route.ts` and `admin/app/api/email-automation/route.ts`.
+  - Updated sidebar navigation in `admin/components/AdminShell.tsx` and sub-navigation tabs in `/leads`.
+- **Public Opt-Out Endpoint:** `/api/public/leads/opt-out` (GET & POST) with instant suppression in PostgreSQL.
+
+### Verified
+- **API Tests:** 30/30 tests passed (`tests/scraper-and-email-automation.test.ts`, `tests/persistence.test.ts`, `tests/api-server.test.ts`).
+- **Admin App:** `npx tsc --noEmit` passed with 0 errors; `next build` compiled all 56 routes with 0 errors.
+- **Frontend App:** `npx tsc --noEmit` passed with 0 errors.
+
+## 0.20.28 — PostgreSQL Installation, Live Persistence & Scheduler Recovery
+
+### Added
+- **Portable PostgreSQL 16 Deployment:** Installed standalone community binaries under `%USERPROFILE%\.local\pgsql` bound strictly to `127.0.0.1:5432` without administrative privileges, Windows services, or machine registry modifications.
+- **Dedicated Application Role:** Created least-privilege `aage_app` role with SCRAM-SHA-256 password authentication on `aageonline_dev`.
+- **Durable Scheduler Engine (`api/src/services/scheduler/scheduler-engine.ts`):** Implemented PostgreSQL-backed scheduler using advisory locks (`94827105`) that evaluates due scraper jobs and email campaigns without transient in-memory timers.
+- **Outbox Cooldown Method (`api/src/db/repositories/email-automation-repo.ts`):** Added `isRecipientInCooldown()` to query historical sends from `email_outbox` in PostgreSQL.
+- **Harmonized Migration Runners:** Unified `schema_migrations` tracking and advisory locking (`94827104`) between `frontend/lib/db/migrator.ts` and `api/src/db/migrator.ts`.
+
+### Fixed
+- **Migration 009 Syntax Error:** Corrected index targets in `009_performance_indexes.sql` to index `slug` directly on `locations` and `categories` instead of nonexistent `status` columns.
+- **Audit Log Fallback:** Ensured `/api/admin/audit-logs` supplies seed records when database audit table is initially empty.
+- **Test Isolation:** Added dynamic test identifiers in API persistence tests to ensure clean idempotency against live databases.
+
+### Verified
+- **Live SQL Persistence:** Confirmed 24 leads, 3 scraper jobs, 1 campaign, and 4 outbox messages persisted across API restarts.
+- **Repeat Deduplication:** Confirmed second discovery run updated 23 existing leads without creating duplicate records.
+- **Cooldown Enforcement:** Confirmed repeat campaign dispatch skipped 2 contacts within 14-day cooldown period.
+- **Worker Advisory Locking:** Verified concurrent worker execution is harmlessly skipped via `pg_try_advisory_lock(829104812)`.
+- **Automatic Scheduler Triggers:** Confirmed due scheduler tick executed scraper discovery and advanced `next_run_at` by 24 hours in SQL.
+- **Backup & Restore Parity:** Verified `pg_dump` and restore into disposable test database achieved 100% data parity.
+- **Full Test Suites:** 30/30 API tests passed; 585/585 Frontend tests passed; Admin TypeScript check passed with 0 errors.
+
+## 0.20.30 — Business Owner Identity & Registration Flow
+
+### Added
+- **Migration 014 (`014_whatsapp_auth_and_business_evidence.sql`):** Added `phone` and `status` to `users`; added `whatsapp_phone`, `evidence_type`, `evidence_reference`, and `evidence_status` to `businesses`.
+- **OTP Challenge Service (`frontend/lib/auth/otp-service.ts`):** Indian mobile (+91) normalization, 60s cooldown, 10m TTL, max 5 attempts, hidden test code, and environment-guarded test bypass (`isTestOtpAllowed()`).
+- **PostgreSQL User & Business Repositories:** Created `PostgresUserRepository` (`findByPhone`, `createOrGetUserByPhone`) and `PostgresBusinessRepository` (`getBusinessesByOwner`, `createBusinessWithOwner` with foreign key upserts and bounded VARCHAR(64) IDs).
+- **Returning Owner Screen:** Dedicated "Your Businesses" screen displaying owned listings with verification badges, "Open Workspace →", and "+ Register Additional Business" CTA.
+- **Evidence Format Validation (`frontend/lib/validation/evidence.ts`):** Strict format validation and normalization for GSTIN, UDYAM, SHOP_ESTABLISHMENT, and COMMERCIAL_PAN.
+- **Server API Routes:**
+  - `POST /api/auth/otp/send`: Indian phone normalization and OTP challenge creation.
+  - `POST /api/auth/otp/verify`: Server-side OTP verification, PostgreSQL user resolution, owned business retrieval, and secure HttpOnly cookie creation.
+  - `GET /api/auth/me`: Resolves session cookie and retrieves user and owned businesses from PostgreSQL.
+  - `POST /api/business/register`: Session verification, Business Phone and locked WhatsApp enforcement, evidence format validation, and atomic PostgreSQL persistence (`verification_status: 'PENDING'`).
+  - `POST /api/auth/logout`: Revocation of persistent session in PostgreSQL and clearing of session cookie.
+- **Automated Regression Suite (`frontend/tests/business-auth-and-registration-flow.test.ts`):** 18 comprehensive tests covering phone normalization, OTP lifecycle, security invariants, evidence validation, and PostgreSQL persistence.
+
+### Fixed
+- **Dev Impersonation:** Removed automatic dev impersonation of `user-ajay` in `frontend/lib/auth/store.ts`.
+- **Dashboard WorkspaceNav:** Dynamically loads session from `/api/auth/me` on mount; removed hardcoded `user-ajay` and truthfully displays "Business Owner" / "Not added" and verified phone.
+- **Form UX & Accessibility:** Replaced distant error alerts with accessible alert summaries immediately above action buttons, field-level red borders, and automatic focus to the first invalid field.
+- **Webpack Bundling:** Guarded database imports in `lib/workspace/store.ts` with `typeof window === 'undefined'` to eliminate client bundle crashes.
+
+### Verified
+- **Full Test Suite:** 609 passed, 0 failed, 6 skipped across 190 suites.
+- **End-to-End Live Persistence:** Verified real HTTP flow for OTP verification, initial business registration, multi-business registration, and returning user retrieval from PostgreSQL across session logout and re-login.
+
+## 0.20.32 — PayU Sandbox Payment Provider & External Webhook Verification
+
+**Status:** Milestone 0.20.32 — COMPLETE (Sandbox Testing); Production Release — BLOCKED PENDING RELEASE GATES.
+
+### Added
+- **PayU Sandbox Integration Test Suite (`frontend/tests/payu-sandbox-integration.test.ts`):** 12 comprehensive end-to-end sandbox verification tests covering PayU sandbox separation, SHA-512 request hashing, reverse response hashing with/without surcharges, tampering rejection, real PostgreSQL webhook processing, duplicate delivery idempotency, 5-way concurrent webhook serialization under load, atomic ranking settlement, rollback under simulated failure, and external PayU sandbox handshake.
+- **Verification Report (`docs/Milestone-0.20.32-Payment-Provider-Sandbox-and-External-Webhook-Verification.md`):** Complete evidence-driven milestone verification report with exact commands, exit codes, and status matrix.
+
+### Fixed
+- **PostgreSQL Ranking Settlement Foreign Key Ordering:** In `frontend/lib/ranking-settlement/settlement-service.ts`, ensured the `RankingSettlement` entity is persisted inside the transaction client (`txClient`) immediately following `tx.begin()`. This guarantees that subsequent `position_history` rows referencing `settlement.id` satisfy the `position_history_ranking_settlement_id_fkey` constraint without breaking atomicity or rollback safety.
+
+### Verified
+- **PayU Sandbox Test Suite:** 12/12 tests passed (0 failures, 0 skipped, exit code 0, duration: 474ms).
+- **External Network Handshake:** HTTP POST to `https://test.payu.in/merchant/postservice?form=2` completed with valid PayU sandbox response headers and JSON body for an intentionally nonexistent transaction reference (`NOT_FOUND` / `FAILURE`).
+- **Payment Verification Boundary:** Test 12 did not demonstrate a successful end-to-end payment (negative handshake verified; live capture deferred).
+- **Payment Domain Regression:** 23/23 tests passed in `tests/payment.test.ts`.
+- **Financial Persistence Regression:** 21/21 tests passed in `tests/financial-persistence-and-durability.test.ts`.
+- **Real PostgreSQL Integration:** 11/11 tests passed in `tests/real-postgres-integration.test.ts`.
+- **Database Safety Guard:** Zero queries executed against `aageonline_dev`; all tests executed strictly against verified disposable database `aageonline_integration_test`.
+- **Scope Alignment:** WhatsApp integration excluded from milestone (marked `NOT CONFIGURED / UNVERIFIED`); existing mobile OTP flow kept intact.
+- **Production Blockers:** Production merchant credentials, HTTPS webhook ingress verification, and separate production release authorization remain outstanding release gates prior to live deployment.

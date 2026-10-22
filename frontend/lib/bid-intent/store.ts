@@ -199,7 +199,23 @@ export async function createBidIntent(
     );
   }
 
-  // 8. Construct Immutable Pricing Snapshot
+  // 8. Resolve Effective Qualifying Amount (Supports Manual Offers >= Required Minimum)
+  let effectiveQualifyingAmountMinor = pricingResult.requiredQualifyingAmountMinor;
+  if (input.offeredAmountMinor !== undefined) {
+    if (input.offeredAmountMinor < pricingResult.requiredQualifyingAmountMinor) {
+      throw new Error(
+        `Offered amount of ₹${Math.floor(input.offeredAmountMinor / 100).toLocaleString(
+          'en-IN'
+        )} is below the minimum required qualifying amount of ₹${pricingResult.requiredQualifyingAmountRupees.toLocaleString(
+          'en-IN'
+        )} to claim Position #${input.targetPosition}.`
+      );
+    }
+    effectiveQualifyingAmountMinor = input.offeredAmountMinor;
+  }
+  const effectiveQualifyingAmountRupees = Math.floor(effectiveQualifyingAmountMinor / 100);
+
+  // 9. Construct Immutable Pricing Snapshot
   const pricingSnapshot: PricingSnapshot = {
     marketId: pricingResult.marketId,
     marketSlug: pricingResult.marketSlug,
@@ -214,12 +230,12 @@ export async function createBidIntent(
     disclaimer: pricingResult.disclaimer,
   };
 
-  // 9. Server Timestamp & Expiration Authority (15 minutes default TTL)
+  // 10. Server Timestamp & Expiration Authority (15 minutes default TTL)
   const now = new Date();
   const createdAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + BID_INTENT_TTL_MINUTES * 60 * 1000).toISOString();
 
-  // 10. Instantiate Immutable BidIntent
+  // 11. Instantiate Immutable BidIntent
   const bidIntentId = `bi_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   const intent: BidIntent = {
     id: bidIntentId,
@@ -228,8 +244,8 @@ export async function createBidIntent(
     createdByUserId: effectiveActor,
     membershipId: membership.id,
     targetPosition: pricingResult.targetPosition,
-    qualifyingAmountMinor: pricingResult.requiredQualifyingAmountMinor,
-    qualifyingAmountRupees: pricingResult.requiredQualifyingAmountRupees,
+    qualifyingAmountMinor: effectiveQualifyingAmountMinor,
+    qualifyingAmountRupees: effectiveQualifyingAmountRupees,
     currency: 'INR',
     pricingSnapshot,
     status: 'PENDING_PAYMENT',

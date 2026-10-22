@@ -1,10 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../config/site';
 import { lockScroll, unlockScroll } from '../../lib/performance/scroll';
 
-export function MobileNav() {
+export interface MobileNavProps {
+  currentUser?: { id: string; phone?: string; displayName?: string } | null;
+  onSignOut?: (e: React.MouseEvent) => void;
+}
+
+export function MobileNav({ currentUser, onSignOut }: MobileNavProps = {}) {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -35,17 +42,18 @@ export function MobileNav() {
           display: 'none',
           alignItems: 'center',
           justifyContent: 'center',
-          minWidth: '44px',
-          minHeight: '44px',
-          padding: '10px',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-subtle)',
-          backgroundColor: 'transparent',
-          color: 'var(--text-primary)',
+          minWidth: '40px',
+          minHeight: '40px',
+          padding: '8px',
+          borderRadius: 'var(--radius-pill)',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
+          backgroundColor: 'rgba(241, 245, 249, 0.85)',
+          color: 'var(--text-primary, #111827)',
           cursor: 'pointer',
+          transition: 'all 0.15s ease',
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <line x1="3" y1="12" x2="21" y2="12" />
           <line x1="3" y1="6" x2="21" y2="6" />
           <line x1="3" y1="18" x2="21" y2="18" />
@@ -104,8 +112,8 @@ export function MobileNav() {
           }}
         >
           <div>
-            <span style={{ fontSize: '18px', fontWeight: 900, color: 'var(--brand-deep-emerald)' }}>
-              Aage<span style={{ color: 'var(--brand-teal)' }}>Online</span>
+            <span style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)' }}>
+              Aage<span style={{ color: '#EA580C' }}>Online</span>
             </span>
             <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)' }}>
               {siteConfig.tagline}
@@ -138,49 +146,109 @@ export function MobileNav() {
 
         {/* Navigation Links */}
         <nav aria-label="Mobile Navigation Links" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          {siteConfig.nav.public.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                minHeight: '48px',
-                padding: '0 var(--space-4)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--text-primary)',
-                fontSize: '15px',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
+          {siteConfig.nav.public
+            .filter((item) => item.href !== '/business/claim')
+            .map((item) => {
+              const isHome = pathname === '/' || pathname === '';
+              const resolvedHref = isHome && item.href.startsWith('/#') ? item.href.replace('/', '') : item.href;
+              const isActive =
+                item.href === pathname ||
+                ((item.href as string) !== '/' && !item.href.includes('#') && (pathname?.startsWith(item.href) ?? false));
+
+              return (
+                <a
+                  key={item.href}
+                  href={resolvedHref}
+                  onClick={(e) => {
+                    setIsOpen(false);
+                    if (isHome && resolvedHref.startsWith('#')) {
+                      e.preventDefault();
+                      const targetEl = document.querySelector(resolvedHref);
+                      if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth' });
+                        window.history.pushState(null, '', resolvedHref);
+                      }
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    minHeight: '48px',
+                    padding: '0 var(--space-4)',
+                    borderRadius: 'var(--radius-md)',
+                    color: isActive ? '#EA580C' : 'var(--text-primary)',
+                    backgroundColor: isActive ? 'rgba(234, 88, 12, 0.1)' : 'transparent',
+                    fontSize: '15px',
+                    fontWeight: isActive ? 700 : 600,
+                    textDecoration: 'none',
+                    transition: 'all var(--motion-fast)',
+                  }}
+                >
+                  {item.label === 'Live Rankings' && (
+                    <span
+                      style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        backgroundColor: '#22C55E',
+                        boxShadow: '0 0 6px rgba(34, 197, 94, 0.8)',
+                        display: 'inline-block',
+                      }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {item.label}
+                </a>
+              );
+            })}
         </nav>
 
         {/* Business Workspace CTA */}
         <div style={{ marginTop: 'auto', paddingTop: 'var(--space-6)', borderTop: '1px solid var(--border-subtle)' }}>
-          <a
-            href="/claim"
-            onClick={() => setIsOpen(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '48px',
-              borderRadius: 'var(--radius-pill)',
-              backgroundColor: 'var(--brand-deep-navy)',
-              color: '#ffffff',
-              fontSize: '14px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              boxShadow: 'var(--elevation-1)',
-            }}
-          >
-            Claim / Move Up Business
-          </a>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <a
+              href="/business/claim"
+              onClick={() => setIsOpen(false)}
+              className="aage-button"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '48px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: '#EA580C',
+                color: '#ffffff',
+                fontSize: '14px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
+              }}
+            >
+              Claim Business →
+            </a>
+            {currentUser && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  setIsOpen(false);
+                  onSignOut?.(e);
+                }}
+                style={{
+                  minHeight: '40px',
+                  borderRadius: 'var(--radius-pill)',
+                  backgroundColor: 'rgba(15, 23, 42, 0.05)',
+                  color: 'var(--text-secondary, #475569)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  border: '1px solid var(--border-subtle, #E5E7EB)',
+                  cursor: 'pointer',
+                }}
+              >
+                Sign Out ({currentUser.phone || 'Owner'})
+              </button>
+            )}
+          </div>
 
           <p style={{ marginTop: 'var(--space-3)', fontSize: '11px', color: 'var(--text-tertiary)', textAlign: 'center' }}>
             Paid competitive visibility platform

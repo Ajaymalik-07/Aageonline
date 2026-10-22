@@ -1,9 +1,16 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../config/site';
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Suppress public marketing footer inside dedicated Business Workspace routes
+  if (pathname?.startsWith('/business/dashboard')) {
+    return null;
+  }
   return (
     <footer
       role="contentinfo"
@@ -189,10 +196,10 @@ export function Footer() {
             </h5>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
               <li><a href="/jaipur/interior-designers" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Jaipur · Interior Designers</a></li>
-              <li><a href="/noida/restaurants" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Noida · Restaurants</a></li>
-              <li><a href="/delhi/digital-marketing-agencies" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Delhi · Digital Agencies</a></li>
-              <li><a href="/gurugram/architects" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Gurugram · Commercial Architects</a></li>
-              <li><a href="/hisar/hospitals" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Hisar · Hospitals</a></li>
+              <li><a href="/delhi/interior-designers" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Delhi · Interior Designers</a></li>
+              <li><a href="/mumbai/interior-designers" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Mumbai · Interior Designers</a></li>
+              <li><a href="/jaipur/restaurants" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Jaipur · Restaurants</a></li>
+              <li><a href="/delhi/restaurants" style={{ color: 'rgba(255, 255, 255, 0.75)', textDecoration: 'none' }}>Delhi · Restaurants</a></li>
               <li><a href="/markets" style={{ color: '#FB923C', textDecoration: 'none', fontWeight: 700 }}>Browse All Markets →</a></li>
             </ul>
           </div>
@@ -243,7 +250,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Resources */}
+          {/* Col 4: Resources & Insights */}
           <div>
             <h5
               style={{
@@ -255,8 +262,25 @@ export function Footer() {
                 marginBottom: 'var(--space-4)',
               }}
             >
-              Platform Identity
+              Resources &amp; Blog
             </h5>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--space-4) 0', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+              <li>
+                <a
+                  href="/blog"
+                  style={{
+                    color: '#FB923C',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  AageOnline Blog &amp; Insights →
+                </a>
+              </li>
+            </ul>
             <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'rgba(255, 255, 255, 0.65)' }}>
               <p style={{ marginBottom: '8px' }}>
                 <strong>Zero Algorithmic Bias:</strong> Rankings are strictly governed by transparent, verified qualifying amounts within atomic database transactions.
@@ -309,6 +333,7 @@ export function Footer() {
           </div>
 
           <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
+            <a href="/blog" style={{ color: 'rgba(255, 255, 255, 0.8)', textDecoration: 'none', fontWeight: 600 }}>Blog</a>
             <a href="/privacy" style={{ color: 'rgba(255, 255, 255, 0.6)', textDecoration: 'none' }}>Privacy Policy</a>
             <a href="/terms" style={{ color: 'rgba(255, 255, 255, 0.6)', textDecoration: 'none' }}>Terms of Service</a>
             <a href="/grievance" style={{ color: 'rgba(255, 255, 255, 0.6)', textDecoration: 'none' }}>Grievance Officer</a>

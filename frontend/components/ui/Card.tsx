@@ -29,7 +29,7 @@ export const Card: React.FC<CardProps> = ({
         ...baseStyles,
         ...style,
       }}
-      className={`aage-card ${className}`}
+      className={`aage-card ${isInteractive ? 'aage-card-interactive' : ''} ${className}`.trim()}
       {...props}
     >
       {children}

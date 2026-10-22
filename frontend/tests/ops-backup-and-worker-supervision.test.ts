@@ -271,6 +271,7 @@ describe('Milestone 0.20.13 — Backup, Restore Readiness & Worker Supervision',
 
       const latestHeartbeat = await heartbeatRepo.getLatestHeartbeat('reconciler-worker');
       if (latestHeartbeat && latestHeartbeat.workerId === workerId) {
+        assert.equal(latestHeartbeat.status, 'STOPPED');
         assert.equal(latestHeartbeat.metadata.status, 'STOPPED');
       }
     });

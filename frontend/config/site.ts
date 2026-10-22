@@ -11,6 +11,8 @@ export const siteConfig = {
     grievance: '/grievance',
     trust: '/#trust',
     howItWorks: '/#how-it-works',
+    markets: '/#markets',
+    rankings: '/#rankings',
     claim: '/business/claim',
   },
   disclosures: {
@@ -21,7 +23,10 @@ export const siteConfig = {
   },
   nav: {
     public: [
-      { label: 'Explore Markets', href: '/markets' },
+      { label: 'Markets', href: '/#markets' },
+      { label: 'Categories', href: '/#categories' },
+      { label: 'Cities', href: '/#cities' },
+      { label: 'Live Rankings', href: '/#rankings' },
       { label: 'How It Works', href: '/#how-it-works' },
       { label: 'Trust & Governance', href: '/#trust' },
       { label: 'Claim Business', href: '/business/claim' },

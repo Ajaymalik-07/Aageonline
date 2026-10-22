@@ -24,6 +24,7 @@ export const LiveMarketsCarousel: React.FC<LiveMarketsCarouselProps> = ({ market
 
   return (
     <section
+      id="markets"
       aria-label="Live Competitive Markets"
       style={{
         backgroundColor: 'var(--surface-soft)',

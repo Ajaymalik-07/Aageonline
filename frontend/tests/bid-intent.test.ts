@@ -626,4 +626,41 @@ describe('BidIntent — Data-Access Service Layer', () => {
     assert.strictEqual(total, 1);
     assert.strictEqual(intents[0].id, created.id);
   });
+
+  it('should accept a custom manual offer amount >= required minimum qualifying amount and reject lower amounts', async () => {
+    const service = new BidIntentService(new LocalBidIntentDataSource());
+
+    // Custom offer of ₹30,000 (3,000,000 paise) where minimum is ₹28,501 (2,850,100 paise)
+    const customIntent = await service.createBidIntent(
+      {
+        businessId: 'biz-royal-interiors',
+        marketId: 'mkt-jaipur-interior-designers',
+        targetPosition: 1,
+        offeredAmountMinor: 3000000,
+        idempotencyKey: 'service-custom-offer-01',
+      },
+      'user-ajay'
+    );
+
+    assert.strictEqual(customIntent.targetPosition, 1);
+    assert.strictEqual(customIntent.qualifyingAmountRupees, 30000);
+    assert.strictEqual(customIntent.qualifyingAmountMinor, 3000000);
+    assert.strictEqual(customIntent.pricingSnapshot.requiredQualifyingAmountRupees, 28501);
+
+    // Reject offer below minimum required (e.g. ₹20,000)
+    await assert.rejects(
+      () =>
+        service.createBidIntent(
+          {
+            businessId: 'biz-royal-interiors',
+            marketId: 'mkt-jaipur-interior-designers',
+            targetPosition: 1,
+            offeredAmountMinor: 2000000,
+            idempotencyKey: 'service-custom-offer-invalid',
+          },
+          'user-ajay'
+        ),
+      /below the minimum required qualifying amount/
+    );
+  });
 });

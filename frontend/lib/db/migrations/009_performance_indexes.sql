@@ -23,8 +23,8 @@ CREATE INDEX IF NOT EXISTS idx_position_history_biz_market
 CREATE INDEX IF NOT EXISTS idx_markets_lookup 
   ON markets(slug, status);
 
-CREATE INDEX IF NOT EXISTS idx_locations_slug_status 
-  ON locations(slug, status);
+CREATE INDEX IF NOT EXISTS idx_locations_slug 
+  ON locations(slug);
 
-CREATE INDEX IF NOT EXISTS idx_categories_slug_status 
-  ON categories(slug, status);
+CREATE INDEX IF NOT EXISTS idx_categories_slug 
+  ON categories(slug);

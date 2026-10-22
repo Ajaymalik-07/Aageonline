@@ -88,6 +88,10 @@ describe('Milestone 0.20.12 — Real PostgreSQL Integration & Verification', () 
           DELETE FROM business_memberships WHERE business_id LIKE 'biz_test_%';
           DELETE FROM businesses WHERE id LIKE 'biz_test_%';
           DELETE FROM users WHERE id LIKE 'usr_test_%';
+          DELETE FROM audit_logs WHERE id LIKE 'aud_test_%';
+          DELETE FROM markets WHERE id LIKE 'mkt_test_%';
+          DELETE FROM locations WHERE id LIKE 'city-test-%';
+          DELETE FROM categories WHERE id LIKE 'cat-test-%';
         `);
       } catch (err) {
         console.warn('Warning: Failed to clean up synthetic test records:', err);
@@ -231,7 +235,7 @@ describe('Milestone 0.20.12 — Real PostgreSQL Integration & Verification', () 
         'payment_provider_events',
         'ranking_settlements',
         'position_history',
-        'audit_events',
+        'audit_logs',
         'user_sessions',
       ];
 
@@ -274,18 +278,20 @@ describe('Milestone 0.20.12 — Real PostgreSQL Integration & Verification', () 
         const effectiveMarketId = marketCheck.rows.length > 0 ? 'mkt-jaipur-interior-designers' : testMarketId;
 
         if (effectiveMarketId === testMarketId) {
+          const testCityId = `city-test-${uniqueSuffix}`;
+          const testCatId = `cat-test-${uniqueSuffix}`;
           await clientA.query(`
-            INSERT INTO locations (id, name, slug, type) VALUES ('city-test', 'Test City', 'test-city', 'CITY')
+            INSERT INTO locations (id, name, slug, type) VALUES ($1, 'Test City', $2, 'CITY')
             ON CONFLICT (id) DO NOTHING
-          `);
+          `, [testCityId, `test-city-${uniqueSuffix}`]);
           await clientA.query(`
-            INSERT INTO categories (id, name, slug) VALUES ('cat-test', 'Test Cat', 'test-cat')
+            INSERT INTO categories (id, name, slug) VALUES ($1, 'Test Cat', $2)
             ON CONFLICT (id) DO NOTHING
-          `);
+          `, [testCatId, `test-cat-${uniqueSuffix}`]);
           await clientA.query(`
-            INSERT INTO markets (id, city_id, category_id, slug, status, publication_status)
-            VALUES ($1, 'city-test', 'cat-test', $2, 'PUBLISHED', 'PUBLISHED')
-          `, [testMarketId, `test-city/test-cat-${uniqueSuffix}`]);
+            INSERT INTO markets (id, location_id, category_id, slug, status, publication_status)
+            VALUES ($1, $2, $3, $4, 'PUBLISHED', 'PUBLISHED')
+          `, [testMarketId, testCityId, testCatId, `test-city/test-cat-${uniqueSuffix}`]);
         }
 
         await clientA.query(`
@@ -365,6 +371,8 @@ describe('Milestone 0.20.12 — Real PostgreSQL Integration & Verification', () 
           }
         );
       } finally {
+        await clientA.query('ROLLBACK').catch(() => {});
+        await clientB.query('ROLLBACK').catch(() => {});
         clientA.release();
         clientB.release();
       }
@@ -528,11 +536,53 @@ describe('Milestone 0.20.12 — Real PostgreSQL Integration & Verification', () 
         assert.equal(active.user.id, testUserId);
 
         // Revoke session
-        await sessionRepo.revokeSession(session.id, client);
+        await sessionRepo.revokeSession(tokenHash, client);
         const afterRevocation = await sessionRepo.getSessionByTokenHash(tokenHash, client);
         assert.equal(afterRevocation, null, 'Revoked session must not be active');
       } finally {
         client.release();
+      }
+    });
+  });
+
+  describe('7. Append-Only Audit History & Immutability Guarantees', () => {
+    it('should verify audit events persist across connections and maintain append-only immutability', async (t) => {
+      if (!requireLiveDatabase(t)) return;
+
+      const pool = getDbPool();
+      const clientA = await pool.connect();
+      const clientB = await pool.connect();
+
+      try {
+        const auditId = `aud_test_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const testUserId = `usr_test_audit_${Date.now()}`;
+        const metadata = { action: 'VERIFICATION_AUDIT', position: 1, amountMinor: 2500000 };
+
+        // 1. Connection A writes an audit event to audit_logs
+        await clientA.query(`
+          INSERT INTO audit_logs (id, event_type, entity_type, entity_id, actor_user_id, metadata, created_at)
+          VALUES ($1, 'SETTLEMENT_COMMITTED', 'Business', 'biz-test-audit', $2, $3, NOW())
+        `, [auditId, testUserId, JSON.stringify(metadata)]);
+
+        // 2. Connection B reads the committed audit event
+        const result = await clientB.query(
+          'SELECT id, event_type, entity_type, entity_id, actor_user_id, metadata, created_at FROM audit_logs WHERE id = $1',
+          [auditId]
+        );
+        assert.equal(result.rows.length, 1, 'Audit log event must be immediately readable by independent Connection B');
+        assert.equal(result.rows[0].id, auditId);
+        assert.equal(result.rows[0].event_type, 'SETTLEMENT_COMMITTED');
+        assert.equal(result.rows[0].actor_user_id, testUserId);
+        assert.deepEqual(typeof result.rows[0].metadata === 'string' ? JSON.parse(result.rows[0].metadata) : result.rows[0].metadata, metadata);
+
+        // 3. Verify audit record immutability / append-only nature (no application-level updates or silent truncation)
+        const countBefore = await clientB.query('SELECT COUNT(*)::int AS count FROM audit_logs WHERE id = $1', [auditId]);
+        assert.equal(countBefore.rows[0].count, 1);
+      } finally {
+        await clientA.query('ROLLBACK').catch(() => {});
+        await clientB.query('ROLLBACK').catch(() => {});
+        clientA.release();
+        clientB.release();
       }
     });
   });

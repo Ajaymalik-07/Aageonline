@@ -15,12 +15,12 @@ export function BusinessMarketParticipationSection({
       id="market-participations"
       aria-labelledby="market-participation-heading"
       style={{
-        backgroundColor: 'var(--surface-card)',
-        border: '1px solid var(--border-subtle)',
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E2E8F0',
         borderRadius: 'var(--radius-xl)',
         padding: 'var(--space-8)',
         marginBottom: 'var(--space-8)',
-        boxShadow: 'var(--elevation-1)',
+        boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
       }}
     >
       <div style={{ marginBottom: 'var(--space-6)' }}>
@@ -41,23 +41,24 @@ export function BusinessMarketParticipationSection({
           style={{
             fontSize: 'var(--font-size-2xl)',
             fontWeight: 800,
-            color: 'var(--text-primary)',
+            color: '#0F172A',
             margin: '0 0 var(--space-2) 0',
+            letterSpacing: '-0.01em',
           }}
         >
-          AageOnline Market Participation
+          Market Positions & Paid Visibility
         </h2>
         <p
           style={{
             fontSize: 'var(--font-size-sm)',
-            color: 'var(--text-secondary)',
+            color: '#475569',
             margin: 0,
             maxWidth: '680px',
-            lineHeight: 1.5,
+            lineHeight: 1.55,
           }}
         >
-          Markets where this business is registered and actively competes for paid visibility positions.
-          Ranking positions are strictly market-specific and do not represent a global or subjective rating.
+          Markets where this business is verified and holds transparent paid visibility ranking positions.
+          Ranking positions are strictly market-specific (Location + Category) and audited via immutable transaction records.
         </p>
       </div>
 
@@ -65,7 +66,7 @@ export function BusinessMarketParticipationSection({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
             gap: 'var(--space-4)',
             marginBottom: 'var(--space-6)',
           }}
@@ -78,8 +79,8 @@ export function BusinessMarketParticipationSection({
                 key={p.id}
                 style={{
                   padding: 'var(--space-5)',
-                  backgroundColor: 'var(--surface-sunken)',
-                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
                   borderRadius: 'var(--radius-lg)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -87,6 +88,7 @@ export function BusinessMarketParticipationSection({
                   gap: 'var(--space-4)',
                   position: 'relative',
                   overflow: 'hidden',
+                  transition: 'border-color 0.15s ease',
                 }}
               >
                 {/* Left accent border */}
@@ -96,18 +98,20 @@ export function BusinessMarketParticipationSection({
                     top: 0,
                     bottom: 0,
                     left: 0,
-                    width: '3px',
-                    backgroundColor: hasPosition ? '#EA580C' : 'var(--text-tertiary)',
+                    width: '4px',
+                    backgroundColor: hasPosition ? '#EA580C' : '#94A3B8',
                   }}
                   aria-hidden="true"
                 />
 
-                <div>
+                <div style={{ paddingLeft: '4px' }}>
                   <div
                     style={{
                       fontSize: '11px',
-                      fontWeight: 600,
-                      color: 'var(--text-tertiary)',
+                      fontWeight: 700,
+                      color: '#64748B',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
                       marginBottom: '4px',
                     }}
                   >
@@ -116,8 +120,8 @@ export function BusinessMarketParticipationSection({
                   <h3
                     style={{
                       fontSize: 'var(--font-size-base)',
-                      fontWeight: 700,
-                      color: 'var(--text-primary)',
+                      fontWeight: 800,
+                      color: '#0F172A',
                       margin: '0 0 var(--space-3) 0',
                     }}
                   >
@@ -132,29 +136,29 @@ export function BusinessMarketParticipationSection({
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          backgroundColor: 'rgba(234, 88, 12, 0.1)',
-                          border: '1px solid rgba(234, 88, 12, 0.25)',
-                          padding: '4px 10px',
+                          backgroundColor: '#FFF7ED',
+                          border: '1px solid #FED7AA',
+                          padding: '5px 12px',
                           borderRadius: 'var(--radius-md)',
                         }}
                       >
                         <span
                           style={{
-                            fontSize: '12px',
+                            fontSize: '13px',
                             fontWeight: 800,
                             color: '#EA580C',
                           }}
                         >
-                          #{p.currentPosition}
+                          Rank #{p.currentPosition}
                         </span>
                         <span
                           style={{
                             fontSize: '11px',
                             fontWeight: 600,
-                            color: 'var(--text-secondary)',
+                            color: '#7C2D12',
                           }}
                         >
-                          Paid Visibility Position
+                          Verified Paid Position
                         </span>
                       </div>
                     ) : (
@@ -163,9 +167,9 @@ export function BusinessMarketParticipationSection({
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid var(--border-subtle)',
-                          padding: '4px 10px',
+                          backgroundColor: '#F1F5F9',
+                          border: '1px solid #E2E8F0',
+                          padding: '5px 12px',
                           borderRadius: 'var(--radius-md)',
                         }}
                       >
@@ -182,10 +186,10 @@ export function BusinessMarketParticipationSection({
                           style={{
                             fontSize: '11px',
                             fontWeight: 600,
-                            color: 'var(--text-secondary)',
+                            color: '#475569',
                           }}
                         >
-                          Participating in this market
+                          Eligible Market Participant
                         </span>
                       </div>
                     )}
@@ -193,14 +197,14 @@ export function BusinessMarketParticipationSection({
                 </div>
 
                 {/* Market link */}
-                <div style={{ paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border-subtle)' }}>
+                <div style={{ paddingTop: 'var(--space-3)', borderTop: '1px solid #E2E8F0', paddingLeft: '4px' }}>
                   <a
                     href={p.marketUrl}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      color: 'var(--brand-deep-emerald)',
+                      color: '#EA580C',
                       fontSize: 'var(--font-size-xs)',
                       fontWeight: 700,
                       textDecoration: 'none',
@@ -218,9 +222,9 @@ export function BusinessMarketParticipationSection({
         <div
           style={{
             padding: 'var(--space-6)',
-            backgroundColor: 'var(--surface-sunken)',
+            backgroundColor: '#F8FAFC',
             borderRadius: 'var(--radius-lg)',
-            border: '1px dashed var(--border-subtle)',
+            border: '1px dashed #CBD5E1',
             textAlign: 'center',
             marginBottom: 'var(--space-6)',
           }}
@@ -228,7 +232,7 @@ export function BusinessMarketParticipationSection({
           <p
             style={{
               fontSize: 'var(--font-size-sm)',
-              color: 'var(--text-secondary)',
+              color: '#475569',
               margin: '0 0 var(--space-4) 0',
             }}
           >
@@ -258,12 +262,12 @@ export function BusinessMarketParticipationSection({
           alignItems: 'flex-start',
           gap: 'var(--space-3)',
           padding: 'var(--space-4)',
-          backgroundColor: 'rgba(234, 88, 12, 0.05)',
-          border: '1px solid rgba(234, 88, 12, 0.2)',
+          backgroundColor: '#FFF7ED',
+          border: '1px solid #FED7AA',
           borderRadius: 'var(--radius-md)',
           fontSize: 'var(--font-size-xs)',
-          color: 'var(--text-secondary)',
-          lineHeight: 1.5,
+          color: '#451A03',
+          lineHeight: 1.55,
         }}
       >
         <svg
@@ -272,7 +276,7 @@ export function BusinessMarketParticipationSection({
           viewBox="0 0 24 24"
           fill="none"
           stroke="#EA580C"
-          strokeWidth="2"
+          strokeWidth="2.5"
           style={{ flexShrink: 0, marginTop: '2px' }}
           aria-hidden="true"
         >
@@ -281,12 +285,12 @@ export function BusinessMarketParticipationSection({
           <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
         <div>
-          <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '2px' }}>
-            Paid Visibility Disclosure
+          <strong style={{ color: '#9A3412', display: 'block', marginBottom: '2px' }}>
+            Paid Visibility Transparency Disclosure
           </strong>
-          This business&apos;s market position represents paid visibility within the selected AageOnline market
-          and does not independently establish that the business is the best choice. Positions are maintained
-          transparently via qualifying transactions.
+          This business&apos;s market position represents transparent paid visibility within the selected AageOnline market
+          and does not independently establish an editorial endorsement. Rankings are maintained strictly through verified,
+          server-audited transactions.
         </div>
       </div>
     </section>

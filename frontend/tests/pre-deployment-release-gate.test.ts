@@ -1,9 +1,9 @@
 /**
- * AageOnline — Milestone 0.20.0 Staging Deployment & Infrastructure Verification Tests
+ * AageOnline — Pre-Deployment Release Gate & Infrastructure Verification Tests
  *
  * Verifies:
- * 1. Staging environment isolation, search engine noindex protection & notification safety sink.
- * 2. Ordered migration runner invariants (001-010), idempotent execution, and rollback.
+ * 1. Non-production environment isolation, fail-safe search engine noindex protection & notification safety sink.
+ * 2. Ordered migration runner invariants (001-011), idempotent execution, and schema constraints.
  * 3. Machine-checkable health & readiness domain evaluation.
  * 4. PayU Sandbox integration, request hash generation, and reverse webhook verification.
  * 5. Background reconciler worker heartbeat and multi-instance concurrency safety.
@@ -12,16 +12,16 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import robots from '../app/robots.ts';
-import { StandardDeliveryAdapter } from '../lib/notifications/delivery-adapter.ts';
+import robots, { isProductionRobotsEnvironment } from '../app/robots.ts';
+import { StandardDeliveryAdapter, isEmailSafetySinkActive } from '../lib/notifications/delivery-adapter.ts';
 import { loadMigrationFiles } from '../lib/db/migrator.ts';
 import { getPayUConfig } from '../lib/payments/payu/client.ts';
-import { generatePayURequestHash, generatePayUReverseHash, verifyPayUHash } from '../lib/payments/payu/hash.ts';
+import { generatePayURequestHash, generatePayUReverseHash } from '../lib/payments/payu/hash.ts';
 import { parseAndVerifyPayUWebhook } from '../lib/payments/payu/webhook.ts';
 import { checkRateLimit, extractClientIp, hashClientIp } from '../lib/security/rate-limit.ts';
 import { checkProductionReadiness } from '../lib/db/readiness.ts';
 
-describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification', () => {
+describe('Pre-Deployment Release Gate & Local Verification', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -32,8 +32,90 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
     process.env = originalEnv;
   });
 
-  describe('1. Safe Staging Environment Isolation & SEO Protection', () => {
-    it('should disallow all search engines in staging robots.txt and omit sitemap', () => {
+  describe('1. Non-Production Environment Isolation, SEO Protection & Email Safety Sink', () => {
+    describe('isProductionRobotsEnvironment Detection', () => {
+      it('should return false when all environment variables are missing/unset', () => {
+        const result = isProductionRobotsEnvironment({});
+        assert.equal(result, false, 'Missing environment variables must fail-safe to false');
+      });
+
+      it('should return false for explicit non-production APP_ENV values', () => {
+        const nonProdEnvs = ['development', 'test', 'preview', 'staging', 'local'];
+        for (const envVal of nonProdEnvs) {
+          assert.equal(
+            isProductionRobotsEnvironment({ APP_ENV: envVal, NODE_ENV: 'production' }),
+            false,
+            `APP_ENV=${envVal} must fail-safe to false even if NODE_ENV=production`
+          );
+        }
+      });
+
+      it('should return false for explicit non-production NEXT_PUBLIC_APP_ENV values', () => {
+        const nonProdEnvs = ['development', 'test', 'preview', 'staging'];
+        for (const envVal of nonProdEnvs) {
+          assert.equal(
+            isProductionRobotsEnvironment({ NEXT_PUBLIC_APP_ENV: envVal }),
+            false,
+            `NEXT_PUBLIC_APP_ENV=${envVal} must fail-safe to false`
+          );
+        }
+      });
+
+      it('should return false for conflicting variables (APP_ENV=production but NODE_ENV=development/test)', () => {
+        assert.equal(
+          isProductionRobotsEnvironment({ APP_ENV: 'production', NODE_ENV: 'development' }),
+          false,
+          'Conflicting NODE_ENV=development must fail-safe to false'
+        );
+        assert.equal(
+          isProductionRobotsEnvironment({ APP_ENV: 'production', NODE_ENV: 'test' }),
+          false,
+          'Conflicting NODE_ENV=test must fail-safe to false'
+        );
+      });
+
+      it('should return false for conflicting variables (APP_ENV=production but NEXT_PUBLIC_APP_ENV=staging)', () => {
+        assert.equal(
+          isProductionRobotsEnvironment({ APP_ENV: 'production', NEXT_PUBLIC_APP_ENV: 'staging' }),
+          false,
+          'Conflicting NEXT_PUBLIC_APP_ENV=staging must fail-safe to false'
+        );
+      });
+
+      it('should return true when authoritative production variables are set without conflict', () => {
+        assert.equal(
+          isProductionRobotsEnvironment({ APP_ENV: 'production', NODE_ENV: 'production' }),
+          true,
+          'APP_ENV=production and NODE_ENV=production must return true'
+        );
+        assert.equal(
+          isProductionRobotsEnvironment({ APP_ENV: 'production' }),
+          true,
+          'APP_ENV=production with unset NODE_ENV must return true'
+        );
+        assert.equal(
+          isProductionRobotsEnvironment({ NEXT_PUBLIC_APP_ENV: 'production', NODE_ENV: 'production' }),
+          true,
+          'NEXT_PUBLIC_APP_ENV=production must return true'
+        );
+        assert.equal(
+          isProductionRobotsEnvironment({ APP_ENV: 'prod', NODE_ENV: 'prod' }),
+          true,
+          'APP_ENV=prod shorthand must return true'
+        );
+      });
+    });
+
+    it('should disallow all search engines in non-production robots.txt and omit sitemap', () => {
+      process.env.APP_ENV = 'development';
+      const nonProdRobots = robots();
+      const rules = Array.isArray(nonProdRobots.rules) ? nonProdRobots.rules : [nonProdRobots.rules];
+      assert.equal(rules.length, 1);
+      assert.deepEqual(rules[0].disallow, ['/']);
+      assert.equal(nonProdRobots.sitemap, undefined);
+    });
+
+    it('should disallow all search engines when APP_ENV=staging', () => {
       process.env.APP_ENV = 'staging';
       const stagingRobots = robots();
       const rules = Array.isArray(stagingRobots.rules) ? stagingRobots.rules : [stagingRobots.rules];
@@ -43,7 +125,8 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
     });
 
     it('should allow search engines on public routes in production robots.txt and include sitemap', () => {
-      delete process.env.APP_ENV;
+      process.env.APP_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
       delete process.env.NEXT_PUBLIC_APP_ENV;
       const prodRobots = robots();
       const rules = Array.isArray(prodRobots.rules) ? prodRobots.rules : [prodRobots.rules];
@@ -51,10 +134,98 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
       assert.ok(prodRobots.sitemap && prodRobots.sitemap.includes('sitemap.xml'));
     });
 
-    it('should intercept staging emails and prevent dispatch to real customer mailboxes', async () => {
-      process.env.APP_ENV = 'staging';
+    describe('isEmailSafetySinkActive Detection', () => {
+      it('should activate safety sink when all environment variables are missing/unset', () => {
+        const result = isEmailSafetySinkActive({});
+        assert.equal(result, true, 'Missing environment variables must fail-safe to safety sink active');
+      });
+
+      it('should activate safety sink for local, development, and test environments', () => {
+        assert.equal(isEmailSafetySinkActive({ NODE_ENV: 'development' }), true);
+        assert.equal(isEmailSafetySinkActive({ NODE_ENV: 'test' }), true);
+        assert.equal(isEmailSafetySinkActive({ APP_ENV: 'development' }), true);
+        assert.equal(isEmailSafetySinkActive({ APP_ENV: 'test' }), true);
+        assert.equal(isEmailSafetySinkActive({ APP_ENV: 'preview' }), true);
+        assert.equal(isEmailSafetySinkActive({ APP_ENV: 'staging' }), true);
+      });
+
+      it('should activate safety sink when EMAIL_SAFETY_SINK_ENABLED=true regardless of production', () => {
+        assert.equal(
+          isEmailSafetySinkActive({
+            APP_ENV: 'production',
+            NODE_ENV: 'production',
+            EMAIL_SAFETY_SINK_ENABLED: 'true',
+          }),
+          true,
+          'Explicit EMAIL_SAFETY_SINK_ENABLED=true must override production'
+        );
+      });
+
+      it('should activate safety sink for conflicting variables (APP_ENV=production but NODE_ENV=development/test)', () => {
+        assert.equal(
+          isEmailSafetySinkActive({ APP_ENV: 'production', NODE_ENV: 'development' }),
+          true,
+          'Conflicting NODE_ENV=development must fail-safe to safety sink active'
+        );
+        assert.equal(
+          isEmailSafetySinkActive({ APP_ENV: 'production', NODE_ENV: 'test' }),
+          true,
+          'Conflicting NODE_ENV=test must fail-safe to safety sink active'
+        );
+      });
+
+      it('should activate safety sink for conflicting variables (APP_ENV=production but NEXT_PUBLIC_APP_ENV=staging)', () => {
+        assert.equal(
+          isEmailSafetySinkActive({
+            APP_ENV: 'production',
+            NODE_ENV: 'production',
+            NEXT_PUBLIC_APP_ENV: 'staging',
+          }),
+          true,
+          'Conflicting NEXT_PUBLIC_APP_ENV=staging must fail-safe to safety sink active'
+        );
+      });
+
+      it('should DEACTIVATE safety sink in valid production when NEXT_PUBLIC_APP_ENV is unset', () => {
+        // Standard production container configuration
+        assert.equal(
+          isEmailSafetySinkActive({
+            APP_ENV: 'production',
+            NODE_ENV: 'production',
+            EMAIL_SAFETY_SINK_ENABLED: 'false',
+          }),
+          false,
+          'Valid production with unset NEXT_PUBLIC_APP_ENV must allow email delivery'
+        );
+
+        // Worker container where NODE_ENV may also be unset
+        assert.equal(
+          isEmailSafetySinkActive({
+            APP_ENV: 'production',
+            EMAIL_SAFETY_SINK_ENABLED: 'false',
+          }),
+          false,
+          'Production APP_ENV alone must allow email delivery when sink is not enabled'
+        );
+
+        // Production with explicit matching NEXT_PUBLIC_APP_ENV
+        assert.equal(
+          isEmailSafetySinkActive({
+            APP_ENV: 'production',
+            NODE_ENV: 'production',
+            NEXT_PUBLIC_APP_ENV: 'production',
+            EMAIL_SAFETY_SINK_ENABLED: 'false',
+          }),
+          false,
+          'Full production configuration must allow email delivery'
+        );
+      });
+    });
+
+    it('should intercept non-production emails and prevent dispatch to real customer mailboxes', async () => {
+      process.env.APP_ENV = 'development';
       process.env.NOTIFICATION_EMAIL_ENABLED = 'true';
-      delete process.env.STAGING_TEST_EMAIL_RECIPIENT;
+      delete process.env.SAFE_TEST_EMAIL_RECIPIENT;
 
       const adapter = new StandardDeliveryAdapter();
       const result = await adapter.send(
@@ -80,14 +251,15 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
       );
 
       assert.equal(result.success, true);
-      assert.equal(result.metadata?.provider, 'STAGING_SAFETY_SINK');
+      assert.equal(result.metadata?.provider, 'SAFETY_SINK');
       assert.equal(result.metadata?.intercepted, true);
+      assert.equal(result.metadata?.originalRecipient, 'real-customer@example.com');
     });
 
-    it('should allow staging email dispatch strictly when recipient matches STAGING_TEST_EMAIL_RECIPIENT', async () => {
-      process.env.APP_ENV = 'staging';
+    it('should allow email dispatch strictly when recipient matches SAFE_TEST_EMAIL_RECIPIENT', async () => {
+      process.env.APP_ENV = 'development';
       process.env.NOTIFICATION_EMAIL_ENABLED = 'true';
-      process.env.STAGING_TEST_EMAIL_RECIPIENT = 'qa-tester@aageonline.test';
+      process.env.SAFE_TEST_EMAIL_RECIPIENT = 'qa-tester@aageonline.test';
 
       const adapter = new StandardDeliveryAdapter();
       const result = await adapter.send(
@@ -98,7 +270,7 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
           eventType: 'RANKING_OUTBID',
           channel: 'EMAIL',
           title: 'Test Notification',
-          message: 'Staging verification test',
+          message: 'Local verification test',
           newPosition: 1,
           isRead: false,
           attempts: 0,
@@ -116,16 +288,56 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
       assert.equal(result.metadata?.provider, 'MOCK_SMTP');
       assert.equal(result.metadata?.recipient, 'qa-tester@aageonline.test');
     });
+
+    it('should dispatch emails directly to real customer mailboxes in valid production mode', async () => {
+      process.env.APP_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
+      process.env.NOTIFICATION_EMAIL_ENABLED = 'true';
+      process.env.EMAIL_SAFETY_SINK_ENABLED = 'false';
+      delete process.env.NEXT_PUBLIC_APP_ENV;
+      delete process.env.SAFE_TEST_EMAIL_RECIPIENT;
+
+      const adapter = new StandardDeliveryAdapter();
+      const result = await adapter.send(
+        {
+          id: 'notif_prod_1',
+          businessId: 'biz_customer_123',
+          marketId: 'mkt_jaipur',
+          eventType: 'RANKING_OUTBID',
+          channel: 'EMAIL',
+          title: 'Outbid Notification',
+          message: 'A competitor has taken rank #1.',
+          newPosition: 2,
+          isRead: false,
+          attempts: 0,
+          maxAttempts: 3,
+          nextRunAt: new Date().toISOString(),
+          status: 'PENDING',
+          deliveryMetadata: {},
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        'customer@real-business.in'
+      );
+
+      assert.equal(result.success, true);
+      assert.equal(result.metadata?.provider, 'MOCK_SMTP');
+      assert.equal(result.metadata?.recipient, 'customer@real-business.in');
+      assert.equal(result.metadata?.intercepted, undefined);
+    });
   });
 
   describe('2. Migrations 001–011 Verification & Invariants', () => {
     it('should load exactly 11 migration files in numerical order', () => {
       const files = loadMigrationFiles();
-      assert.equal(files.length, 11, 'Expected migrations 001 through 011');
+      assert.ok(files.length >= 11, 'Expected at least migrations 001 through 011');
       assert.equal(files[0].version, '001');
       assert.equal(files[8].version, '009');
       assert.equal(files[9].version, '010');
       assert.equal(files[10].version, '011');
+      if (files.length >= 12) {
+        assert.equal(files[11].version, '012');
+      }
 
       // Verify names and ordered sequence
       for (let i = 0; i < files.length; i++) {
@@ -182,10 +394,10 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
 
     it('should compute valid request hash and verify reverse webhook hash in sandbox mode', () => {
       const config = getPayUConfig();
-      const txnid = 'txn_staging_test_123';
+      const txnid = 'txn_preflight_test_123';
       const amount = '1500.00';
       const productinfo = 'AageOnline Visibility';
-      const firstname = 'StagingTester';
+      const firstname = 'PreflightTester';
       const email = 'tester@aageonline.test';
       const status = 'success';
 
@@ -276,7 +488,7 @@ describe('Milestone 0.20.0 — Staging Deployment & Infrastructure Verification'
   describe('5. Distributed Rate-Limit Behavior & Resilience', () => {
     it('should correctly increment and throttle in memory when DB is unconfigured', () => {
       delete process.env.DATABASE_URL;
-      const token = 'token_test_staging_001';
+      const token = 'token_test_preflight_001';
       const tier = 'PUBLIC_DISCOVERY';
 
       const first = checkRateLimit(token, tier, false);

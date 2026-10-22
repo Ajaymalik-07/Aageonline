@@ -7,17 +7,20 @@ export default function WorkspaceLoading() {
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--space-6)',
-        padding: 'var(--space-8) 0',
       }}
     >
+      {/* Banner Skeleton */}
       <div
         style={{
-          height: '80px',
-          backgroundColor: '#0B1F33',
+          height: '140px',
+          backgroundColor: 'rgba(11, 31, 51, 0.6)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: 'var(--radius-xl)',
-          opacity: 0.6,
+          animation: 'pulse 1.8s ease-in-out infinite',
         }}
       />
+
+      {/* Metrics Grid Skeleton */}
       <div
         style={{
           display: 'grid',
@@ -25,17 +28,19 @@ export default function WorkspaceLoading() {
           gap: 'var(--space-4)',
         }}
       >
-        <div style={{ height: '110px', backgroundColor: '#0B1F33', borderRadius: 'var(--radius-lg)', opacity: 0.5 }} />
-        <div style={{ height: '110px', backgroundColor: '#0B1F33', borderRadius: 'var(--radius-lg)', opacity: 0.5 }} />
-        <div style={{ height: '110px', backgroundColor: '#0B1F33', borderRadius: 'var(--radius-lg)', opacity: 0.5 }} />
-        <div style={{ height: '110px', backgroundColor: '#0B1F33', borderRadius: 'var(--radius-lg)', opacity: 0.5 }} />
+        <div style={{ height: '120px', backgroundColor: 'rgba(11, 31, 51, 0.6)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: 'var(--radius-lg)' }} />
+        <div style={{ height: '120px', backgroundColor: 'rgba(11, 31, 51, 0.6)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: 'var(--radius-lg)' }} />
+        <div style={{ height: '120px', backgroundColor: 'rgba(11, 31, 51, 0.6)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: 'var(--radius-lg)' }} />
+        <div style={{ height: '120px', backgroundColor: 'rgba(11, 31, 51, 0.6)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: 'var(--radius-lg)' }} />
       </div>
+
+      {/* Main Section Skeleton */}
       <div
         style={{
-          height: '180px',
-          backgroundColor: '#0B1F33',
+          height: '240px',
+          backgroundColor: 'rgba(11, 31, 51, 0.6)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: 'var(--radius-xl)',
-          opacity: 0.4,
         }}
       />
     </div>

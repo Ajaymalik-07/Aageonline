@@ -29,6 +29,9 @@ export function MarketPositionPricingCalculator({
   const [result, setResult] = useState<MarketPricingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Manual Custom Qualifying Offer Amount (defaults to required qualifying rupees)
+  const [manualOfferInput, setManualOfferInput] = useState<string>('');
+
   // Bid Intent State
   const [createdIntent, setCreatedIntent] = useState<BidIntent | null>(null);
   const [creatingIntent, setCreatingIntent] = useState<boolean>(false);
@@ -39,13 +42,9 @@ export function MarketPositionPricingCalculator({
   const activeRequestIdRef = useRef<number>(0);
   const idempotencyKeyRef = useRef<string | null>(null);
 
-  const handleCalculate = async (requestedPos?: number) => {
-    const posToCalculate = requestedPos !== undefined ? requestedPos : parseInt(targetPositionInput.trim(), 10);
-
-    if (isNaN(posToCalculate) || posToCalculate <= 0) {
-      setError('Please enter a valid positive whole position integer (e.g. 1, 2, 3).');
-      return;
-    }
+  const handleCalculate = async (_requestedPos?: number) => {
+    // Target position is strictly and exclusively Position #1
+    const posToCalculate = 1;
 
     const currentRequestId = ++activeRequestIdRef.current;
     setLoading(true);
@@ -64,6 +63,7 @@ export function MarketPositionPricingCalculator({
       // Verify request correlation (discard if stale)
       if (currentRequestId === activeRequestIdRef.current) {
         setResult(res);
+        setManualOfferInput(String(res.requiredQualifyingAmountRupees));
       }
     } catch (err: unknown) {
       if (currentRequestId === activeRequestIdRef.current) {
@@ -76,10 +76,22 @@ export function MarketPositionPricingCalculator({
     }
   };
 
+  // Auto-calculate Position #1 pricing on mount or market change
+  React.useEffect(() => {
+    handleCalculate(1);
+  }, [marketId, businessId]);
+
   const handleCreateIntent = async () => {
     if (!result) return;
     if (!businessId) {
       setIntentError('Business context required to create a visibility intent. Please log in with an authorized account.');
+      return;
+    }
+
+    const parsedOffer = parseInt(manualOfferInput.replace(/,/g, '').trim(), 10);
+    const minRequired = result.requiredQualifyingAmountRupees;
+    if (isNaN(parsedOffer) || parsedOffer < minRequired) {
+      setIntentError(`Your offer cannot be less than the minimum qualifying amount of ₹${minRequired.toLocaleString('en-IN')} to claim Position #1.`);
       return;
     }
 
@@ -98,6 +110,7 @@ export function MarketPositionPricingCalculator({
         marketId,
         targetPosition: result.targetPosition,
         clientCalculatedAmountMinor: result.requiredQualifyingAmountMinor,
+        offeredAmountMinor: parsedOffer * 100,
         idempotencyKey: idempotencyKeyRef.current,
       });
 
@@ -192,10 +205,10 @@ export function MarketPositionPricingCalculator({
   return (
     <div
       style={{
-        backgroundColor: '#071526',
+        backgroundColor: '#F8FAFC',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--space-5)',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
+        border: '1px solid #E2E8F0',
         marginTop: 'var(--space-3)',
       }}
     >
@@ -210,103 +223,66 @@ export function MarketPositionPricingCalculator({
               display: 'inline-block',
             }}
           />
-          <span style={{ fontWeight: 800, fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#FB923C' }}>
+          <span style={{ fontWeight: 800, fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#EA580C' }}>
             Position Pricing Calculator
           </span>
         </div>
-        <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+        <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>
           Read-only • No financial mutation
         </span>
       </div>
 
-      <p style={{ margin: '0 0 var(--space-4) 0', fontSize: 'var(--font-size-xs)', color: 'rgba(255, 255, 255, 0.7)', lineHeight: 1.5 }}>
-        Calculate the exact minimum qualifying amount required to target any visibility position in{' '}
-        <strong style={{ color: '#FFFFFF' }}>{marketName}</strong>.
+      <p style={{ margin: '0 0 var(--space-4) 0', fontSize: 'var(--font-size-xs)', color: '#64748B', lineHeight: 1.5 }}>
+        Calculate the exact minimum qualifying amount required to target Position #1 (Market Top) in{' '}
+        <strong style={{ color: '#0F172A' }}>{marketName}</strong>.
       </p>
 
-      {/* Target Position Input & Trigger */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <label htmlFor={`target-pos-${marketId}`} style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)' }}>
+      {/* Target Position Display & Trigger — Strictly Position #1 */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: '#334155' }}>
             Target Position:
-          </label>
-          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-            <span style={{ position: 'absolute', left: '10px', color: 'rgba(255, 255, 255, 0.5)', fontWeight: 700, fontSize: 'var(--font-size-xs)' }}>
-              #
+          </span>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: '#FFF7ED',
+              border: '1.5px solid #EA580C',
+              color: '#EA580C',
+              borderRadius: 'var(--radius-pill)',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: 800,
+            }}
+          >
+            <span>#1</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A3412' }}>
+              (Spotlight Rank #1)
             </span>
-            <input
-              id={`target-pos-${marketId}`}
-              type="number"
-              min={1}
-              max={100}
-              step={1}
-              value={targetPositionInput}
-              onChange={(e) => {
-                setTargetPositionInput(e.target.value);
-                // Invalidate existing result if position changes
-                if (result && parseInt(e.target.value, 10) !== result.targetPosition) {
-                  setResult(null);
-                }
-              }}
-              style={{
-                width: '70px',
-                padding: '8px 10px 8px 24px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                backgroundColor: '#0B1F33',
-                color: '#FFFFFF',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 700,
-                outline: 'none',
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Quick Position Selectors */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {[1, 2, 3, 5, 10].map((quickPos) => (
-            <button
-              key={quickPos}
-              type="button"
-              onClick={() => {
-                setTargetPositionInput(String(quickPos));
-                handleCalculate(quickPos);
-              }}
-              style={{
-                backgroundColor: targetPositionInput === String(quickPos) ? 'rgba(234, 88, 12, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                border: targetPositionInput === String(quickPos) ? '1px solid #EA580C' : '1px solid rgba(255, 255, 255, 0.1)',
-                color: targetPositionInput === String(quickPos) ? '#FB923C' : 'rgba(255, 255, 255, 0.8)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '6px 10px',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              #{quickPos}
-            </button>
-          ))}
+          </span>
         </div>
 
         <button
           type="button"
-          onClick={() => handleCalculate()}
-          disabled={loading || !targetPositionInput}
+          onClick={() => handleCalculate(1)}
+          disabled={loading}
           style={{
             backgroundColor: '#EA580C',
             color: '#FFFFFF',
             border: 'none',
-            padding: '8px 16px',
+            padding: '8px 20px',
             borderRadius: 'var(--radius-pill)',
-            fontWeight: 700,
+            fontWeight: 800,
             fontSize: 'var(--font-size-xs)',
             cursor: loading ? 'not-allowed' : 'pointer',
             opacity: loading ? 0.7 : 1,
             marginLeft: 'auto',
+            boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
           }}
         >
-          {loading ? 'Calculating...' : 'Calculate Required Amount →'}
+          {loading ? 'Calculating...' : 'Calculate Required Amount for #1 →'}
         </button>
       </div>
 
@@ -316,12 +292,13 @@ export function MarketPositionPricingCalculator({
           role="alert"
           style={{
             marginTop: 'var(--space-3)',
-            backgroundColor: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            backgroundColor: '#FEE2E2',
+            border: '1px solid #FCA5A5',
             borderRadius: 'var(--radius-md)',
             padding: '8px 12px',
-            color: '#F87171',
+            color: '#DC2626',
             fontSize: 'var(--font-size-xs)',
+            fontWeight: 700,
           }}
         >
           {error}
@@ -333,114 +310,396 @@ export function MarketPositionPricingCalculator({
         <div
           style={{
             marginTop: 'var(--space-4)',
-            backgroundColor: '#0B1F33',
-            borderRadius: 'var(--radius-md)',
-            padding: 'var(--space-4)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            backgroundColor: '#FFFFFF',
+            borderRadius: 'var(--radius-xl)',
+            padding: '24px',
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 'var(--space-3)',
+            gap: '20px',
           }}
         >
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
-            <div>
-              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', fontWeight: 700 }}>
-                Targeting Position #{result.targetPosition}
+          {/* Header Row: Target Position & Calculation Mode */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: '#EA580C',
+                  color: '#FFFFFF',
+                  padding: '4px 12px',
+                  borderRadius: 'var(--radius-pill)',
+                  fontWeight: 900,
+                  fontSize: '12px',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <span>★</span>
+                <span>POSITION #1 SPOTLIGHT</span>
               </span>
-              <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, color: '#FFFFFF', marginTop: '2px' }}>
-                ₹{result.requiredQualifyingAmountRupees.toLocaleString('en-IN')}
-                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'rgba(255, 255, 255, 0.5)', marginLeft: '6px' }}>
-                  ({result.currency})
-                </span>
-              </div>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                Competitive Qualification in {marketName}
+              </span>
             </div>
 
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontWeight: 800,
-                padding: '4px 8px',
+                padding: '4px 10px',
                 borderRadius: 'var(--radius-pill)',
                 backgroundColor:
                   result.calculationMode === 'STRICT_SUPERSEDING'
-                    ? 'rgba(234, 88, 12, 0.2)'
+                    ? '#FFF7ED'
                     : result.calculationMode === 'INITIAL_FLOOR'
-                    ? 'rgba(59, 130, 246, 0.2)'
-                    : 'rgba(255, 255, 255, 0.1)',
+                    ? '#EFF6FF'
+                    : '#F1F5F9',
                 color:
                   result.calculationMode === 'STRICT_SUPERSEDING'
-                    ? '#FB923C'
+                    ? '#EA580C'
                     : result.calculationMode === 'INITIAL_FLOOR'
-                    ? '#60A5FA'
-                    : 'rgba(255, 255, 255, 0.8)',
+                    ? '#2563EB'
+                    : '#475569',
+                border:
+                  result.calculationMode === 'STRICT_SUPERSEDING'
+                    ? '1px solid #FED7AA'
+                    : result.calculationMode === 'INITIAL_FLOOR'
+                    ? '1px solid #BFDBFE'
+                    : '1px solid #E2E8F0',
               }}
             >
               Mode: {result.calculationMode}
             </span>
           </div>
 
-          {/* Explanation */}
+          {/* Section 1 & 2: Current #1 Position Holder & Claim Position #1 Breakdown */}
           <div
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '10px 12px',
-              fontSize: 'var(--font-size-xs)',
-              color: 'rgba(255, 255, 255, 0.8)',
-              lineHeight: 1.5,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '16px',
             }}
           >
-            <strong style={{ color: '#FB923C' }}>Calculation Basis: </strong>
-            {result.reason}
+            {/* Current #1 Leader Box */}
+            <div
+              style={{
+                backgroundColor: '#F8FAFC',
+                border: '1.5px solid #E2E8F0',
+                borderRadius: 'var(--radius-lg)',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748B', letterSpacing: '0.05em' }}>
+                  🥇 Current #1 Position Holder
+                </span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    backgroundColor: '#E2E8F0',
+                    color: '#334155',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                  }}
+                >
+                  {result.relevantCurrentQualifyingAmountRupees ? 'Occupied' : 'Vacant'}
+                </span>
+              </div>
+
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>
+                {result.occupantBusinessName || 'Current Market Leader'}
+              </div>
+
+              <div style={{ marginTop: 'auto', paddingTop: '6px' }}>
+                <span style={{ fontSize: '11px', color: '#64748B', display: 'block' }}>
+                  Current Qualifying Amount:
+                </span>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#475569' }}>
+                  {result.relevantCurrentQualifyingAmountRupees
+                    ? `₹${result.relevantCurrentQualifyingAmountRupees.toLocaleString('en-IN')}`
+                    : `₹${result.requiredQualifyingAmountRupees.toLocaleString('en-IN')} (Floor)`}
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', marginLeft: '6px' }}>
+                    INR
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Claim Position #1 & The +₹1 Rule */}
+            <div
+              style={{
+                backgroundColor: '#FFF7ED',
+                border: '1.5px solid #FDBA74',
+                borderRadius: 'var(--radius-lg)',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#C2410C', letterSpacing: '0.05em' }}>
+                  🎯 Claim Position #1
+                </span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    backgroundColor: '#EA580C',
+                    color: '#FFFFFF',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                  }}
+                >
+                  Strict Superseding
+                </span>
+              </div>
+
+              <div style={{ fontSize: '12px', color: '#7C2D12', lineHeight: 1.4 }}>
+                {result.relevantCurrentQualifyingAmountRupees ? (
+                  <>
+                    Must strictly exceed current #1 holder (₹{result.relevantCurrentQualifyingAmountRupees.toLocaleString('en-IN')}) by <strong>at least ₹1</strong>.
+                  </>
+                ) : (
+                  <>
+                    Position #1 is unoccupied. Meet or exceed this market's base entry floor.
+                  </>
+                )}
+              </div>
+
+              <div style={{ marginTop: 'auto', paddingTop: '6px' }}>
+                <span style={{ fontSize: '11px', color: '#9A3412', display: 'block', fontWeight: 700 }}>
+                  Minimum Required to Claim:
+                </span>
+                <div style={{ fontSize: '22px', fontWeight: 900, color: '#EA580C' }}>
+                  ₹{result.requiredQualifyingAmountRupees.toLocaleString('en-IN')}
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#C2410C', marginLeft: '6px' }}>
+                    (+₹1 above leader)
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Timestamp and Non-Lock Notice */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)', gap: '4px' }}>
-            <span>Calculated at {formattedTime}</span>
-            <span>Informational only • Does not reserve position or lock amount</span>
-          </div>
-
-          {/* Action Area: Create Visibility Intent */}
+          {/* Section 3: Manual Custom Amount Entry & Quick Increment Chips */}
           {!createdIntent && (
             <div
               style={{
-                marginTop: 'var(--space-2)',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                paddingTop: 'var(--space-3)',
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #CBD5E1',
+                borderRadius: 'var(--radius-lg)',
+                padding: '18px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 'var(--space-2)',
+                gap: '14px',
               }}
             >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <label
+                    htmlFor="manualOfferInput"
+                    style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', display: 'block' }}
+                  >
+                    Enter Your Qualifying Offer Amount (INR)
+                  </label>
+                  <span style={{ fontSize: '11px', color: '#64748B' }}>
+                    Minimum required: ₹{result.requiredQualifyingAmountRupees.toLocaleString('en-IN')}. You can manually increase this amount to set a higher competitive barrier.
+                  </span>
+                </div>
+              </div>
+
+              {/* Input Row & Quick Chips */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      backgroundColor: '#FFFFFF',
+                      border:
+                        parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) < result.requiredQualifyingAmountRupees
+                          ? '2px solid #EF4444'
+                          : '2px solid #EA580C',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '4px 12px',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                    }}
+                  >
+                    <span style={{ fontSize: '18px', fontWeight: 900, color: '#EA580C', marginRight: '6px' }}>
+                      ₹
+                    </span>
+                    <input
+                      id="manualOfferInput"
+                      type="number"
+                      min={result.requiredQualifyingAmountRupees}
+                      step={1}
+                      value={manualOfferInput}
+                      onChange={(e) => {
+                        setManualOfferInput(e.target.value);
+                        setIntentError(null);
+                      }}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        fontSize: '18px',
+                        fontWeight: 900,
+                        color: '#0F172A',
+                        width: '180px',
+                        backgroundColor: 'transparent',
+                      }}
+                    />
+                  </div>
+
+                  {/* Quick-Add Chips */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginRight: '2px' }}>
+                      Quick Add:
+                    </span>
+                    {[100, 500, 1000, 5000].map((increment) => (
+                      <button
+                        key={increment}
+                        type="button"
+                        onClick={() => {
+                          const currentVal = parseInt(manualOfferInput.replace(/,/g, '') || '0', 10);
+                          const base = isNaN(currentVal) || currentVal < result.requiredQualifyingAmountRupees
+                            ? result.requiredQualifyingAmountRupees
+                            : currentVal;
+                          setManualOfferInput(String(base + increment));
+                          setIntentError(null);
+                        }}
+                        style={{
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: 'var(--radius-pill)',
+                          padding: '4px 10px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: '#334155',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = '#FFF7ED';
+                          e.currentTarget.style.borderColor = '#EA580C';
+                          e.currentTarget.style.color = '#EA580C';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = '#FFFFFF';
+                          e.currentTarget.style.borderColor = '#CBD5E1';
+                          e.currentTarget.style.color = '#334155';
+                        }}
+                      >
+                        +₹{increment.toLocaleString('en-IN')}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setManualOfferInput(String(result.requiredQualifyingAmountRupees));
+                        setIntentError(null);
+                      }}
+                      style={{
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#64748B',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        padding: '4px 6px',
+                      }}
+                    >
+                      Reset to Min (₹{result.requiredQualifyingAmountRupees.toLocaleString('en-IN')})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live validation feedback */}
+                {parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) < result.requiredQualifyingAmountRupees ? (
+                  <div style={{ color: '#DC2626', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>⚠️</span>
+                    <span>
+                      Offer cannot be lower than the minimum qualifying amount of ₹{result.requiredQualifyingAmountRupees.toLocaleString('en-IN')} to claim Position #1.
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ color: '#16A34A', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>✓</span>
+                    <span>
+                      Valid offer: ₹{parseInt(manualOfferInput.replace(/,/g, '') || '0', 10).toLocaleString('en-IN')} qualifies to claim Position #1 upon payment confirmation.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Area: Create Visibility Intent Button */}
               <div
                 style={{
+                  borderTop: '1px solid #E2E8F0',
+                  paddingTop: '14px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   flexWrap: 'wrap',
-                  gap: 'var(--space-2)',
+                  gap: '12px',
                 }}
               >
                 <button
                   type="button"
                   onClick={handleCreateIntent}
-                  disabled={creatingIntent}
+                  disabled={
+                    creatingIntent ||
+                    parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) < result.requiredQualifyingAmountRupees
+                  }
                   style={{
-                    backgroundColor: '#0D9488',
+                    backgroundColor:
+                      parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) < result.requiredQualifyingAmountRupees
+                        ? '#94A3B8'
+                        : '#0D9488',
                     color: '#FFFFFF',
                     border: 'none',
-                    padding: '8px 18px',
+                    padding: '12px 28px',
                     borderRadius: 'var(--radius-pill)',
-                    fontWeight: 700,
-                    fontSize: 'var(--font-size-xs)',
-                    cursor: creatingIntent ? 'not-allowed' : 'pointer',
-                    opacity: creatingIntent ? 0.7 : 1,
+                    fontWeight: 800,
+                    fontSize: '13px',
+                    letterSpacing: '0.02em',
+                    cursor:
+                      creatingIntent ||
+                      parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) < result.requiredQualifyingAmountRupees
+                        ? 'not-allowed'
+                        : 'pointer',
+                    boxShadow:
+                      parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) < result.requiredQualifyingAmountRupees
+                        ? 'none'
+                        : '0 4px 14px rgba(13, 148, 136, 0.35)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseOver={(e) => {
+                    if (parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) >= result.requiredQualifyingAmountRupees) {
+                      e.currentTarget.style.backgroundColor = '#0F766E';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) >= result.requiredQualifyingAmountRupees) {
+                      e.currentTarget.style.backgroundColor = '#0D9488';
+                    }
                   }}
                 >
-                  {creatingIntent ? 'Creating Intent...' : 'Create Visibility Intent →'}
+                  {creatingIntent
+                    ? 'Creating Intent...'
+                    : `Create Visibility Intent for ₹${(parseInt(manualOfferInput.replace(/,/g, '') || '0', 10) || result.requiredQualifyingAmountRupees).toLocaleString('en-IN')} →`}
                 </button>
-                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                  Preparation for payment • No charge executed
+
+                <span style={{ fontSize: '11px', color: '#64748B' }}>
+                  Clicking creates an active visibility intent and unlocks direct payment details via PayU.
                 </span>
               </div>
 
@@ -448,12 +707,13 @@ export function MarketPositionPricingCalculator({
                 <div
                   role="alert"
                   style={{
-                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    backgroundColor: '#FEE2E2',
+                    border: '1px solid #FCA5A5',
                     borderRadius: 'var(--radius-sm)',
-                    padding: '6px 10px',
-                    color: '#F87171',
-                    fontSize: '11px',
+                    padding: '8px 12px',
+                    color: '#DC2626',
+                    fontSize: '12px',
+                    fontWeight: 600,
                   }}
                 >
                   {intentError}
@@ -464,12 +724,12 @@ export function MarketPositionPricingCalculator({
                 <div
                   role="alert"
                   style={{
-                    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    backgroundColor: '#FEF3C7',
+                    border: '1px solid #FDE68A',
                     borderRadius: 'var(--radius-sm)',
-                    padding: '8px 10px',
-                    color: '#FBBF24',
-                    fontSize: '11px',
+                    padding: '8px 12px',
+                    color: '#B45309',
+                    fontSize: '12px',
                     lineHeight: 1.4,
                   }}
                 >
@@ -477,7 +737,7 @@ export function MarketPositionPricingCalculator({
                   <div style={{ marginTop: '4px' }}>
                     <button
                       type="button"
-                      onClick={() => handleCalculate()}
+                      onClick={() => handleCalculate(1)}
                       style={{
                         backgroundColor: '#F59E0B',
                         color: '#000000',
@@ -497,67 +757,144 @@ export function MarketPositionPricingCalculator({
             </div>
           )}
 
-          {/* Active Created Intent Card */}
+          {/* Active Created Intent Card — Executive High-Security Terminal */}
           {createdIntent && (
             <div
               style={{
-                marginTop: 'var(--space-2)',
-                backgroundColor: 'rgba(13, 148, 136, 0.12)',
-                border: '1px solid rgba(13, 148, 136, 0.3)',
-                borderRadius: 'var(--radius-md)',
-                padding: 'var(--space-4)',
+                marginTop: 'var(--space-4)',
+                backgroundColor: '#071526',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: 'var(--radius-xl)',
+                padding: '24px',
+                color: '#FFFFFF',
+                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.35)',
+                position: 'relative',
+                overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 'var(--space-2)',
+                gap: '16px',
               }}
             >
+              {/* Top Accent Gradient Stripe */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '3px',
+                  background: 'linear-gradient(90deg, #EA580C, #F59E0B, #10B981)',
+                }}
+              />
+
+              {/* Header: Status Badge + Title + Ref ID */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   flexWrap: 'wrap',
-                  gap: 'var(--space-2)',
+                  gap: '12px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  paddingBottom: '14px',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span
                     style={{
-                      fontSize: '10px',
+                      fontSize: '11px',
                       fontWeight: 800,
-                      padding: '3px 8px',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      padding: '4px 10px',
                       borderRadius: 'var(--radius-pill)',
                       backgroundColor:
                         createdIntent.status === 'PENDING_PAYMENT'
-                          ? 'rgba(34, 197, 94, 0.2)'
-                          : 'rgba(255, 255, 255, 0.1)',
+                          ? 'rgba(245, 158, 11, 0.15)'
+                          : 'rgba(34, 197, 94, 0.15)',
                       color:
                         createdIntent.status === 'PENDING_PAYMENT'
-                          ? '#4ADE80'
-                          : 'rgba(255, 255, 255, 0.7)',
+                          ? '#FBBF24'
+                          : '#4ADE80',
+                      border:
+                        createdIntent.status === 'PENDING_PAYMENT'
+                          ? '1px solid rgba(245, 158, 11, 0.35)'
+                          : '1px solid rgba(34, 197, 94, 0.35)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
                     }}
                   >
+                    <span>●</span>
                     {createdIntent.status}
                   </span>
-                  <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 800, color: '#FFFFFF' }}>
+                  <h4 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
                     Visibility Intent Active
+                  </h4>
+                </div>
+
+                <div
+                  style={{
+                    fontSize: '11px',
+                    color: '#94A3B8',
+                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '3px 8px',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  Ref: <span style={{ color: '#E2E8F0', fontWeight: 600 }}>{createdIntent.id}</span>
+                </div>
+              </div>
+
+              {/* Data Summary Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: '12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '14px 16px',
+                }}
+              >
+                <div>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Target Position
+                  </span>
+                  <span style={{ fontSize: '16px', fontWeight: 800, color: '#FB923C' }}>
+                    Position #{createdIntent.targetPosition}{' '}
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#FED7AA' }}>
+                      (Spotlight Rank)
+                    </span>
                   </span>
                 </div>
-                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                  Ref: <code>{createdIntent.id}</code>
-                </span>
+
+                <div>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Required Qualifying Amount
+                  </span>
+                  <span style={{ fontSize: '18px', fontWeight: 900, color: '#FFFFFF' }}>
+                    ₹{createdIntent.qualifyingAmountRupees.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Reservation Expiry
+                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#38BDF8' }}>
+                    ⏱️ Valid until {new Date(createdIntent.expiresAt).toLocaleTimeString('en-IN')}
+                  </span>
+                </div>
               </div>
 
-              <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.5 }}>
-                Intent registered for <strong>Position #{createdIntent.targetPosition}</strong> at{' '}
-                <strong>₹{createdIntent.qualifyingAmountRupees.toLocaleString('en-IN')}</strong>. Valid until{' '}
-                <strong>{new Date(createdIntent.expiresAt).toLocaleTimeString('en-IN')}</strong>.
-              </div>
-
-              {/* Payment Boundary Integration (Milestone 0.12.0) */}
+              {/* Payment Action Row */}
               {!paymentOrder && createdIntent.status === 'PENDING_PAYMENT' && (
-                <div style={{ marginTop: 'var(--space-2)', paddingTop: 'var(--space-2)', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                     <button
                       type="button"
                       onClick={handleInitiatePayment}
@@ -567,21 +904,47 @@ export function MarketPositionPricingCalculator({
                         color: '#FFFFFF',
                         border: 'none',
                         borderRadius: 'var(--radius-pill)',
-                        padding: '6px 16px',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: 700,
+                        padding: '12px 28px',
+                        fontSize: '14px',
+                        fontWeight: 800,
+                        letterSpacing: '0.02em',
                         cursor: initiatingPayment ? 'not-allowed' : 'pointer',
                         opacity: initiatingPayment ? 0.7 : 1,
+                        boxShadow: '0 4px 16px rgba(234, 88, 12, 0.45)',
+                        transition: 'all 0.15s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#C2410C';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = '#EA580C';
                       }}
                     >
-                      {initiatingPayment ? 'Initializing PayU...' : 'Continue to Payment (PayU) →'}
+                      <span>{initiatingPayment ? 'Initializing PayU Gateway...' : 'Continue to Payment (PayU) →'}</span>
                     </button>
-                    <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                      Hosted PayU India Gateway
-                    </span>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94A3B8', fontSize: '12px' }}>
+                      <span>🔒</span>
+                      <span>Hosted via PayU India Gateway (256-bit SSL)</span>
+                    </div>
                   </div>
+
                   {paymentError && (
-                    <div style={{ marginTop: '6px', color: '#F87171', fontSize: '11px' }}>
+                    <div
+                      role="alert"
+                      style={{
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '8px 12px',
+                        color: '#F87171',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                      }}
+                    >
                       {paymentError}
                     </div>
                   )}
@@ -592,25 +955,27 @@ export function MarketPositionPricingCalculator({
               {paymentOrder && (
                 <div
                   style={{
-                    marginTop: 'var(--space-2)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '10px 12px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '14px 18px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '6px',
+                    gap: '10px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#FB923C' }}>
-                      PayU Order: {paymentOrder.id}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#FB923C' }}>
+                        PayU Order: {paymentOrder.id}
+                      </span>
+                    </div>
+
                     <span
                       style={{
                         fontSize: '10px',
                         fontWeight: 800,
-                        padding: '2px 6px',
+                        padding: '3px 8px',
                         borderRadius: 'var(--radius-pill)',
                         backgroundColor:
                           paymentOrder.status === 'SUCCEEDED'
@@ -624,6 +989,12 @@ export function MarketPositionPricingCalculator({
                             : paymentOrder.status === 'FAILED'
                             ? '#F87171'
                             : '#FBBF24',
+                        border:
+                          paymentOrder.status === 'SUCCEEDED'
+                            ? '1px solid rgba(34, 197, 94, 0.35)'
+                            : paymentOrder.status === 'FAILED'
+                            ? '1px solid rgba(239, 68, 68, 0.35)'
+                            : '1px solid rgba(245, 158, 11, 0.35)',
                       }}
                     >
                       {paymentOrder.status}
@@ -635,23 +1006,24 @@ export function MarketPositionPricingCalculator({
                       {Object.entries(checkoutPayload.fields).map(([k, v]) => (
                         <input key={k} type="hidden" name={k} value={v || ''} />
                       ))}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
                         <button
                           type="submit"
                           style={{
                             backgroundColor: '#22C55E',
-                            color: '#000000',
+                            color: '#071526',
                             border: 'none',
                             borderRadius: 'var(--radius-pill)',
-                            padding: '6px 14px',
-                            fontSize: '11px',
+                            padding: '10px 22px',
+                            fontSize: '13px',
                             fontWeight: 800,
                             cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
                           }}
                         >
                           Proceed to PayU Checkout →
                         </button>
-                        <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                        <span style={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'monospace' }}>
                           Ref: {paymentOrder.providerTransactionId}
                         </span>
                       </div>
@@ -659,26 +1031,28 @@ export function MarketPositionPricingCalculator({
                   )}
 
                   {(paymentOrder.status === 'SUCCEEDED' || paymentOrder.status === 'CONFIRMED') && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ color: '#4ADE80', fontSize: '11px', lineHeight: 1.4 }}>
-                        ✅ Payment of ₹{paymentOrder.amountRupees.toLocaleString('en-IN')} {paymentOrder.status === 'CONFIRMED' ? 'confirmed' : 'verified'} by PayU.
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ color: '#4ADE80', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>✅</span>
+                        <span>Payment of ₹{paymentOrder.amountRupees.toLocaleString('en-IN')} {paymentOrder.status === 'CONFIRMED' ? 'confirmed' : 'verified'} by PayU.</span>
                       </div>
 
                       {!settlement && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div>
                           <button
                             type="button"
                             onClick={handleSettleRanking}
                             disabled={settlingRanking}
                             style={{
-                              backgroundColor: '#0EA5E9',
+                              backgroundColor: '#0284C7',
                               color: '#FFFFFF',
                               border: 'none',
                               borderRadius: 'var(--radius-pill)',
-                              padding: '6px 14px',
-                              fontSize: '11px',
+                              padding: '10px 22px',
+                              fontSize: '13px',
                               fontWeight: 800,
                               cursor: settlingRanking ? 'not-allowed' : 'pointer',
+                              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
                             }}
                           >
                             {settlingRanking ? 'Settling Ranking...' : 'Finalize Ranking Settlement →'}
@@ -687,7 +1061,7 @@ export function MarketPositionPricingCalculator({
                       )}
 
                       {settlementError && (
-                        <div style={{ color: '#F87171', fontSize: '11px' }}>
+                        <div style={{ color: '#F87171', fontSize: '12px' }}>
                           Settlement error: {settlementError}
                         </div>
                       )}
@@ -696,15 +1070,15 @@ export function MarketPositionPricingCalculator({
                         <div
                           style={{
                             backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                            border: '1px solid #22C55E',
-                            borderRadius: 'var(--radius-sm)',
-                            padding: '10px',
+                            border: '1px solid rgba(34, 197, 94, 0.4)',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '12px 16px',
                           }}
                         >
-                          <div style={{ fontWeight: 800, color: '#4ADE80', fontSize: '12px' }}>
+                          <div style={{ fontWeight: 800, color: '#4ADE80', fontSize: '14px' }}>
                             🎉 Visibility payment settled! Market position is now #{settlement.finalPosition}.
                           </div>
-                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.8)', marginTop: '4px' }}>
+                          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)', marginTop: '4px' }}>
                             Paid Qualifying Amount: ₹{settlement.paidAmountRupees.toLocaleString('en-IN')} • Settlement: Completed
                           </div>
                         </div>
@@ -714,15 +1088,15 @@ export function MarketPositionPricingCalculator({
                         <div
                           style={{
                             backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                            border: '1px solid #EF4444',
-                            borderRadius: 'var(--radius-sm)',
-                            padding: '10px',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '12px 16px',
                           }}
                         >
-                          <div style={{ fontWeight: 800, color: '#F87171', fontSize: '12px' }}>
+                          <div style={{ fontWeight: 800, color: '#F87171', fontSize: '13px' }}>
                             ⚠️ Settlement could not displace incumbent position.
                           </div>
-                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginTop: '4px' }}>
+                          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.75)', marginTop: '4px' }}>
                             Payment remains confirmed. Reason: {settlement.failureReason}
                           </div>
                         </div>
@@ -731,27 +1105,35 @@ export function MarketPositionPricingCalculator({
                   )}
 
                   {paymentOrder.status === 'FAILED' && (
-                    <div style={{ color: '#F87171', fontSize: '11px' }}>
+                    <div style={{ color: '#F87171', fontSize: '12px' }}>
                       Payment failed: {paymentOrder.failureReason || 'Declined by provider'}.
                     </div>
                   )}
                 </div>
               )}
 
+              {/* Regulatory & Transparency Disclosure */}
               <div
                 style={{
                   fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                  padding: '6px 10px',
-                  borderRadius: 'var(--radius-sm)',
+                  color: '#94A3B8',
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  padding: '10px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  lineHeight: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
               >
-                ⚖️ Paid visibility determines market ranking position and does not independently establish that a business is the objectively best choice.
+                <span>⚖️</span>
+                <span>Paid visibility determines market ranking position and does not independently establish that a business is the objectively best choice.</span>
               </div>
 
+              {/* Cancel Intent Action */}
               {createdIntent.status === 'PENDING_PAYMENT' && (
-                <div style={{ marginTop: 'var(--space-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingTop: '2px' }}>
                   <button
                     type="button"
                     onClick={handleCancelIntent}
@@ -759,15 +1141,22 @@ export function MarketPositionPricingCalculator({
                     style={{
                       backgroundColor: 'transparent',
                       color: '#F87171',
-                      border: '1px solid rgba(248, 113, 113, 0.3)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
                       borderRadius: 'var(--radius-pill)',
-                      padding: '4px 12px',
+                      padding: '6px 14px',
                       fontSize: '11px',
                       fontWeight: 700,
                       cursor: creatingIntent || initiatingPayment ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    {creatingIntent ? 'Cancelling...' : 'Cancel Intent'}
+                    {creatingIntent ? 'Cancelling Intent...' : '✕ Cancel This Intent'}
                   </button>
                 </div>
               )}

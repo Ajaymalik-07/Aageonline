@@ -302,3 +302,109 @@ export function assertPostgresUtilityAvailable(
     );
   }
 }
+
+export interface ManifestValidationResult {
+  isValid: boolean;
+  manifest?: BackupManifest;
+  error?: string;
+}
+
+/**
+ * Validates a backup manifest artifact, rejecting corrupt JSON, missing fields, failed status, or stored credentials.
+ */
+export function validateBackupManifest(
+  rawContent: string | Record<string, unknown>
+): ManifestValidationResult {
+  if (!rawContent) {
+    return { isValid: false, error: 'Manifest content is empty or null.' };
+  }
+
+  let parsed: Record<string, unknown>;
+  if (typeof rawContent === 'string') {
+    try {
+      parsed = JSON.parse(rawContent);
+    } catch {
+      return { isValid: false, error: 'Manifest is corrupted: invalid JSON syntax.' };
+    }
+  } else {
+    parsed = rawContent;
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return { isValid: false, error: 'Manifest must be a JSON object.' };
+  }
+
+  const requiredFields = [
+    'manifestVersion',
+    'backupTimestamp',
+    'databaseName',
+    'fileName',
+    'fileSizeBytes',
+    'checksumSha256',
+    'verificationStatus',
+  ];
+
+  for (const field of requiredFields) {
+    if (parsed[field] === undefined || parsed[field] === null || parsed[field] === '') {
+      return { isValid: false, error: `Manifest corrupted: missing required field "${field}".` };
+    }
+  }
+
+  // Checksum format validation (64 hex characters)
+  const checksum = String(parsed.checksumSha256);
+  if (!/^[a-fA-F0-9]{64}$/.test(checksum)) {
+    return { isValid: false, error: 'Manifest corrupted: invalid SHA-256 checksum format.' };
+  }
+
+  // File size validation
+  const size = Number(parsed.fileSizeBytes);
+  if (isNaN(size) || size <= 0) {
+    return { isValid: false, error: 'Manifest corrupted: fileSizeBytes must be a positive number.' };
+  }
+
+  // Verification status check
+  const status = String(parsed.verificationStatus);
+  if (status === 'FAILED') {
+    return { isValid: false, error: 'Backup marked as FAILED in manifest: partial or corrupt artifact.' };
+  }
+
+  if (status !== 'PENDING' && status !== 'VERIFIED') {
+    return { isValid: false, error: `Manifest corrupted: unrecognized verificationStatus "${status}".` };
+  }
+
+  // Credentials security check: must strictly never store credentials
+  if (parsed.credentialsStored !== false) {
+    return { isValid: false, error: 'Security violation: manifest must declare credentialsStored=false.' };
+  }
+
+  return {
+    isValid: true,
+    manifest: parsed as unknown as BackupManifest,
+  };
+}
+
+/**
+ * Checks whether a proposed backup destination file already exists, preventing accidental overwrite.
+ */
+export function checkBackupFileOverwrite(
+  targetFilePath: string,
+  fileExistsFn: (filePath: string) => boolean
+): { canWrite: boolean; error?: string } {
+  if (fileExistsFn(targetFilePath)) {
+    return {
+      canWrite: false,
+      error: `Destination backup file already exists: "${targetFilePath}". Aborting to prevent overwrite.`,
+    };
+  }
+  return { canWrite: true };
+}
+
+/**
+ * Formats a database restore error string, strictly redacting passwords or connection secrets.
+ */
+export function formatSafeRestoreError(err: unknown): string {
+  if (!err) return 'Database restore operation failed with unknown error.';
+  const rawMsg = err instanceof Error ? err.message : String(err);
+  return redactConnectionString(rawMsg);
+}
+

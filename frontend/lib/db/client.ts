@@ -13,6 +13,7 @@ import {
   getDatabaseConfig,
   isDatabaseConfigured,
   isProductionPersistenceRequired,
+  isProductionEnvironment,
   assertProductionPersistence,
 } from './guard.ts';
 
@@ -21,6 +22,7 @@ export {
   getDatabaseConfig,
   isDatabaseConfigured,
   isProductionPersistenceRequired,
+  isProductionEnvironment,
   assertProductionPersistence,
 };
 

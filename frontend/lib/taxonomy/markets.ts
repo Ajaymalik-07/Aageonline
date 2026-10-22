@@ -149,7 +149,10 @@ export function getMarketByCityAndCategory(
 }
 
 export function createMarket(
-  data: Omit<MarketEntity, 'createdAt' | 'updatedAt'>
+  data: Omit<MarketEntity, 'createdAt' | 'updatedAt' | 'id' | 'slug'> & {
+    id?: string;
+    slug?: string;
+  }
 ): MarketEntity {
   const city = getCityById(data.cityId);
   if (!city) {

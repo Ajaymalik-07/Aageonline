@@ -98,7 +98,7 @@ export const BusinessCtaBanner: React.FC = () => {
             }}
           >
             <a
-              href="/explore"
+              href="/markets"
               style={{
                 padding: '16px 36px',
                 borderRadius: 'var(--radius-pill)',
@@ -118,7 +118,7 @@ export const BusinessCtaBanner: React.FC = () => {
             </a>
 
             <a
-              href="/claim"
+              href="/business/claim"
               style={{
                 padding: '16px 32px',
                 borderRadius: 'var(--radius-pill)',

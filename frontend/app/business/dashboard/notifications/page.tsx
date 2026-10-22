@@ -63,15 +63,37 @@ function NotificationsContent() {
 
   useEffect(() => {
     async function init() {
-      const { getActiveDevSession } = await import('../../../../lib/auth/store.ts');
-      const session = getActiveDevSession();
-      if (!session) {
-        router.replace('/auth/login?returnUrl=/business/dashboard/notifications');
+      let userId: string | null = null;
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            userId = data.user.id;
+            const { registerUserInStore, setActiveDevUser: setDevUser } = await import('../../../../lib/auth/store.ts');
+            registerUserInStore(data.user);
+            if (process.env.NODE_ENV !== 'production') {
+              setDevUser(data.user.id);
+            }
+          }
+        }
+      } catch {
+        // fallback
+      }
+
+      if (!userId) {
+        const { getActiveDevSession } = await import('../../../../lib/auth/store.ts');
+        const session = getActiveDevSession();
+        if (session) userId = session.userId;
+      }
+
+      if (!userId) {
+        router.replace('/business/claim?returnUrl=/business/dashboard/notifications');
         return;
       }
 
       const { resolveWorkspaceContext } = await import('../../../../lib/workspace/store.ts');
-      const ctx = await resolveWorkspaceContext(session.userId, businessIdParam);
+      const ctx = await resolveWorkspaceContext(userId, businessIdParam);
       setBusinessId(ctx.currentBusiness.id);
       loadData(ctx.currentBusiness.id);
     }
@@ -131,10 +153,10 @@ function NotificationsContent() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
         <div>
-          <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, margin: '0 0 var(--space-2) 0', color: '#FFFFFF' }}>
+          <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, margin: '0 0 var(--space-2) 0', color: '#0F172A' }}>
             Notifications &amp; Milestone Alerts
           </h1>
-          <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'rgba(255, 255, 255, 0.7)' }}>
+          <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#64748B' }}>
             Stay informed when ranking movement crosses significant competitive thresholds.
           </p>
         </div>
@@ -142,9 +164,9 @@ function NotificationsContent() {
         {unreadCount > 0 && (
           <span
             style={{
-              backgroundColor: 'rgba(234, 88, 12, 0.2)',
-              border: '1px solid rgba(234, 88, 12, 0.4)',
-              color: '#FB923C',
+              backgroundColor: '#FFF7ED',
+              border: '1px solid #FED7AA',
+              color: '#EA580C',
               padding: '6px 14px',
               borderRadius: 'var(--radius-pill)',
               fontSize: '12px',
@@ -159,13 +181,13 @@ function NotificationsContent() {
       {actionMessage && (
         <div
           style={{
-            backgroundColor: 'rgba(34, 197, 94, 0.15)',
-            border: '1px solid rgba(34, 197, 94, 0.3)',
-            color: '#4ADE80',
+            backgroundColor: '#ECFDF5',
+            border: '1px solid #A7F3D0',
+            color: '#059669',
             padding: '10px 16px',
             borderRadius: 'var(--radius-md)',
             fontSize: 'var(--font-size-xs)',
-            fontWeight: 600,
+            fontWeight: 700,
           }}
         >
           {actionMessage}
@@ -177,17 +199,17 @@ function NotificationsContent() {
         style={{
           display: 'flex',
           gap: 'var(--space-2)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          borderBottom: '1px solid #E2E8F0',
           paddingBottom: 'var(--space-2)',
         }}
       >
         <button
           onClick={() => setFilterUnread(false)}
           style={{
-            backgroundColor: !filterUnread ? '#EA580C' : 'transparent',
-            color: '#FFFFFF',
-            border: 'none',
-            padding: '6px 14px',
+            backgroundColor: !filterUnread ? '#EA580C' : '#F1F5F9',
+            color: !filterUnread ? '#FFFFFF' : '#334155',
+            border: !filterUnread ? 'none' : '1px solid #CBD5E1',
+            padding: '6px 16px',
             borderRadius: 'var(--radius-pill)',
             fontSize: '12px',
             fontWeight: 700,
@@ -199,10 +221,10 @@ function NotificationsContent() {
         <button
           onClick={() => setFilterUnread(true)}
           style={{
-            backgroundColor: filterUnread ? '#EA580C' : 'transparent',
-            color: '#FFFFFF',
-            border: 'none',
-            padding: '6px 14px',
+            backgroundColor: filterUnread ? '#EA580C' : '#F1F5F9',
+            color: filterUnread ? '#FFFFFF' : '#334155',
+            border: filterUnread ? 'none' : '1px solid #CBD5E1',
+            padding: '6px 16px',
             borderRadius: 'var(--radius-pill)',
             fontSize: '12px',
             fontWeight: 700,
@@ -215,24 +237,24 @@ function NotificationsContent() {
 
       {/* Notifications List */}
       {loading ? (
-        <div style={{ padding: 'var(--space-12) 0', textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)' }}>
+        <div style={{ padding: 'var(--space-12) 0', textAlign: 'center', color: '#64748B', fontWeight: 600 }}>
           Loading notifications...
         </div>
       ) : notifications.length === 0 ? (
         <div
           style={{
-            backgroundColor: '#0B1F33',
+            backgroundColor: '#FFFFFF',
             borderRadius: 'var(--radius-xl)',
             padding: 'var(--space-12) var(--space-6)',
             textAlign: 'center',
-            border: '1px dashed rgba(255, 255, 255, 0.15)',
+            border: '1px dashed #CBD5E1',
           }}
         >
           <div style={{ fontSize: '32px', marginBottom: 'var(--space-3)' }}>🔔</div>
-          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, color: '#FFFFFF', margin: '0 0 var(--space-2) 0' }}>
+          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 800, color: '#0F172A', margin: '0 0 var(--space-2) 0' }}>
             No Notifications
           </h3>
-          <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'rgba(255, 255, 255, 0.6)' }}>
+          <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: '#64748B' }}>
             {filterUnread
               ? 'You have caught up on all unread ranking alerts.'
               : 'When ranking drops cross milestones (#1→#5, #5→#10, etc.), alerts will appear here.'}
@@ -244,16 +266,17 @@ function NotificationsContent() {
             <div
               key={notif.id}
               style={{
-                backgroundColor: notif.isRead ? '#0B1F33' : 'rgba(11, 31, 51, 0.95)',
+                backgroundColor: notif.isRead ? '#FFFFFF' : '#FFF7ED',
                 border: notif.isRead
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(234, 88, 12, 0.35)',
+                  ? '1px solid #E2E8F0'
+                  : '1px solid #FED7AA',
                 borderRadius: 'var(--radius-lg)',
                 padding: 'var(--space-4) var(--space-5)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 gap: 'var(--space-4)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -269,7 +292,7 @@ function NotificationsContent() {
                       }}
                     />
                   )}
-                  <span style={{ fontWeight: 800, color: '#FFFFFF', fontSize: 'var(--font-size-sm)' }}>
+                  <span style={{ fontWeight: 800, color: '#0F172A', fontSize: 'var(--font-size-sm)' }}>
                     {notif.title}
                   </span>
                   {notif.milestone && (
@@ -277,8 +300,9 @@ function NotificationsContent() {
                       style={{
                         fontSize: '10px',
                         fontWeight: 800,
-                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                        color: '#F87171',
+                        backgroundColor: '#FEE2E2',
+                        color: '#DC2626',
+                        border: '1px solid #FECACA',
                         padding: '2px 6px',
                         borderRadius: '4px',
                       }}
@@ -287,10 +311,10 @@ function NotificationsContent() {
                     </span>
                   )}
                 </div>
-                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'rgba(255, 255, 255, 0.75)', lineHeight: 1.5 }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: '#475569', lineHeight: 1.5 }}>
                   {notif.message}
                 </p>
-                <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.4)', marginTop: '2px' }}>
+                <span style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
                   {new Date(notif.createdAt).toLocaleString('en-IN', {
                     dateStyle: 'medium',
                     timeStyle: 'short',
@@ -302,15 +326,16 @@ function NotificationsContent() {
                 <button
                   onClick={() => handleMarkRead(notif.id)}
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    color: '#FFFFFF',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    padding: '6px 12px',
-                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: '#FFFFFF',
+                    color: '#334155',
+                    border: '1px solid #CBD5E1',
+                    padding: '6px 14px',
+                    borderRadius: 'var(--radius-pill)',
                     fontSize: '11px',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
                   }}
                 >
                   Mark Read
@@ -325,14 +350,15 @@ function NotificationsContent() {
       {preferences && (
         <div
           style={{
-            backgroundColor: '#0B1F33',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
             borderRadius: 'var(--radius-xl)',
             padding: 'var(--space-6)',
+            boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
             marginTop: 'var(--space-4)',
           }}
         >
-          <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 800, color: '#FFFFFF', margin: '0 0 var(--space-4) 0' }}>
+          <h2 style={{ fontSize: 'var(--font-size-base)', fontWeight: 800, color: '#0F172A', margin: '0 0 var(--space-4) 0' }}>
             Alert Preferences &amp; Anti-Spam Coalescing
           </h2>
 
@@ -345,7 +371,7 @@ function NotificationsContent() {
                 onChange={(e) => handleUpdatePreference('inAppRankingDrops', e.target.checked)}
                 style={{ width: '16px', height: '16px', accentColor: '#EA580C' }}
               />
-              <span style={{ fontSize: 'var(--font-size-xs)', color: '#FFFFFF', fontWeight: 600 }}>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: '#0F172A', fontWeight: 600 }}>
                 In-app notifications for ranking milestone drops
               </span>
             </label>
@@ -358,31 +384,32 @@ function NotificationsContent() {
                 onChange={(e) => handleUpdatePreference('emailRankingDrops', e.target.checked)}
                 style={{ width: '16px', height: '16px', accentColor: '#EA580C' }}
               />
-              <span style={{ fontSize: 'var(--font-size-xs)', color: '#FFFFFF', fontWeight: 600 }}>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: '#0F172A', fontWeight: 600 }}>
                 Email alerts for milestone drops (requires configured email channel)
               </span>
             </label>
 
             {/* Digest Window */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: 'var(--space-2)' }}>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'rgba(255, 255, 255, 0.7)' }}>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: '#64748B', fontWeight: 600 }}>
                 Rapid-movement coalescing window:
               </span>
               <select
                 value={preferences.digestWindowMinutes}
                 onChange={(e) => handleUpdatePreference('digestWindowMinutes', parseInt(e.target.value, 10))}
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F172A',
+                  border: '1px solid #CBD5E1',
                   borderRadius: 'var(--radius-md)',
-                  padding: '4px 10px',
-                  fontSize: '11px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
                 }}
               >
-                <option value={0} style={{ backgroundColor: '#0B1F33' }}>No coalescing (immediate)</option>
-                <option value={15} style={{ backgroundColor: '#0B1F33' }}>15 minutes (recommended)</option>
-                <option value={60} style={{ backgroundColor: '#0B1F33' }}>1 hour</option>
+                <option value={0}>No coalescing (immediate)</option>
+                <option value={15}>15 minutes (recommended)</option>
+                <option value={60}>1 hour</option>
               </select>
             </div>
           </div>
@@ -396,7 +423,7 @@ export default function NotificationsPage() {
   return (
     <Suspense
       fallback={
-        <div style={{ padding: 'var(--space-12) 0', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)' }}>
+        <div style={{ padding: 'var(--space-12) 0', textAlign: 'center', color: '#64748B' }}>
           Loading notifications center...
         </div>
       }

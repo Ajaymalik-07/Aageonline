@@ -26,9 +26,23 @@ import {
   checkProductionReadiness,
   assertLivePaymentReady,
 } from '../lib/db/readiness.ts';
-import { createBidIntent } from '../lib/bid-intent/store.ts';
-import { createPaymentOrder } from '../lib/payments/store.ts';
-import { settleRanking } from '../lib/ranking-settlement/settlement-service.ts';
+import {
+  createBidIntent,
+  getBidIntentInternal,
+  resetBidIntentStoreForTesting,
+} from '../lib/bid-intent/store.ts';
+import {
+  createPaymentOrder,
+  processPayUWebhook,
+  reconcilePaymentOrder,
+  getPaymentOrderInternal,
+  resetPaymentStoreForTesting,
+} from '../lib/payments/store.ts';
+import { reconcileSinglePaymentOrder } from '../lib/payments/reconciliation-service.ts';
+import {
+  settleRanking,
+  resetSettlementStoreForTesting,
+} from '../lib/ranking-settlement/settlement-service.ts';
 
 describe('Milestone 0.14.0 — PostgreSQL Persistence & Production Readiness', () => {
   const originalEnv = { ...process.env };
@@ -125,6 +139,41 @@ describe('Milestone 0.14.0 — PostgreSQL Persistence & Production Readiness', (
       );
     });
 
+    it('should refuse processPayUWebhook execution in production without DATABASE_URL', async () => {
+      setEnv('NODE_ENV', 'production');
+      setEnv('DATABASE_URL', undefined);
+
+      await assert.rejects(
+        () =>
+          processPayUWebhook({
+            txnid: 'tx-test-webhook',
+            status: 'success',
+            hash: 'somehash',
+          }),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+    });
+
+    it('should refuse reconcilePaymentOrder execution in production without DATABASE_URL', async () => {
+      setEnv('NODE_ENV', 'production');
+      setEnv('DATABASE_URL', undefined);
+
+      await assert.rejects(
+        () => reconcilePaymentOrder('po-test', 'user-ajay'),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+    });
+
+    it('should refuse reconcileSinglePaymentOrder execution in production without DATABASE_URL', async () => {
+      setEnv('NODE_ENV', 'production');
+      setEnv('DATABASE_URL', undefined);
+
+      await assert.rejects(
+        () => reconcileSinglePaymentOrder('po-test', 'user-ajay'),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+    });
+
     it('should refuse settleRanking execution in production without DATABASE_URL', async () => {
       setEnv('NODE_ENV', 'production');
       setEnv('DATABASE_URL', undefined);
@@ -137,6 +186,164 @@ describe('Milestone 0.14.0 — PostgreSQL Persistence & Production Readiness', (
           }),
         /CRITICAL CONFIGURATION ERROR/
       );
+    });
+
+    it('should refuse all mutation paths when DATABASE_URL is blank or whitespace-only in production', async () => {
+      setEnv('NODE_ENV', 'production');
+      setEnv('DATABASE_URL', '   ');
+
+      assert.equal(isDatabaseConfigured(), false);
+
+      await assert.rejects(
+        () =>
+          createBidIntent(
+            {
+              businessId: 'biz-royal-interiors',
+              marketId: 'mkt-jaipur-interior-designers',
+              targetPosition: 1,
+              idempotencyKey: 'idem-blank-db',
+            },
+            'user-ajay'
+          ),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+
+      await assert.rejects(
+        () =>
+          createPaymentOrder({
+            bidIntentId: 'bi-test',
+            idempotencyKey: 'idem-test-blank-pay',
+            actorUserId: 'user-ajay',
+          }),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+
+      await assert.rejects(
+        () =>
+          processPayUWebhook({
+            txnid: 'tx-blank-db',
+            status: 'success',
+            hash: 'somehash',
+          }),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+
+      await assert.rejects(
+        () => settleRanking({ paymentOrderId: 'po-test', actorUserId: 'user-ajay' }),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+    });
+
+    it('should fail closed against conflicting production and non-production environment variables', async () => {
+      setEnv('DATABASE_URL', undefined);
+
+      // Conflict Case 1: NODE_ENV=production with APP_ENV=development and PERSISTENCE_MODE=memory
+      setEnv('NODE_ENV', 'production');
+      setEnv('APP_ENV', 'development');
+      setEnv('PERSISTENCE_MODE', 'memory');
+      assert.equal(isProductionPersistenceRequired(), true);
+      assert.throws(() => assertProductionPersistence(), /CRITICAL CONFIGURATION ERROR/);
+
+      // Conflict Case 2: APP_ENV=production with NODE_ENV=test
+      setEnv('NODE_ENV', 'test');
+      setEnv('APP_ENV', 'production');
+      setEnv('PERSISTENCE_MODE', undefined);
+      assert.equal(isProductionPersistenceRequired(), true);
+      assert.throws(() => assertProductionPersistence(), /CRITICAL CONFIGURATION ERROR/);
+
+      // Conflict Case 3: PERSISTENCE_MODE=postgres with NODE_ENV=development
+      setEnv('NODE_ENV', 'development');
+      setEnv('APP_ENV', undefined);
+      setEnv('PERSISTENCE_MODE', 'postgres');
+      assert.equal(isProductionPersistenceRequired(), true);
+      assert.throws(() => assertProductionPersistence(), /CRITICAL CONFIGURATION ERROR/);
+
+      // Conflict Case 4: PERSISTENCE_MODE=production with NODE_ENV=test
+      setEnv('NODE_ENV', 'test');
+      setEnv('APP_ENV', undefined);
+      setEnv('PERSISTENCE_MODE', 'production');
+      assert.equal(isProductionPersistenceRequired(), true);
+      assert.throws(() => assertProductionPersistence(), /CRITICAL CONFIGURATION ERROR/);
+
+      // Conflict Case 5: NODE_ENV=prod alias with APP_ENV=development
+      setEnv('NODE_ENV', 'prod');
+      setEnv('APP_ENV', 'development');
+      setEnv('PERSISTENCE_MODE', undefined);
+      assert.equal(isProductionPersistenceRequired(), true);
+      assert.throws(() => assertProductionPersistence(), /CRITICAL CONFIGURATION ERROR/);
+    });
+
+    it('should enforce zero-mutation guarantee across all stores when guard rejects in production', async () => {
+      resetBidIntentStoreForTesting();
+      resetPaymentStoreForTesting();
+      resetSettlementStoreForTesting();
+
+      setEnv('NODE_ENV', 'production');
+      setEnv('DATABASE_URL', undefined);
+
+      // 1. Rejected createBidIntent must leave bid intent store untouched
+      const testIdemKey = 'idem-zero-mutation-test';
+      await assert.rejects(
+        () =>
+          createBidIntent(
+            {
+              businessId: 'biz-royal-interiors',
+              marketId: 'mkt-jaipur-interior-designers',
+              targetPosition: 1,
+              idempotencyKey: testIdemKey,
+            },
+            'user-ajay'
+          ),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+
+      // 2. Rejected createPaymentOrder must leave payment store untouched
+      await assert.rejects(
+        () =>
+          createPaymentOrder({
+            bidIntentId: 'bi-nonexistent',
+            idempotencyKey: 'idem-zero-pay',
+            actorUserId: 'user-ajay',
+          }),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+      assert.equal(getPaymentOrderInternal('bi-nonexistent'), undefined);
+
+      // 3. Rejected processPayUWebhook must not record provider events or mutate orders
+      await assert.rejects(
+        () =>
+          processPayUWebhook({
+            txnid: 'tx-zero-mutation',
+            status: 'success',
+            hash: 'dummyhash',
+          }),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+
+      // 4. Rejected settleRanking must not produce ranking settlements
+      await assert.rejects(
+        () => settleRanking({ paymentOrderId: 'po-zero', actorUserId: 'user-ajay' }),
+        /CRITICAL CONFIGURATION ERROR/
+      );
+    });
+
+    it('should not acknowledge a failed persistence operation as a successful webhook', async () => {
+      setEnv('NODE_ENV', 'production');
+      setEnv('DATABASE_URL', undefined);
+
+      let webhookError: any = null;
+      try {
+        await processPayUWebhook({
+          txnid: 'tx-unpersisted-webhook',
+          status: 'success',
+          hash: 'fake-hash',
+        });
+      } catch (err) {
+        webhookError = err;
+      }
+
+      assert.ok(webhookError instanceof Error, 'Expected processPayUWebhook to throw an error on persistence failure');
+      assert.match(webhookError.message, /CRITICAL CONFIGURATION ERROR/);
     });
   });
 

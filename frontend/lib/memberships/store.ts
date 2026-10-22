@@ -16,7 +16,7 @@ import type {
 } from '../../types/membership.ts';
 import { recordAuditEvent } from '../audit/store.ts';
 import { getBusinessById } from '../taxonomy/businesses.ts';
-import { getUserById } from '../auth/store.ts';
+import { getUserById, registerUserInStore } from '../auth/store.ts';
 
 const MEMBERSHIPS_STORE: Map<string, BusinessMembership> = new Map();
 
@@ -80,6 +80,16 @@ function seedCanonicalMemberships(): void {
       createdAt: now,
       updatedAt: now,
     },
+    // Seed membership for ABC Interiors & Spacecraft Studio (enables switching and editing)
+    {
+      id: 'mem-abc-ajay',
+      businessId: 'biz-abc-interiors',
+      userId: 'user-ajay',
+      role: 'OWNER',
+      status: 'ACTIVE',
+      createdAt: now,
+      updatedAt: now,
+    },
   ];
 
   for (const m of seedMemberships) {
@@ -119,9 +129,18 @@ export function createMembership(
     throw new Error(`Business "${input.businessId}" does not exist.`);
   }
 
-  const user = getUserById(input.userId);
+  let user = getUserById(input.userId);
   if (!user) {
-    throw new Error(`User "${input.userId}" does not exist.`);
+    user = {
+      id: input.userId,
+      email: `${input.userId}@owner.aageonline.in`,
+      displayName: 'Business Owner',
+      role: 'USER',
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    registerUserInStore(user);
   }
 
   const key = compositeKey(input.businessId, input.userId);
@@ -153,6 +172,12 @@ export function createMembership(
     role: input.role,
   });
 
+  return membership;
+}
+
+export function registerMembershipInStore(membership: BusinessMembership): BusinessMembership {
+  const key = compositeKey(membership.businessId, membership.userId);
+  MEMBERSHIPS_STORE.set(key, membership);
   return membership;
 }
 

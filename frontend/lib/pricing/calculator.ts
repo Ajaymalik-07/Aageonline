@@ -140,6 +140,7 @@ export class PricingCalculator {
         currentQualifyingAmountMinor: occupant.qualifyingAmountMinor,
         relevantCurrentQualifyingAmountMinor: occupant.qualifyingAmountMinor,
         relevantCurrentQualifyingAmountRupees: occupant.qualifyingAmountRupees,
+        occupantBusinessName: occupant.businessName,
         requiredQualifyingAmountMinor: requiredMinor,
         requiredQualifyingAmountRupees: requiredRupees,
         currency: 'INR',

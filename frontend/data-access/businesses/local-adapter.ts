@@ -234,7 +234,9 @@ export class LocalBusinessDataSource implements BusinessDataSource {
       logo: b.logo,
       website: b.website,
       phone: b.phone,
+      email: b.email,
       address: b.address,
+      socialLinks: b.socialLinks,
       verificationStatus: b.verificationStatus === 'VERIFIED' ? 'VERIFIED' : 'UNVERIFIED',
       publicationStatus: 'PUBLISHED',
       primaryCategory: primaryCatEntity

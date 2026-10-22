@@ -8,7 +8,8 @@ export type UserRole = 'USER' | 'ADMIN' | 'SUPERADMIN';
 
 export interface User {
   id: string;
-  email: string;
+  email?: string;
+  phone?: string;
   displayName?: string;
   avatarUrl?: string;
   role?: UserRole;

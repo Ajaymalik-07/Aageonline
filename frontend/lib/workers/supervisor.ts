@@ -26,6 +26,7 @@ export interface SupervisorOptions {
   onCycleComplete?: (summary: WorkerCycleSummary | { skipped: true; reason: string }) => void;
   onError?: (error: unknown, failureCount: number) => void;
   onStatusChange?: (status: SupervisorStatus) => void;
+  cycleRunner?: (workerId: string) => Promise<WorkerCycleSummary | { skipped: true; reason: string }>;
 }
 
 export interface WorkerHealthReport {
@@ -134,6 +135,10 @@ export class WorkerSupervisor {
     this.timer = setTimeout(() => {
       this.executeCycle();
     }, delayMs);
+
+    if (this.timer && typeof this.timer.unref === 'function') {
+      this.timer.unref();
+    }
   }
 
   /**
@@ -147,13 +152,15 @@ export class WorkerSupervisor {
     this.lastRunAt = new Date().toISOString();
     let currentDelay = this.baseIntervalMs;
 
+    let cycleTimer: NodeJS.Timeout | null = null;
     try {
       // Execute cycle with cycleTimeoutMs race
-      const cyclePromise = runSingleReconcilerCycle(this.workerId);
+      const cycleRunnerFn = this.options.cycleRunner || runSingleReconcilerCycle;
+      const cyclePromise = cycleRunnerFn(this.workerId);
       this.inFlightCyclePromise = cyclePromise;
 
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
+        cycleTimer = setTimeout(() => {
           reject(new Error(`Worker cycle exceeded execution timeout (${this.cycleTimeoutMs}ms)`));
         }, this.cycleTimeoutMs);
       });
@@ -210,8 +217,14 @@ export class WorkerSupervisor {
       const backoffMultiplier = Math.pow(1.5, Math.min(this.consecutiveFailures, 8));
       currentDelay = Math.min(this.baseIntervalMs * backoffMultiplier, 300000);
     } finally {
+      if (cycleTimer) {
+        clearTimeout(cycleTimer);
+        cycleTimer = null;
+      }
       this.inFlightCyclePromise = null;
-      this.scheduleNext(currentDelay);
+      if (this.status === 'RUNNING' || this.status === 'CIRCUIT_BROKEN') {
+        this.scheduleNext(currentDelay);
+      }
     }
   }
 
@@ -242,9 +255,10 @@ export class WorkerSupervisor {
 
     // Await in-flight cycle drain if active
     if (this.inFlightCyclePromise) {
+      let drainTimer: NodeJS.Timeout | null = null;
       try {
         const drainTimeout = new Promise<void>((resolve) => {
-          setTimeout(() => {
+          drainTimer = setTimeout(() => {
             console.warn(
               JSON.stringify({
                 level: 'warn',
@@ -262,18 +276,27 @@ export class WorkerSupervisor {
       } catch (drainErr) {
         console.warn('Error occurred while draining in-flight cycle:', drainErr);
       } finally {
+        if (drainTimer) {
+          clearTimeout(drainTimer);
+          drainTimer = null;
+        }
         this.inFlightCyclePromise = null;
       }
     }
 
     // Record terminal STOPPED heartbeat
     try {
-      await this.heartbeatRepo.recordHeartbeat(this.workerId, 'reconciler-worker', {
-        status: 'STOPPED',
-        stoppedAt: new Date().toISOString(),
-        lastRunAt: this.lastRunAt,
-        lastSuccessAt: this.lastSuccessAt,
-      });
+      await this.heartbeatRepo.recordHeartbeat(
+        this.workerId,
+        'reconciler-worker',
+        {
+          status: 'STOPPED',
+          stoppedAt: new Date().toISOString(),
+          lastRunAt: this.lastRunAt,
+          lastSuccessAt: this.lastSuccessAt,
+        },
+        'STOPPED'
+      );
     } catch (hbErr) {
       console.warn('Could not record terminal heartbeat:', hbErr);
     }

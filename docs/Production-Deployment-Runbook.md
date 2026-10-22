@@ -1,209 +1,211 @@
-# AageOnline — Production Deployment & Operations Runbook
-## Milestone 0.20.6: Local Development → Production Deployment Architecture
+# AageOnline — Production Deployment Runbook
 
+> **Product:** AageOnline — Get Seen. Get Ahead.  
 > **Target Environment:** `aageonline.com` (Production)  
-> **Topology:** Docker Compose on Linux VPS + Caddy Auto-TLS + Managed PostgreSQL 16+ + Direct DNS  
-> **Brand & Tagline:** AageOnline — Get Seen. Get Ahead.  
+> **Architecture Topology:** Docker Compose on Linux VPS + Caddy Auto-TLS + Managed PostgreSQL 16+ + Direct DNS  
+> **Status:** Pre-Execution Runbook (Milestone 0.20.18)  
+> **Important:** This runbook is a documented operational procedure. **Do not execute until explicit owner approval is granted.**  
 
 ---
 
-## 1. Architecture & Production Topology
+## 1. Architectural Overview & Network Topology
 
 ```text
        [ Internet Users / Search Crawlers / PayU Production Webhooks ]
                                │
                                │ (Public Ports 80 & 443)
                                ▼
-            ┌─────────────────────────────────────┐
-            │        Linux VPS (Ubuntu 24.04)     │
-            │                                     │
-            │   ┌─────────────────────────────┐   │
-            │   │      Caddy Reverse Proxy    │   │
-            │   │  - Auto HTTPS (Let's Encrypt)│  │
-            │   │  - Standard Security Headers│   │
-            │   │  - Gzip / Zstd Compression  │   │
-            │   └──────────────┬──────────────┘   │
-            │                  │                  │
-            │         Private Docker Bridge       │
-            │           (aageonline-net)          │
-            │                  │                  │
-            │        ┌─────────┴─────────┐        │
-            │        ▼                   ▼        │
-            │   [ Next.js Web ]     [ Worker ]    │
-            │   (Port 3000 private) (No ports)    │
-            │   (Standalone Node 22)(Reconciler)  │
-            └────────┼───────────────────┼────────┘
-                     │                   │
-                     │ (SSL/TLS Port 5432)
-                     ▼                   ▼
-            ┌─────────────────────────────────────┐
-            │       Managed PostgreSQL 16+        │
-            │    (Neon Direct / RDS / Supabase)   │
-            │      - Production Database          │
-            │      - SSL Mode: require            │
-            │      - Schema Migrations 001–010    │
-            └─────────────────────────────────────┘
+            ┌──────────────────────────────────────────────┐
+            │           Linux VPS (Ubuntu 24.04)           │
+            │                                              │
+            │   ┌──────────────────────────────────────┐   │
+            │   │          Caddy Reverse Proxy         │   │
+            │   │  - Automatic HTTPS (Let's Encrypt)   │   │
+            │   │  - Standard Security Headers         │   │
+            │   │  - HTTP/3 (QUIC) + Zstandard / Gzip  │   │
+            │   └──────────────────┬───────────────────┘   │
+            │                      │                       │
+            │             Private Docker Bridge            │
+            │               (aageonline-net)               │
+            │                      │                       │
+            │        ┌─────────────┼─────────────┬─────────────────┐
+            │        ▼             ▼             ▼                 ▼
+            │   [ Next.js Web ] [ Node API ]  [ Admin UI ]    [ Worker Daemon ]
+            │   (Port 3000)     (Port 4000)   (Port 3001)     (No ext ports)
+            │   (Standalone)    (REST Engine) (Control Center)(Reconciler)
+            └────────┼─────────────┼─────────────┼─────────────────┼───────────┘
+                     │             │             │                 │
+                     │ (SSL/TLS Port 5432)       │                 │
+                     ▼             ▼             ▼                 ▼
+            ┌──────────────────────────────────────────────────────────┐
+            │                  Managed PostgreSQL 16+                  │
+            │           (Neon Direct / RDS / DigitalOcean DB)          │
+            │            - Production Database                         │
+            │            - SSL Mode: require                           │
+            │            - Schema Migrations 001–011                   │
+            └──────────────────────────────────────────────────────────┘
+
 ```
 
-### Security Boundaries
-1. **Public Attack Surface:** Only ports **80** (HTTP), **443** (HTTPS), and **443/udp** (HTTP/3-QUIC) are open on the host.
-2. **Private Application Port:** Port 3000 is exposed strictly inside internal Docker network `aageonline-net` and is **never** published to host interfaces (`0.0.0.0`).
-3. **Database Isolation:** PostgreSQL is hosted on an isolated managed cloud database with SSL enforcement.
-4. **Worker Isolation:** The background worker runs in a container with **zero** inbound ports, communicating solely outbound to PostgreSQL over TLS.
-5. **Non-Root Execution:** Node.js applications run as unprivileged system user `nextjs` (UID 1001).
-
 ---
 
-## 2. Server Prerequisites & DNS Setup
+## 2. Ordered 14-Step Deployment Runbook
 
-### VPS Requirements
-- **OS:** Ubuntu 22.04 LTS or 24.04 LTS (x86_64 or arm64).
-- **Specs:** Minimum 2 vCPU, 4 GB RAM, 40+ GB SSD.
-- **Network:** Static public IPv4 address.
+### Step 1: Pre-Provisioning Approval and Account Ownership
+- Confirm explicit written authorization from business owner to incur infrastructure costs.
+- Verify primary ownership and root credentials for:
+  - VPS provider (Hetzner / DigitalOcean).
+  - Managed PostgreSQL provider (Neon / AWS / Supabase / DigitalOcean).
+  - Domain registrar / DNS provider (Cloudflare / Namecheap).
+  - PayU India Merchant Account dashboard.
 
-### Direct DNS Configuration
-Configure an `A` record with your DNS provider:
+### Step 2: Provider and Region Selection
+- **Recommended Regions:**
+  - Database: Mumbai (`ap-south-1`) or Frankfurt/Nuremberg (if using Hetzner/Neon).
+  - VPS: Co-located with or geographically proximate to the managed database (< 10ms network latency).
+- **Compute Specs:**
+  - VPS: Minimum 2 vCPU, 4 GB RAM, 40 GB NVMe SSD (e.g. Hetzner CX22 or DigitalOcean 2 GB droplet).
+  - Database: Minimum 1 vCPU, 2 GB RAM, 10 GB storage with automated daily snapshots.
 
-| Host / Subdomain | Type | Value | TTL |
-| :--- | :---: | :--- | :---: |
-| `aageonline.com` | `A` | `<VPS_PUBLIC_IPV4>` | 300 seconds |
-| `www.aageonline.com` | `CNAME` | `aageonline.com` | 300 seconds |
+### Step 3: Domain and DNS Prerequisites
+- Verify domain registration for `aageonline.com`.
+- Configure DNS records:
+  - `A` Record: `aageonline.com` → `<VPS_PUBLIC_IPV4>` (TTL: 300s).
+  - `CNAME` Record: `www.aageonline.com` → `aageonline.com` (TTL: 300s).
+- Verify DNS propagation via `dig +short aageonline.com`.
 
----
+### Step 4: PostgreSQL Provisioning, Connection Limits, and Automated Backups
+- Provision managed PostgreSQL 16+ database instance named `aageonline_production`.
+- Enforce SSL transport (`sslmode=require`).
+- Configure connection limits:
+  - Max pool connections: `20` (Application Web pool max: 10, Worker pool max: 5).
+  - Statement timeout: `10000ms` (10s).
+  - Idle timeout: `30000ms` (30s).
+- Enable automated daily snapshots and 7-day Point-In-Time Recovery (PITR) in provider console.
 
-## 3. Host Hardening & Provisioning (`scripts/setup-vps.sh`)
-
-1. Connect to the VPS via SSH:
+### Step 5: Production Secret Creation and Secure Injection
+1. Connect to VPS via SSH: `ssh deploy@<VPS_PUBLIC_IPV4>`.
+2. Clone repository into `/opt/aageonline`:
    ```bash
-   ssh root@<VPS_PUBLIC_IPV4>
+   sudo mkdir -p /opt/aageonline && sudo chown deploy:docker /opt/aageonline
+   git clone https://github.com/Ajaymalik-07/Aageonline.git /opt/aageonline
+   cd /opt/aageonline
    ```
-
-2. Clone the repository and run the setup script:
+3. Copy environment template:
    ```bash
-   mkdir -p /opt/aageonline && cd /opt/aageonline
-   git clone https://github.com/Ajaymalik-07/Aageonline.git .
-   sudo bash scripts/setup-vps.sh
+   cp .env.production.example .env.production
+   chmod 600 .env.production
    ```
+4. Generate cryptographic keys and inject verified values into `.env.production` (referencing [docs/Production-Environment-and-Secrets-Matrix.md](file:///d:/Aage%20online/docs/Production-Environment-and-Secrets-Matrix.md)):
+   - `AUTH_SECRET`: `openssl rand -hex 32`
+   - `RATE_LIMIT_SALT`: `openssl rand -hex 32`
+   - `ADMIN_TOKEN`: `openssl rand -hex 32`
+   - `DATABASE_URL`: Injected from Step 4.
 
-   This script:
-   - Updates OS packages.
-   - Configures UFW firewall (allows SSH 22, HTTP 80, HTTPS 443; blocks 3000 and 5432).
-   - Installs official Docker CE and Compose plugin.
-   - Adds the deploy user to the `docker` group.
+### Step 6: Build and Artifact Verification
+- Build production container images:
+  ```bash
+  docker compose build
+  ```
+- Verify images built cleanly without warnings:
+  - `aageonline_web` (Website & Dashboard, Port 3000)
+  - `aageonline_api` (Standalone REST API, Port 4000)
+  - `aageonline_admin` (Admin Control Center, Port 3001)
+  - `aageonline_worker` (Background Reconciler Daemon)
+  - `aageonline_migrator` (Database Migration Runner)
 
----
+### Step 7: Database Migration Review and Execution
+- Review migration files in `frontend/lib/db/migrations/` (001 through 011).
+- Execute migrations using the isolated migrator container:
+  ```bash
+  docker compose run --rm migrator
+  ```
+- Confirm output reports: `All 11 migrations applied successfully.`
+- Verify `schema_migrations` table in database confirms all 11 entries.
 
-## 4. Production Environment Configuration (`.env.production`)
+### Step 8: Production Services Deployment
+- Launch web application, REST API, admin panel, and reverse proxy:
+  ```bash
+  docker compose up -d web api admin caddy
+  ```
+- Monitor Caddy TLS certificate acquisition:
+  ```bash
+  docker compose logs -f caddy
+  ```
+- Verify Caddy outputs: `certificate obtained successfully` for `aageonline.com`, `www.aageonline.com`, `api.aageonline.com`, and `admin.aageonline.com`.
 
-Copy the production environment template and restrict permissions:
+### Step 9: Worker Deployment and Supervision
+- Launch background reconciler worker:
+  ```bash
+  docker compose up -d worker
+  ```
+- Monitor worker startup telemetry:
+  ```bash
+  docker compose logs --tail 30 worker
+  ```
+- Verify worker logs: `STARTUP` event, advisory lock acquisition, and initial cycle execution.
 
+
+### Step 10: Health Checks and Operational Smoke Tests
+Execute verification probes from external terminal:
 ```bash
-cd /opt/aageonline
-cp .env.production.example .env.production
-chmod 600 .env.production
-nano .env.production
-```
-
-Ensure the following variables are configured:
-
-```ini
-# Application
-NODE_ENV=production
-APP_ENV=production
-NEXT_PUBLIC_APP_ENV=production
-NEXT_TELEMETRY_DISABLED=1
-
-# Domain & Ingress
-SITE_ADDRESS=aageonline.com
-ACME_EMAIL=admin@aageonline.com
-NEXT_PUBLIC_APP_URL=https://aageonline.com
-
-# Managed PostgreSQL (Direct SSL Connection)
-DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:5432/<DB_NAME>?sslmode=require
-DATABASE_SSL=true
-DATABASE_SSL_REJECT_UNAUTHORIZED=true
-DATABASE_MAX_CONNECTIONS=10
-DATABASE_STATEMENT_TIMEOUT_MS=10000
-
-# Security Keys (Generate with: openssl rand -hex 32)
-AUTH_SECRET=<64_CHAR_HEX_SECRET>
-RATE_LIMIT_SALT=<64_CHAR_HEX_SECRET>
-
-# Reverse Proxy
-TRUSTED_PROXY_IPS=127.0.0.1,172.16.0.0/12,10.0.0.0/8
-
-# PayU India Production Keys
-PAYU_ENV=production
-PAYU_MERCHANT_KEY=<YOUR_PRODUCTION_PAYU_KEY>
-PAYU_MERCHANT_SALT=<YOUR_PRODUCTION_PAYU_SALT>
-
-# Email Delivery
-NOTIFICATION_EMAIL_ENABLED=false
-```
-
----
-
-## 5. Deployment Pipeline (`scripts/deploy.sh`)
-
-Execute the production deployment script:
-
-```bash
-bash scripts/deploy.sh
-```
-
-### What `scripts/deploy.sh` Executes:
-1. **Config Verification:** Confirms `.env.production` has `chmod 600` and validates that `DATABASE_URL` and `AUTH_SECRET` are not placeholder values.
-2. **Docker Build:** Compiles the standalone Next.js image using `frontend/Dockerfile`.
-3. **Database Migrations (001–010):** Runs `npm run db:migrate` in the migrator container *before* launching web services. Any migration failure immediately aborts deployment.
-4. **Service Startup:** Launches Caddy, Web, and Worker containers (`docker compose up -d`).
-5. **Healthcheck Gate:** Polls `/api/health/live` until the container reports healthy (up to 45s).
-6. **Readiness Probe:** Verifies `/api/health/ready` returns HTTP 200 with `{ "ready": true }`.
-
----
-
-## 6. Post-Deployment Verification Commands
-
-Run the following checks after deployment completes:
-
-```bash
-# 1. Process Liveness Check (Should return HTTP 200)
+# 1. Liveness Probe (HTTP 200)
 curl -i https://aageonline.com/api/health/live
 
-# 2. Database & Infrastructure Readiness Check (Should return HTTP 200 with ready: true)
+# 2. Infrastructure Readiness Probe (HTTP 200 with ready: true)
 curl -i https://aageonline.com/api/health/ready
 
-# 3. Public Homepage Check (Should return HTTP 200 with HTML)
+# 3. Worker Health Probe (Inside container)
+docker compose exec worker node --experimental-strip-types scripts/worker.ts --health
+
+# 4. Public Homepage Ingress (HTTP 200)
 curl -i https://aageonline.com/
 
-# 4. Container Health & Status
-docker compose -f docker-compose.yml ps
-
-# 5. Background Worker Telemetry Logs
-docker compose -f docker-compose.yml logs --tail 50 worker
+# 5. Featured Market Canonical Route (HTTP 200)
+curl -i https://aageonline.com/jaipur/interior-designers
 ```
 
----
+### Step 11: PayU Sandbox Verification
+- With `PAYU_ENV=test` configured in `.env.production`:
+  1. Open business workspace: `https://aageonline.com/business/dashboard/markets`.
+  2. Initiate bid intent for position #1 in a test market.
+  3. Proceed to PayU checkout sandbox and complete payment with test credentials.
+  4. Verify PayU webhook hits `https://aageonline.com/api/payments/webhooks/payu`.
+  5. Verify payment status updates to `CONFIRMED` and ranking settles atomically.
+  6. Verify `position_history` record is created.
 
-## 7. Operational Troubleshooting & Rollback
-
-### If Migrations Fail
-- Database migrations execute inside transactional blocks (`BEGIN ... COMMIT`) with rollback on error, serialized via `SELECT pg_advisory_lock(94827104)`.
-- Because migrations run *before* the web container restarts, a failed migration prevents the new application version from launching, keeping existing containers intact.
-
-### If Web Container Fails Health Check
-- Inspect logs:
-  ```bash
-  docker compose -f docker-compose.yml logs web
+### Step 12: Production Payment Enablement (Separate Explicit Owner Approval Gate)
+- **GATE REQUIRED:** Obtain explicit owner sign-off before enabling live money.
+- Update `.env.production`:
+  ```ini
+  PAYU_ENV=production
+  PAYU_MERCHANT_KEY=<LIVE_MERCHANT_KEY>
+  PAYU_MERCHANT_SALT=<LIVE_MERCHANT_SALT>
   ```
-- Check database connectivity from within container:
+- Restart web application:
   ```bash
-  docker compose -f docker-compose.yml exec web node -e "import('./lib/db/client.ts').then(m => m.checkDatabaseHealth()).then(console.log)"
+  docker compose restart web
+  ```
+- Verify live checkout endpoint maps to `https://secure.payu.in/_payment`.
+
+### Step 13: Post-Deployment Monitoring & Alerting
+- Configure external uptime monitoring (e.g. BetterStack / UptimeRobot):
+  - Target: `https://aageonline.com/api/health/ready`
+  - Interval: 60 seconds.
+  - Alert destination: Ops email / SMS.
+- Verify Docker container logging rotation (capped at 10MB x 5 files).
+- Add cron job on VPS host for daily backup execution:
+  ```bash
+  0 2 * * * cd /opt/aageonline && bash scripts/backup-db.sh >> /var/log/aageonline-backup.log 2>&1
   ```
 
-### Rollback Procedure
-If rolling back to a previous Git commit:
-```bash
-git checkout <PREVIOUS_STABLE_COMMIT_OR_TAG>
-bash scripts/deploy.sh
-```
-Financial tables (`transactions`, `position_history`, `ranking_settlements`) are strictly append-only and never truncated or rolled back.
+### Step 14: Incident Response, Rollback, and Recovery
+- **Application Rollback (Zero Data Loss):**
+  ```bash
+  git checkout <PREVIOUS_STABLE_TAG>
+  docker compose build
+  docker compose up -d web worker
+  ```
+- **Database Schema Principle:**
+  - Migrations are strictly forward-compatible. Financial ledgers (`position_history`, `ranking_settlements`, `payment_orders`) are append-only and never rolled back.
+  - In the event of an incompatible schema defect, apply forward-fix migrations rather than destructive rollbacks.

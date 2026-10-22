@@ -33,7 +33,6 @@ import {
 
 import {
   checkRateLimit,
-  checkDistributedRateLimit,
   extractClientIp,
   hashClientIp,
   isVerifiedSearchCrawler,
@@ -41,6 +40,7 @@ import {
   resetRateLimitCacheForTesting,
   RATE_LIMIT_TIERS,
 } from '../lib/security/rate-limit.ts';
+import { checkDistributedRateLimit } from '../lib/security/distributed-rate-limit.ts';
 
 import {
   CACHE_POLICIES,

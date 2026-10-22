@@ -34,6 +34,7 @@ export class ApiBidIntentDataSource implements BidIntentDataSource {
         marketId: input.marketId,
         targetPosition: input.targetPosition,
         clientCalculatedAmountMinor: input.clientCalculatedAmountMinor,
+        offeredAmountMinor: input.offeredAmountMinor,
       }),
     });
 

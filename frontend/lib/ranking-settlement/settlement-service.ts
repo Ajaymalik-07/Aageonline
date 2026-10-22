@@ -214,6 +214,15 @@ export async function settleRanking(
   const txClient = tx.getClient();
 
   try {
+    if (isDatabaseConfigured() && txClient) {
+      const existingInDb = await settlementRepo.getSettlementById(settlement.id, txClient);
+      if (existingInDb) {
+        await settlementRepo.updateSettlement(settlement, txClient);
+      } else {
+        await settlementRepo.createSettlement(settlement, txClient);
+      }
+    }
+
     // 9. Re-read Current Rankings inside Transaction Lock
     let currentRankings: Array<{ position: number; businessId: string; qualifyingAmountRupees: number }>;
     if (isDatabaseConfigured() && txClient) {

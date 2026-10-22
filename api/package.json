@@ -1,0 +1,22 @@
+{
+  "name": "@aageonline/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --experimental-strip-types src/server.ts",
+    "start": "node --experimental-strip-types src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/**/*.test.ts",
+    "admin:bootstrap": "node --experimental-strip-types scripts/bootstrap-admin.ts"
+  },
+
+  "dependencies": {
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

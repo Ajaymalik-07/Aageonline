@@ -73,6 +73,21 @@ const nextConfig: NextConfig = {
         destination: '/#trust',
         permanent: false,
       },
+      {
+        source: '/knowledge',
+        destination: '/blog',
+        permanent: true,
+      },
+      {
+        source: '/knowledge/:slug*',
+        destination: '/blog/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/auth/login',
+        destination: '/business/claim',
+        permanent: false,
+      },
     ];
   },
 };

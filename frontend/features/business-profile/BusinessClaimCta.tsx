@@ -12,16 +12,16 @@ export function BusinessClaimCta({ businessName, businessSlug }: BusinessClaimCt
     <section
       aria-label="Claim Business Profile"
       style={{
-        backgroundColor: '#071526',
+        backgroundColor: '#FFFFFF',
         borderRadius: 'var(--radius-xl)',
-        padding: 'var(--space-8)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        padding: 'var(--space-6)',
+        border: '1px solid #E2E8F0',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        gap: 'var(--space-4)',
-        boxShadow: 'var(--elevation-2)',
+        gap: 'var(--space-3)',
+        boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
       }}
     >
       <div
@@ -29,8 +29,8 @@ export function BusinessClaimCta({ businessName, businessSlug }: BusinessClaimCt
           width: '44px',
           height: '44px',
           borderRadius: '50%',
-          backgroundColor: 'rgba(234, 88, 12, 0.12)',
-          border: '1px solid rgba(234, 88, 12, 0.3)',
+          backgroundColor: '#FFF7ED',
+          border: '1px solid #FED7AA',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -38,26 +38,26 @@ export function BusinessClaimCta({ businessName, businessSlug }: BusinessClaimCt
         }}
         aria-hidden="true"
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       </div>
 
-      <div style={{ maxWidth: '580px' }}>
+      <div>
         <h3
           style={{
-            fontSize: 'var(--font-size-xl)',
+            fontSize: 'var(--font-size-base)',
             fontWeight: 800,
-            color: '#FFFFFF',
-            margin: '0 0 var(--space-2) 0',
+            color: '#0F172A',
+            margin: '0 0 var(--space-1) 0',
           }}
         >
           Do you represent {businessName}?
         </h3>
         <p
           style={{
-            fontSize: 'var(--font-size-sm)',
-            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: 'var(--font-size-xs)',
+            color: '#475569',
             margin: 0,
             lineHeight: 1.5,
           }}
@@ -75,16 +75,17 @@ export function BusinessClaimCta({ businessName, businessSlug }: BusinessClaimCt
           gap: '8px',
           backgroundColor: '#EA580C',
           color: '#FFFFFF',
-          padding: '12px 24px',
+          padding: '10px 20px',
           borderRadius: 'var(--radius-pill)',
           fontWeight: 700,
-          fontSize: 'var(--font-size-sm)',
+          fontSize: 'var(--font-size-xs)',
           textDecoration: 'none',
-          boxShadow: '0 4px 14px rgba(234, 88, 12, 0.35)',
+          boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
           transition: 'transform 0.15s ease',
+          marginTop: 'var(--space-1)',
         }}
       >
-        Claim This Business Profile
+        <span>Claim This Business Profile</span>
         <span aria-hidden="true">→</span>
       </a>
     </section>

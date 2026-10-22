@@ -1130,3 +1130,98 @@ Executes an on-demand audit cycle: evaluates candidate URLs against the centrali
   - `403 Forbidden`: Authenticated user lacks `ADMIN` role.
   - `500 Internal Server Error`: Audit execution failed (sanitized error message).
 
+---
+
+## 17. Administrative Control Center Endpoints & Persistence Contract (Milestone 0.20.25)
+
+All administrative endpoints are hosted on the central API service (`api:4000`) and accessed securely by the dedicated Admin application (`admin:3001`) via server-to-server proxy route handlers.
+
+### 17.1 Administrative Authentication & RBAC
+
+- **Authorization Header:** `Authorization: Bearer adm_sess_<userId>_<expiresAt>_<signature>` or `Authorization: Bearer <ADMIN_TOKEN>`
+- **Stateless Session Token Validation:** Scrutinized in constant-time via HMAC-SHA256 (`crypto.timingSafeEqual`).
+- **Fail-Closed Protection:** Rejects all mutations if `ADMIN_TOKEN` is unset in production.
+
+### 17.2 Administrative Endpoint Directory
+
+| Endpoint | Method | Role Required | Authoritative Store | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `/api/admin/auth/login` | `POST` | Public / Admin Credential | PostgreSQL `admin_users` | Authenticates administrator using salted scrypt hash |
+| `/api/admin/auth/me` | `GET` | Authenticated Admin | Session | Returns current admin profile & role |
+| `/api/admin/auth/logout` | `POST` | Authenticated Admin | Session Revocation | Revokes administrative session |
+| `/api/admin/businesses` | `GET`, `POST` | `MARKETPLACE_MANAGER` | PostgreSQL `businesses` | Lists & creates directory business entities |
+| `/api/admin/locations` | `GET`, `POST` | `MARKETPLACE_MANAGER` | PostgreSQL `locations` | Manages state & city geographical taxonomy |
+| `/api/admin/categories` | `GET`, `POST` | `MARKETPLACE_MANAGER` | PostgreSQL `categories` | Manages business category taxonomy |
+| `/api/admin/markets` | `GET`, `POST` | `MARKETPLACE_MANAGER` | PostgreSQL `markets` | Manages city × category market pairings |
+| `/api/admin/rankings` | `GET`, `POST` | `SUPER_ADMIN` | PostgreSQL `ranking_entries` / `position_history` | Inspects live market positions & history with row locks |
+| `/api/admin/discovery` | `GET`, `POST` | `MARKETPLACE_MANAGER` | PostgreSQL `discovery_requests` | Reviews public taxonomy doorway suggestions |
+| `/api/admin/payments` | `GET` | `FINANCE_RECONCILER` | PostgreSQL `payment_orders` | Audits payment transaction records & webhooks |
+| `/api/admin/settlements` | `GET` | `FINANCE_RECONCILER` | PostgreSQL `ranking_settlements` | Audits atomic ranking settlement ledgers |
+| `/api/admin/operations` | `GET`, `POST` | `SUPER_ADMIN` | Database Vitals | Worker heartbeat monitoring & ledger reconciliation |
+| `/api/admin/content` | `GET`, `POST` | `CONTENT_SEO_MANAGER` | PostgreSQL `content_blocks` | Edits public website content blocks & disclosures |
+| `/api/admin/blog` | `GET`, `POST` | `CONTENT_SEO_MANAGER` | PostgreSQL `blog_posts` | Edits draft & published blog articles |
+| `/api/admin/newsletter` | `GET` | `CONTENT_SEO_MANAGER` | PostgreSQL `newsletter_subscribers` | Audits subscriber consent records |
+| `/api/admin/analytics` | `GET` | `AUDITOR`, `SUPER_ADMIN` | PostgreSQL Aggregates | Aggregated traffic and conversion telemetry |
+| `/api/admin/leads` | `GET`, `POST` | `SUPER_ADMIN` | PostgreSQL `lead_prospects` | Manages acquisition prospect contacts & connectors |
+| `/api/admin/notifications` | `GET`, `POST` | `SUPER_ADMIN` | PostgreSQL Notifications | Manages operational alert dispatch & acknowledgments |
+| `/api/admin/mail` | `GET`, `POST` | `SUPER_ADMIN` | Configuration / Queue | Configures email templates & mock transport |
+| `/api/admin/audit` | `GET` | `AUDITOR`, `SUPER_ADMIN` | PostgreSQL `audit_logs` | Append-only administrative and security event log |
+| `/api/admin/users` | `GET`, `POST` | `SUPER_ADMIN` | PostgreSQL `admin_users` | Manages administrative user accounts & roles |
+| `/api/admin/settings` | `GET`, `PATCH` | `SUPER_ADMIN` | PostgreSQL `system_settings` | Manages system-wide maintenance & feature toggles |
+
+---
+
+## 18. Authoritative PostgreSQL Persistence Boundary (Milestone 0.20.26)
+
+Beginning in Milestone 0.20.26, the standalone REST API (`api/`, port 4000) eliminates ephemeral in-memory `Map` collections as the authoritative source of mutable business records:
+
+1. **Database Client Pool (`api/src/db/client.ts`)**:
+   - Connection pool managed via `pg.Pool` with connection/statement timeouts.
+   - In production or when `DATABASE_URL` is set, all queries execute against PostgreSQL.
+2. **Fail-Closed Readiness Probe (`GET /api/health/ready`)**:
+   - Executes `checkDatabaseHealth()` on PostgreSQL.
+   - Returns HTTP 200 `OK` (`db: CONNECTED`) when database is responsive.
+   - Returns HTTP 503 `DEGRADED` (`db: DISCONNECTED`) when `DATABASE_URL` is configured but unreachable.
+   - Never falls back silently to in-memory fixtures during database connection failures.
+3. **Atomic Concurrency Invariants**:
+   - Ranking settlements enforce transactional row-level market locks (`SELECT id FROM markets WHERE id = $1 FOR UPDATE`).
+   - Displaced businesses update atomically within the transaction boundary.
+---
+
+## 19. Lead Scraper & Email Automation Endpoints (Milestone 0.20.27)
+
+### 19.1 Public Outreach Safety & Opt-Out
+
+| Endpoint | Method | Auth | Persistence | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `/api/public/leads/opt-out` | `GET` | Public | PostgreSQL `email_suppression_list` | One-click unsubscribe link returning clean HTML confirmation |
+| `/api/public/leads/opt-out` | `POST` | Public | PostgreSQL `email_suppression_list` | Programmatic opt-out `{ "email": "...", "reason": "..." }` |
+
+### 19.2 Administrative Scraper Engine (`/api/admin/scraper/*`)
+
+All endpoints require administrative Bearer token or authenticated admin session:
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/admin/scraper/metrics` | `GET` | Discovery aggregates: total discovered, new leads, duplicates, and job statuses |
+| `/api/admin/scraper/config` | `GET`, `PUT` | Configures target locations, categories, limits, crawl depth, and schedules |
+| `/api/admin/scraper/connectors` | `GET` | Reports operational status and limitations of discovery connectors |
+| `/api/admin/scraper/jobs` | `GET`, `POST` | Lists historical discovery jobs; `POST` executes an immediate discovery batch |
+
+### 19.3 Administrative Email Automation (`/api/admin/email-automation/*`)
+
+All endpoints require administrative Bearer token or authenticated admin session:
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/admin/email-automation/overview` | `GET` | Overview metrics: eligible recipients, active campaigns, outbox states, opt-outs |
+| `/api/admin/email-automation/campaigns` | `GET`, `POST` | Lists and creates targeted email outreach campaigns |
+| `/api/admin/email-automation/campaigns/:id/status` | `POST` | Updates campaign state (`ACTIVE`, `PAUSED`, `CANCELLED`) |
+| `/api/admin/email-automation/campaigns/:id/run` | `POST` | Triggers an immediate send cycle enforcing cooldowns and suppression |
+| `/api/admin/email-automation/templates` | `GET`, `POST` | Lists and creates sanitized HTML email templates with variable validation |
+| `/api/admin/email-automation/messages` | `GET` | Queries outbox messages filtered by campaign or status |
+| `/api/admin/email-automation/messages/test-send` | `POST` | Sends a single test invitation to verify HTML rendering safely |
+| `/api/admin/email-automation/suppress` | `POST` | Manually suppresses an email address from all future outreach |
+
+
+

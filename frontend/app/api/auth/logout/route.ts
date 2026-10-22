@@ -13,6 +13,8 @@ import {
   extractSessionTokenFromRequest,
   getSessionCookieName,
   getSessionCookieOptions,
+  DEVELOPMENT_COOKIE_NAME,
+  PRODUCTION_COOKIE_NAME,
 } from '../../../../lib/auth/session-token.ts';
 
 export async function POST(req: NextRequest) {
@@ -22,7 +24,15 @@ export async function POST(req: NextRequest) {
       await revokePersistentSession(rawToken);
     }
 
-    const cookieName = getSessionCookieName();
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const { setActiveDevUser } = await import('../../../../lib/auth/store.ts');
+        setActiveDevUser(null);
+      } catch {
+        // safe to ignore
+      }
+    }
+
     const cookieOptions = getSessionCookieOptions();
 
     const response = NextResponse.json({
@@ -30,15 +40,17 @@ export async function POST(req: NextRequest) {
       message: 'Logged out successfully.',
     });
 
-    // Clear session cookie immediately
-    response.cookies.set(cookieName, '', {
-      httpOnly: cookieOptions.httpOnly,
-      secure: cookieOptions.secure,
-      sameSite: cookieOptions.sameSite,
-      path: cookieOptions.path,
-      maxAge: 0,
-      expires: new Date(0),
-    });
+    // Clear all possible session cookies across environments
+    for (const name of [DEVELOPMENT_COOKIE_NAME, PRODUCTION_COOKIE_NAME]) {
+      response.cookies.set(name, '', {
+        httpOnly: cookieOptions.httpOnly,
+        secure: cookieOptions.secure,
+        sameSite: cookieOptions.sameSite,
+        path: '/',
+        maxAge: 0,
+        expires: new Date(0),
+      });
+    }
 
     return response;
   } catch (err: unknown) {
@@ -46,3 +58,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function GET(req: NextRequest) {
+  await POST(req);
+  return NextResponse.redirect(new URL('/business/claim', req.url));
+}
+

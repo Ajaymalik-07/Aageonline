@@ -4,7 +4,6 @@ node_modules
 .gitignore
 .env
 .env.*
-!.env.staging.example
 tests
 *.log
 npm-debug.log*

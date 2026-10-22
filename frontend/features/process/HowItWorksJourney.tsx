@@ -70,6 +70,28 @@ const SIX_STEPS: JourneyStep[] = [
 
 export const HowItWorksJourney: React.FC = () => {
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  // Highlight step 1 to 6 sequentially, then loop back to 1
+  useEffect(() => {
+    if (isHovered || prefersReducedMotion) return;
+
+    const timer = setInterval(() => {
+      setActiveStepIndex((prev) => (prev + 1) % SIX_STEPS.length);
+    }, 2800);
+
+    return () => clearInterval(timer);
+  }, [isHovered, prefersReducedMotion]);
 
   const active = SIX_STEPS[activeStepIndex];
 
@@ -77,6 +99,8 @@ export const HowItWorksJourney: React.FC = () => {
     <section
       id="how-it-works"
       aria-label="How AageOnline Works - Step-by-Step Overview"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         backgroundColor: '#0B1F33',
         backgroundImage: `

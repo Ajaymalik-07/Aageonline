@@ -107,10 +107,14 @@ function seedCanonicalUsers(): void {
       createdAt: now,
     };
     SESSIONS_STORE.set(initialSession.token, initialSession);
-    activeDevSessionToken = initialSession.token;
+    activeDevSessionToken = null;
   } else {
     activeDevSessionToken = null;
   }
+}
+
+export function registerUserInStore(user: User): void {
+  USERS_STORE.set(user.id, user);
 }
 
 // Seed upon load
@@ -123,11 +127,25 @@ export function getUserById(id: string): User | undefined {
 export function getUserByEmail(email: string): User | undefined {
   const norm = email.trim().toLowerCase();
   for (const u of USERS_STORE.values()) {
-    if (u.email.toLowerCase() === norm) {
+    if (u.email && u.email.toLowerCase() === norm) {
       return u;
     }
   }
   return undefined;
+}
+
+export function getUserByPhone(phone: string): User | undefined {
+  const norm = phone.replace(/\D/g, '');
+  for (const u of USERS_STORE.values()) {
+    if (u.phone && u.phone.replace(/\D/g, '') === norm) {
+      return u;
+    }
+  }
+  return undefined;
+}
+
+export function getAllUsers(): User[] {
+  return Array.from(USERS_STORE.values());
 }
 
 export function createOrGetUserByEmail(email: string, displayName?: string, role: import('../../types/auth.ts').UserRole = 'USER'): User {

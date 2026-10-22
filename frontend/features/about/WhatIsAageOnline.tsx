@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ArchitectureNode {
   step: string;
@@ -62,6 +62,28 @@ const ARCHITECTURE_NODES: ArchitectureNode[] = [
 
 export const WhatIsAageOnline: React.FC = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  // Cycle through step 1 to 5 sequentially, then loop back to 1
+  useEffect(() => {
+    if (isHovered || prefersReducedMotion) return;
+
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % ARCHITECTURE_NODES.length);
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, [isHovered, prefersReducedMotion]);
 
   return (
     <section
@@ -198,6 +220,8 @@ export const WhatIsAageOnline: React.FC = () => {
 
           {/* Connected 5-Stage Interactive Pipeline */}
           <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))',
@@ -214,7 +238,7 @@ export const WhatIsAageOnline: React.FC = () => {
                   onClick={() => setActiveStep(idx)}
                   className="card-lift"
                   style={{
-                    backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.04)' : '#ffffff',
+                    backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.05)' : '#ffffff',
                     borderRadius: 'var(--radius-lg)',
                     padding: 'var(--space-4)',
                     border: `1.5px solid ${isSelected ? '#EA580C' : 'var(--border-subtle)'}`,
@@ -223,8 +247,9 @@ export const WhatIsAageOnline: React.FC = () => {
                     flexDirection: 'column',
                     minHeight: '220px',
                     position: 'relative',
-                    boxShadow: isSelected ? '0 6px 20px rgba(234, 88, 12, 0.12)' : '0 2px 8px rgba(11, 31, 59, 0.04)',
-                    transition: 'all var(--motion-fast)',
+                    boxShadow: isSelected ? '0 8px 24px rgba(234, 88, 12, 0.16)' : '0 2px 8px rgba(11, 31, 59, 0.04)',
+                    transform: isSelected && !prefersReducedMotion ? 'translateY(-3px)' : 'none',
+                    transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                 >
                   {/* Step Badge & Icon */}

@@ -46,6 +46,12 @@ function seedCanonicalBusinesses(): void {
     website: 'https://royalinteriors.example.com',
     phone: '+91 141 278 4900',
     address: 'C-Scheme, Ashok Nagar, Jaipur, Rajasthan 302001',
+    socialLinks: {
+      instagram: 'https://instagram.com/royalinteriors_jaipur',
+      linkedin: 'https://linkedin.com/company/royal-interiors-studio',
+      facebook: 'https://facebook.com/royalinteriorsjaipur',
+      whatsapp: '+919829012345',
+    },
     primaryCityId: 'city-jaipur',
     primaryStateId: 'state-rajasthan',
     primaryCountryId: 'country-in',
@@ -84,7 +90,14 @@ function seedCanonicalBusinesses(): void {
       'Established studio specializing in bespoke architectural interiors and modern turnkey residential projects throughout central and southern Jaipur.',
     website: 'https://abcinteriors.example.com',
     phone: '+91 141 222 1890',
+    email: 'contact@abcinteriors.example.com',
     address: 'C-Scheme, Jaipur, Rajasthan 302001',
+    socialLinks: {
+      instagram: 'https://instagram.com/abcinteriors_jaipur',
+      linkedin: 'https://linkedin.com/company/abc-interiors-jaipur',
+      whatsapp: '+919829123456',
+      facebook: 'https://facebook.com/abcinteriorsjaipur',
+    },
     primaryCityId: 'city-jaipur',
     primaryStateId: 'state-rajasthan',
     primaryCountryId: 'country-in',
@@ -298,6 +311,11 @@ export function createBusiness(entity: BusinessEntity): BusinessEntity {
   if (existingSlug) {
     throw new Error(`Business with slug "${entity.slug}" already exists.`);
   }
+  BUSINESSES_STORE.set(entity.id, entity);
+  return entity;
+}
+
+export function registerBusinessInStore(entity: BusinessEntity): BusinessEntity {
   BUSINESSES_STORE.set(entity.id, entity);
   return entity;
 }

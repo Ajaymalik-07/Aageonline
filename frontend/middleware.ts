@@ -28,6 +28,8 @@ export const config = {
      * - favicon.ico, sitemap.xml, robots.txt
      * - static public assets (/assets/*)
      */
+    '/admin',
+    '/admin/:path*',
     '/api/:path*',
     '/markets/:path*',
     '/categories/:path*',
@@ -38,6 +40,16 @@ export const config = {
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Legacy frontend admin route retirement / safe redirection
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const adminUrl = process.env.ADMIN_APP_URL || process.env.NEXT_PUBLIC_ADMIN_URL;
+    if (adminUrl && adminUrl.trim().length > 0) {
+      const subpath = pathname.replace(/^\/admin/, '') || '/';
+      return NextResponse.redirect(new URL(subpath, adminUrl));
+    }
+    return new NextResponse('Not Found', { status: 404 });
+  }
 
   // 0. CSRF Defense-in-depth: Validate Origin and Sec-Fetch-Site on state-changing API mutations
   const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);

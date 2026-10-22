@@ -39,7 +39,7 @@ export default function RootLayout({
           Skip to main content
         </a>
 
-        {/* Global Semantic Header with responsive navigation and theme switch */}
+        {/* Global Semantic Header with responsive navigation */}
         <Header />
 
         {/* Main Content Landmark */}

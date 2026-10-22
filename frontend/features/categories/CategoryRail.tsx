@@ -207,21 +207,20 @@ export const CategoryRail: React.FC = () => {
           paddingTop: '6px',
         }}
       >
-        {BUSINESS_CATEGORIES.map((cat, idx) => {
-          const isFeatured = idx === 2; // Card 3 highlighted like in screenshot 3
+        {BUSINESS_CATEGORIES.map((cat) => {
           const catImage = getCategoryImage(cat.slug || cat.name);
 
           return (
             <a
               key={cat.id}
-              href={`/explore?category=${cat.slug}`}
+              href={`/categories/${cat.slug}`}
               className="carousel-snap-item card-lift"
               style={{
                 width: '240px',
                 backgroundColor: '#0F2137',
                 borderRadius: 'var(--radius-lg)',
-                border: isFeatured ? '1.5px solid #FB923C' : '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow: isFeatured ? '0 10px 30px rgba(234, 88, 12, 0.25)' : '0 6px 20px rgba(0, 0, 0, 0.35)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.35)',
                 textDecoration: 'none',
                 display: 'flex',
                 flexDirection: 'column',

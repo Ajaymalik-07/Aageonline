@@ -17,6 +17,10 @@ secrets/
 credentials/
 *.env.local
 
+# Database Backups and Dumps
+backups/
+*.dump
+
 # Production Build Artifacts
 .next/
 out/

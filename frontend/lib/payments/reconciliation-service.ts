@@ -11,7 +11,7 @@
  * 5. Successful reconciliation enqueues idempotent settlement recovery.
  */
 
-import { isDatabaseConfigured } from '../db/client.ts';
+import { isDatabaseConfigured, assertProductionPersistence } from '../db/client.ts';
 import { PostgresPaymentRepository } from '../db/repositories/payment-repository.ts';
 import { PostgresReconciliationRunRepository, type ReconciliationTriggerSource } from '../db/repositories/reconciliation-run-repository.ts';
 import { verifyPayUPayment } from './payu/verification.ts';
@@ -54,6 +54,8 @@ export async function runPaymentReconciliationCycle(
     actorUserId?: string;
   } = {}
 ): Promise<PaymentReconciliationResult> {
+  assertProductionPersistence();
+
   const batchSize = Math.min(100, options.batchSize || 20);
   const olderThanMinutes = options.olderThanMinutes !== undefined ? options.olderThanMinutes : 2;
   const triggerSource = options.triggerSource || 'SCHEDULED';
@@ -157,6 +159,8 @@ export async function reconcileSinglePaymentOrder(
   newStatus: PaymentOrderStatus;
   error?: string;
 }> {
+  assertProductionPersistence();
+
   let order: PaymentOrder | null = null;
 
   if (isDatabaseConfigured()) {

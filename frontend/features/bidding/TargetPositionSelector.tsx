@@ -21,7 +21,7 @@ export const TargetPositionSelector: React.FC<TargetPositionSelectorProps> = ({
   onSelectTarget,
   className = '',
 }) => {
-  const targetSlots = [1, 2, 3, 4, 5];
+  const targetSlots = [1];
 
   return (
     <div
@@ -35,10 +35,10 @@ export const TargetPositionSelector: React.FC<TargetPositionSelectorProps> = ({
     >
       <div style={{ marginBottom: 'var(--space-1)' }}>
         <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-          Select Target Visibility Position
+          Target Position: #1 (Spotlight Rank)
         </h3>
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-          Qualifying bid must strictly exceed the incumbent's qualifying amount.
+          All visibility placements compete exclusively for Position #1. Qualifying bid must exceed the incumbent's qualifying amount.
         </p>
       </div>
 

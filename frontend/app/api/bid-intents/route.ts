@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { businessId, marketId, targetPosition, clientCalculatedAmountMinor } = body;
+    const { businessId, marketId, targetPosition, clientCalculatedAmountMinor, offeredAmountMinor } = body;
 
     if (!businessId || typeof businessId !== 'string') {
       return NextResponse.json(
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
         marketId,
         targetPosition,
         clientCalculatedAmountMinor,
+        offeredAmountMinor,
         idempotencyKey,
       },
       user.id

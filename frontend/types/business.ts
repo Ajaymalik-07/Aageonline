@@ -20,6 +20,15 @@ export type BusinessPublicationStatus =
   | 'REVIEW'
   | 'ARCHIVED';
 
+export interface BusinessSocialLinks {
+  instagram?: string;
+  linkedin?: string;
+  facebook?: string;
+  twitter?: string;
+  youtube?: string;
+  whatsapp?: string;
+}
+
 export interface BusinessEntity {
   id: string;
   slug: string;
@@ -33,11 +42,16 @@ export interface BusinessEntity {
   phone?: string;
   email?: string;
   address?: string;
+  socialLinks?: BusinessSocialLinks;
   primaryCityId?: string;
   primaryStateId?: string;
   primaryCountryId?: string;
   verificationStatus: BusinessVerificationStatus;
   publicationStatus: BusinessPublicationStatus;
+  whatsappPhone?: string;
+  evidenceType?: string;
+  evidenceReference?: string;
+  evidenceStatus?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,6 +97,7 @@ export interface Business {
   email?: string;
   website?: string;
   address?: string;
+  socialLinks?: BusinessSocialLinks;
   currentPositions?: {
     marketId: string;
     marketName: string;

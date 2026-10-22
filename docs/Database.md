@@ -868,6 +868,59 @@ ON rate_limit_counters (window_start);
 - **Idempotent Invalidation:** Multiple workers claiming different jobs can execute safely without interfering with each other. If a worker crashes mid-invalidation, the lease expires and the job is automatically retried up to 5 times.
 - **Fail-Open Rate Limiter:** During temporary database connection issues or failovers, rate limiting degrades safely to process-local memory counters, preventing widespread disruption of legitimate users while logging security alerts.
 
+---
+
+## 15. Migration 012: Admin Content, Governance & Authoritative API Persistence
+
+Implemented in `frontend/lib/db/migrations/012_admin_content_and_governance.sql` for Milestone 0.20.26 to eliminate in-process ephemeral collections from the standalone API server (`api/src/server.ts`).
+
+### 15.1 New Relational Entities
+
+1. **`discovery_requests`**: Tracks market discovery submissions (`category`, `city`, `requester_email`, `status`, `notes`).
+2. **`content_blocks`**: Tracks editable dynamic content segments (`key`, `title`, `content_body`, `content_type`, `status`).
+3. **`blog_posts`**: Full blog management (`slug`, `title`, `summary`, `body_markdown`, `author_name`, `meta_title`, `meta_description`, `keywords`, `status`, `published_at`).
+4. **`url_redirects`**: Manages SEO 301/308 redirect mappings (`source_path`, `target_path`, `status_code`, `is_active`, `hit_count`, `last_hit_at`).
+5. **`newsletter_subscribers`**: Captures subscriber leads (`email`, `status`, `source`, `confirmed_at`).
+6. **`lead_prospects`**: B2B inquiry and claim prospecting (`full_name`, `email`, `phone`, `business_name`, `city`, `category`, `notes`, `status`).
+7. **`admin_users`**: Administrative operators with RBAC (`email`, `full_name`, `role`, `status`, `last_login_at`).
+8. **`system_settings`**: Key-value operational configuration (`key`, `value_json`, `description`, `updated_by`).
+
+### 15.2 Authoritative API Repository Architecture
+
+The standalone REST API (`api/`) connects directly to PostgreSQL via `api/src/db/`:
+- **`client.ts`**: Pool singleton (`pg.Pool`), transaction runner (`withTransaction`), and fail-closed health evaluator (`checkDatabaseHealth`).
+- **`migrator.ts`**: Standalone runner applying 001–012 sequentially, recording checksums in `schema_migrations`.
+- **`ranking-repo.ts`**: Implements atomic row-level market locking (`SELECT id FROM markets WHERE id = $1 FOR UPDATE`) during bid settlements, writes to append-only `position_history`, and enforces displacement floor invariants.
+- **Fail-Closed Policy**: If `DATABASE_URL` is set but the database is unreachable, `/api/health/ready` returns HTTP 503 `DEGRADED`, and all mutation endpoints fail closed without in-memory fallbacks.
+
+---
+
+## 16. Migration 013: Lead Scraper & Zero-Inspired Email Automation (Milestone 0.20.27)
+
+Implemented in `frontend/lib/db/migrations/013_lead_scraper_and_email_automation.sql` to establish the authoritative single handoff between Business Discovery and Email Automation.
+
+### 16.1 New Relational Entities
+
+1. **`scraper_configs`**: Configuration for automated discovery jobs (`enabled_connectors`, `target_locations`, `target_categories`, `search_keywords`, `crawl_depth`, `per_source_limit`, `frequency_hours`, `execution_timezone`, `max_concurrency`, `gemini_enabled`, `is_active`).
+2. **`scraper_jobs`**: Append-only execution record of discovery batches (`source`, `target_locations`, `target_categories`, `status`, `total_discovered`, `new_leads_added`, `existing_updated`, `duplicates_skipped`, `invalid_records`, `connector_errors`, `error_log`, `started_at`, `completed_at`).
+3. **`email_templates`**: Rich invitation templates with validation variables (`name`, `subject`, `body_html`, `body_text`, `variables`, `is_active`).
+4. **`email_campaigns`**: Independent campaign configurations (`name`, `template_id`, `status`, `target_locations`, `target_categories`, `target_sources`, `sender_name`, `sender_email`, `daily_limit`, `cooldown_days`, `schedule_cron`, `execution_timezone`, `total_recipients`, `sent_count`, `delivered_count`, `failed_count`, `bounced_count`, `opt_out_count`, `conversions_count`, `last_run_at`, `next_run_at`).
+5. **`email_outbox`**: Append-only transactional queue of outbound messages (`campaign_id`, `lead_id`, `recipient_email`, `recipient_name`, `business_name`, `subject`, `body_html`, `status`, `provider_message_id`, `error_message`, `attempt_count`, `queued_at`, `sent_at`, `delivered_at`).
+6. **`email_suppression_list`**: Authoritative permanent suppression registry (`email`, `reason`, `source`, `suppressed_at`).
+
+### 16.2 Schema Enrichment: `lead_prospects`
+Migration 013 extends `lead_prospects` with:
+- `normalized_name`: Lowercase punctuation-stripped business name for deduplication.
+- `website`: Extracted official business website URL.
+- `provenance`: JSONB field tracking connector origin, crawl timestamps, and discovery job ID.
+- `outreach_eligible`: Boolean flag indicating presence of valid email and outreach suitability.
+- `suppressed`: Boolean flag indicating recipient opt-out or bounce status.
+- `suppression_reason`: Reason for suppression (e.g., `ONE_CLICK_UNSUBSCRIBE`, `BOUNCE`, `COMPLAINT`).
+- `suppressed_at`: Timestamp of suppression registration.
+- `discovery_job_id`: Foreign key link to `scraper_jobs`.
+
+
+
 
 
 

@@ -65,7 +65,7 @@ export const MomentumMarkets: React.FC<MomentumMarketsProps> = ({ markets }) => 
         </div>
 
         <a
-          href="/explore"
+          href="/markets"
           style={{
             fontSize: '13px',
             fontWeight: 700,

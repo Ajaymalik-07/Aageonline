@@ -83,7 +83,7 @@ export const MarketCTA: React.FC<MarketCTAProps> = ({ locationName, categoryName
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
           <Link
-            href="/claim"
+            href="/business/claim"
             style={{
               padding: '14px 32px',
               borderRadius: 'var(--radius-pill)',

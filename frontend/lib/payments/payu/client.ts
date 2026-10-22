@@ -17,6 +17,15 @@ const DEFAULT_TEST_KEY = 'gtKFFx'; // PayU standard test key for development / i
 const DEFAULT_TEST_SALT = 'eCwWELxi'; // PayU standard test salt for development / integration testing
 
 export function getPayUConfig(): PayUConfig {
+  const isExplicitNonProduction =
+    Boolean(process.env.APP_ENV && process.env.APP_ENV !== 'production');
+
+  if (isExplicitNonProduction && process.env.PAYU_ENV === 'production') {
+    throw new Error(
+      `PAYU GATEWAY SAFETY VIOLATION: Cannot activate PAYU_ENV=production in non-production environment '${process.env.APP_ENV}'. Real customer payments are strictly prohibited.`
+    );
+  }
+
   const env: PayUEnvironment =
     process.env.PAYU_ENV === 'production' ? 'production' : 'test';
 
